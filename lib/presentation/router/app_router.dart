@@ -1,0 +1,58 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/logic/cubit/internet_cubit.dart';
+import 'package:racconnect/presentation/screens/disconnected_screen.dart';
+import 'package:racconnect/presentation/screens/main_screen.dart';
+import 'package:racconnect/presentation/screens/sign_in_screen.dart';
+import 'package:racconnect/presentation/screens/sign_up_screen.dart';
+
+class AppRouter {
+  Route? onGenerateRoute(RouteSettings routeSettings) {
+    return MaterialPageRoute(
+      builder: (context) {
+        final internetState = context.watch<InternetCubit>().state;
+        bool internetConnected = internetState is InternetConnected;
+        if (!internetConnected) {
+          return DisconnectedScreen();
+        } else {
+          switch (routeSettings.name) {
+            case '/':
+              return BlocConsumer<AuthCubit, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.error),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+
+                  if (state is AuthSignedUp) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Account created successfully! Contact the administrator to activate your account.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  if (state is AuthSignedIn) {
+                    return MainScreen();
+                  }
+                  return SignInScreen();
+                },
+              );
+            case '/signup':
+              return SignUpScreen();
+            default:
+              return DisconnectedScreen();
+          }
+        }
+      },
+    );
+  }
+}

@@ -1,0 +1,72 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:racconnect/data/models/user_model.dart';
+import 'package:racconnect/data/repositories/auth_repository.dart';
+
+part 'auth_state.dart';
+
+class AuthCubit extends Cubit<AuthState> {
+  AuthCubit() : super(AuthInitial());
+  final authRepository = AuthRepository();
+
+  void signOut() async {
+    try {
+      emit(AuthLoading());
+      await authRepository.signOut();
+      emit(AuthInitial());
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  void signUp({
+    required String email,
+    required String password,
+    required String passwordConfirm,
+    required String firstName,
+    String? middleName,
+    required String lastName,
+  }) async {
+    try {
+      emit(AuthLoading());
+      await authRepository.signUp(
+        email: email,
+        password: password,
+        passwordConfirm: passwordConfirm,
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
+      );
+      emit(AuthSignedUp());
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  void signIn({required String email, required String password}) async {
+    try {
+      emit(AuthLoading());
+      final userModel = await authRepository.signIn(
+        email: email,
+        password: password,
+      );
+
+      emit(AuthSignedIn(userModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  void errorMessage(dynamic e) {
+    if (e.runtimeType == ClientException) {
+      if (e.response['data'].isNotEmpty &&
+          e.response['data']['email']['code'] == 'validation_not_unique') {
+        emit(AuthError('The email address is already taken.'));
+      } else {
+        emit(AuthError(e.response['message'].toString()));
+      }
+    } else {
+      emit(AuthError(e.toString()));
+    }
+  }
+}
