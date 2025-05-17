@@ -16,7 +16,36 @@ class SectionCubit extends Cubit<SectionState> {
         name: name,
         code: code,
       );
-      emit(SectionSuccess(sectionModel));
+      emit(SectionAddSuccess(sectionModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> updateSection({
+    required String id,
+    required String name,
+    required String code,
+  }) async {
+    try {
+      emit(SectionLoading());
+      final sectionModel = await sectionRepository.updateSection(
+        id: id,
+        name: name,
+        code: code,
+      );
+      emit(SectionUpdateSuccess(sectionModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> deleteSection({required String id}) async {
+    try {
+      emit(SectionLoading());
+      print(id);
+      await sectionRepository.deleteSection(id: id);
+      emit(SectionDeleteSuccess());
     } catch (e) {
       errorMessage(e);
     }

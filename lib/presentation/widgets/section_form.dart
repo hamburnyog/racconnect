@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:racconnect/data/models/section_model.dart';
 
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 
 class SectionForm extends StatefulWidget {
-  const SectionForm({super.key});
+  final SectionModel? sectionModel;
+  const SectionForm({this.sectionModel, super.key});
 
   @override
   State<SectionForm> createState() => _SectionFormState();
@@ -22,6 +24,28 @@ class _SectionFormState extends State<SectionForm> {
         name: nameController.text.trim(),
         code: codeController.text.trim(),
       );
+      Navigator.of(context).pop();
+    }
+  }
+
+  void saveSection() {
+    if (formKey.currentState!.validate()) {
+      final sectionId = widget.sectionModel?.id ?? '';
+      context.read<SectionCubit>().updateSection(
+        id: sectionId,
+        name: nameController.text.trim(),
+        code: codeController.text.trim(),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sectionModel != null) {
+      nameController.text = widget.sectionModel!.name;
+      codeController.text = widget.sectionModel!.code;
     }
   }
 
@@ -36,8 +60,9 @@ class _SectionFormState extends State<SectionForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: MediaQuery.of(context).viewInsets,
       child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: formKey,
           child: Column(
@@ -94,6 +119,11 @@ class _SectionFormState extends State<SectionForm> {
 
                   return null;
                 },
+                onFieldSubmitted:
+                    (_) =>
+                        (widget.sectionModel == null)
+                            ? addSection
+                            : saveSection,
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   hintText: 'Enter a name',
@@ -116,6 +146,11 @@ class _SectionFormState extends State<SectionForm> {
 
                   return null;
                 },
+                onFieldSubmitted:
+                    (_) =>
+                        (widget.sectionModel == null)
+                            ? addSection
+                            : saveSection,
                 decoration: const InputDecoration(
                   labelText: 'Code',
                   hintText: 'Enter an acronym or code',
@@ -132,7 +167,8 @@ class _SectionFormState extends State<SectionForm> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  onPressed: addSection,
+                  onPressed:
+                      (widget.sectionModel == null) ? addSection : saveSection,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(

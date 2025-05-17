@@ -159,6 +159,23 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       SizedBox(height: 15),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          side: const BorderSide(color: Colors.grey),
+                        ),
+                        icon: Image.asset(
+                          'assets/images/google_logo.png',
+                          height: 24,
+                          width: 24,
+                        ),
+                        label: const Text('SIGN IN WITH GOOGLE'),
+                        onPressed: () {
+                          context.read<AuthCubit>().signInWithGoogle();
+                        },
+                      ),
+                      SizedBox(height: 15),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pushNamed('/signup');

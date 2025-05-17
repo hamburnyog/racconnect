@@ -20,7 +20,6 @@ Future<void> main() async {
   Bloc.observer = AppBlocObserver();
 
   runApp(MyApp(appRouter: AppRouter(), connectivity: Connectivity()));
-  // runApp(MyApp(connectivity: Connectivity()));
 }
 
 class MyApp extends StatefulWidget {

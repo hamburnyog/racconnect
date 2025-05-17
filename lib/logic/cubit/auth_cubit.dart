@@ -23,9 +23,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     required String password,
     required String passwordConfirm,
-    required String firstName,
-    String? middleName,
-    required String lastName,
+    required String name,
   }) async {
     try {
       emit(AuthLoading());
@@ -33,9 +31,7 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         password: password,
         passwordConfirm: passwordConfirm,
-        firstName: firstName,
-        middleName: middleName,
-        lastName: lastName,
+        name: name,
       );
       emit(AuthSignedUp());
     } catch (e) {
@@ -57,15 +53,25 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  void signInWithGoogle() async {
+    try {
+      emit(AuthLoading());
+      final userModel = await authRepository.signInWithGoogle();
+      emit(AuthSignedIn(userModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
-      if (e.response['data'].isNotEmpty &&
-          e.response['data']['email']['code'] == 'validation_not_unique') {
-        emit(AuthError('The email address is already taken.'));
-      } else {
-        emit(AuthError(e.response['message'].toString()));
-      }
-    } else {
+      //   if (e.response['data'].isNotEmpty &&
+      //       e.response['data']['email']['code'] == 'validation_not_unique') {
+      //     emit(AuthError('The email address is already taken.'));
+      //   } else {
+      //     emit(AuthError(e.response['message'].toString()));
+      //   }
+      // } else {
       emit(AuthError(e.toString()));
     }
   }

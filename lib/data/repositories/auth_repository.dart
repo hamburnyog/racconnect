@@ -1,10 +1,11 @@
-import 'package:pocketbase/pocketbase.dart';
+import 'dart:async';
+
 import 'package:racconnect/data/models/user_model.dart';
-import 'package:racconnect/utility/constants.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AuthRepository {
-  final pb = PocketBase(Uri.parse(serverUrl).toString());
-
+  final pb = PocketBaseClient.instance;
   Future<UserModel> signIn({
     required String email,
     required String password,
@@ -13,6 +14,28 @@ class AuthRepository {
       final response = await pb
           .collection('users')
           .authWithPassword(email, password);
+
+      if (response.record.data.isNotEmpty) {
+        final isVerified = response.record.getBoolValue('verified');
+
+        if (!isVerified) {
+          throw 'Your account is inactive. Kindly check your email for the verification link or contact your administrator.';
+        }
+      }
+
+      return UserModel.fromJson(response.record.toString());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<UserModel> signInWithGoogle() async {
+    try {
+      final response = await pb.collection('users').authWithOAuth2('google', (
+        url,
+      ) async {
+        await launchUrl(url);
+      });
 
       if (response.record.data.isNotEmpty) {
         final isVerified = response.record.getBoolValue('verified');
@@ -40,21 +63,17 @@ class AuthRepository {
     required String email,
     required String password,
     required String passwordConfirm,
-    required String firstName,
-    String? middleName,
-    required String lastName,
+    required String name,
   }) async {
     try {
       final body = <String, dynamic>{
         "password": password,
         "passwordConfirm": passwordConfirm,
         "email": email,
-        "firstName": firstName,
-        "middleName": middleName,
-        "lastName": lastName,
+        "name": name,
       };
       await pb.collection('users').create(body: body);
-      // await pb.collection('users').requestVerification(email);
+      await pb.collection('users').requestVerification(email);
     } catch (e) {
       rethrow;
       // throw e.toString();

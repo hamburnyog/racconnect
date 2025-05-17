@@ -33,7 +33,7 @@ class AppRouter {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Account created successfully! Contact the administrator to activate your account.',
+                          'Account created successfully! Kindly verify your email or contact an administrator to activate your account.',
                         ),
                       ),
                     );

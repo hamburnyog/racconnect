@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -10,12 +11,10 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final passwordConfirmController = TextEditingController();
-  final firstNameController = TextEditingController();
-  final middleNameController = TextEditingController();
-  final lastNameController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   @override
@@ -23,9 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     emailController.dispose();
     passwordController.dispose();
     passwordConfirmController.dispose();
-    firstNameController.dispose();
-    middleNameController.dispose();
-    lastNameController.dispose();
+    nameController.dispose();
     formKey.currentState?.dispose();
     super.dispose();
   }
@@ -33,12 +30,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void signUpUser() {
     if (formKey.currentState!.validate()) {
       context.read<AuthCubit>().signUp(
+        name: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
         passwordConfirm: passwordConfirmController.text.trim(),
-        firstName: firstNameController.text.trim(),
-        middleName: middleNameController.text.trim(),
-        lastName: lastNameController.text.trim(),
       );
     }
   }
@@ -97,36 +92,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       SizedBox(height: 30),
                       TextFormField(
-                        controller: firstNameController,
-                        decoration: InputDecoration(hintText: 'First Name'),
+                        controller: nameController,
+                        decoration: InputDecoration(hintText: 'Name'),
                         onFieldSubmitted: (_) => signUpUser(),
                         validator: (value) {
                           // TODO: IMPROVE VALIDATION
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter a valid first name.';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
-                        controller: middleNameController,
-                        decoration: InputDecoration(hintText: 'Middle Name'),
-                        onFieldSubmitted: (_) => signUpUser(),
-                        validator: (value) {
-                          // TODO: IMPROVE VALIDATION
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
-                        controller: lastNameController,
-                        decoration: InputDecoration(hintText: 'Last Name'),
-                        onFieldSubmitted: (_) => signUpUser(),
-                        validator: (value) {
-                          // TODO: IMPROVE VALIDATION
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a valid last name.';
                           }
                           return null;
                         },
@@ -193,6 +165,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           'SIGN UP',
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
+                      ),
+                      SizedBox(height: 15),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'By registering, you agree to the ',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              launchUrl(
+                                Uri.parse('https://privacy.codecarpentry.com/'),
+                              );
+                            },
+                            child: Text(
+                              'privacy policy',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).primaryColor,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                          Text('.', style: TextStyle(fontSize: 12)),
+                        ],
                       ),
                       SizedBox(height: 15),
                       GestureDetector(

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:racconnect/data/models/section_model.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/presentation/widgets/section_form.dart';
 
@@ -19,6 +20,7 @@ class _SectionPageState extends State<SectionPage> {
   void _showSectionForm() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       scrollControlDisabledMaxHeightRatio: 0.75,
       showDragHandle: true,
       useSafeArea: true,
@@ -28,7 +30,21 @@ class _SectionPageState extends State<SectionPage> {
     );
   }
 
-  void addSection() {}
+  void _showSectionFormWithEdit(SectionModel sectionModel) {
+    showModalBottomSheet(
+      context: context,
+      scrollControlDisabledMaxHeightRatio: 0.75,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (BuildContext builder) {
+        return SectionForm(sectionModel: sectionModel);
+      },
+    );
+  }
+
+  void _deleteSection(String id) {
+    context.read<SectionCubit>().deleteSection(id: id);
+  }
 
   @override
   void initState() {
@@ -110,142 +126,157 @@ class _SectionPageState extends State<SectionPage> {
               SizedBox(height: 10),
               BlocBuilder<SectionCubit, SectionState>(
                 builder: (context, state) {
+                  var sections = [];
                   if (state is SectionLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Column(
+                      children: [
+                        SizedBox(height: 30),
+                        CircularProgressIndicator(),
+                      ],
+                    );
                   }
 
                   if (state is SectionError) {
-                    return Center(
-                      child: Text(
-                        state.error,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    );
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    });
+                  }
+
+                  if (state is SectionError ||
+                      state is SectionAddSuccess ||
+                      state is SectionUpdateSuccess ||
+                      state is SectionDeleteSuccess) {
+                    context.read<SectionCubit>().getAllSections();
                   }
 
                   if (state is GetAllSectionSuccess) {
-                    final sections = state.sectionModels.toList();
+                    sections = state.sectionModels.toList();
 
-                    if (sections.isEmpty) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(height: 50),
-                          SvgPicture.asset(
-                            'assets/images/dog.svg',
-                            height: 100,
+                    if (sections.isNotEmpty) {
+                      return Expanded(
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          interactive: true,
+                          child: ListView.builder(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            scrollDirection: Axis.vertical,
+                            controller: _scrollController,
+                            itemCount: sections.length,
+                            itemBuilder: (context, index) {
+                              final sectionModel = sections[index];
+                              return ClipRect(
+                                child: Dismissible(
+                                  key: UniqueKey(),
+                                  direction: DismissDirection.endToStart,
+                                  onDismissed: (direction) async {},
+                                  confirmDismiss: (
+                                    DismissDirection direction,
+                                  ) async {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text("Confirm"),
+                                          content: const Text(
+                                            "Are you sure you want to delete this record?",
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
+                                              child: const Text("Cancel"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                _deleteSection(sectionModel.id);
+                                                Navigator.of(context).pop(true);
+                                              },
+                                              child: const Text("Delete"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  background: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.pink,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    alignment: Alignment.centerRight,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  child: Card(
+                                    elevation: 3,
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        child: Icon(
+                                          Icons.group,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        sectionModel.code,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        sectionModel.name,
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                      trailing: IconButton(
+                                        icon: Icon(
+                                          Icons.edit,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        onPressed: () {
+                                          _showSectionFormWithEdit(
+                                            sectionModel,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          Text(
-                            'Nothing is here yet. Add a record to get started.',
-                            style: TextStyle(fontSize: 10),
-                          ),
-                        ],
+                        ),
                       );
                     }
-
-                    return Expanded(
-                      child: Scrollbar(
-                        controller: _scrollController,
-                        thumbVisibility: true,
-                        interactive: true,
-                        child: ListView.builder(
-                          physics: AlwaysScrollableScrollPhysics(),
-                          scrollDirection: Axis.vertical,
-                          controller: _scrollController,
-                          itemCount: sections.length,
-                          itemBuilder: (context, index) {
-                            final sectionModel = sections[index];
-                            return ClipRect(
-                              child: Dismissible(
-                                key: UniqueKey(),
-                                direction: DismissDirection.endToStart,
-                                onDismissed: (direction) async {},
-                                confirmDismiss: (
-                                  DismissDirection direction,
-                                ) async {
-                                  return await showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text("Confirm"),
-                                        content: const Text(
-                                          "Are you sure you want to delete this record?",
-                                        ),
-                                        actions: <Widget>[
-                                          TextButton(
-                                            onPressed:
-                                                () => Navigator.of(
-                                                  context,
-                                                ).pop(false),
-                                            child: const Text("Cancel"),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop(true);
-                                            },
-                                            child: const Text("Delete"),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                                background: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.pink,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  alignment: Alignment.centerRight,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                  ),
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                child: Card(
-                                  elevation: 3,
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor:
-                                          Theme.of(context).primaryColor,
-                                      child: Icon(
-                                        Icons.group,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      sectionModel.code,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      sectionModel.name,
-                                      style: TextStyle(fontSize: 10),
-                                    ),
-                                    trailing: IconButton(
-                                      icon: Icon(
-                                        Icons.edit,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                      onPressed: _showSectionForm,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
                   }
-                  return const Center(child: Text('Something went wrong.'));
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 50),
+                      SvgPicture.asset('assets/images/dog.svg', height: 100),
+                      Text(
+                        'Nothing is here yet. Add a record to get started.',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  );
                 },
               ),
             ],

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 
 class DisconnectedScreen extends StatefulWidget {
@@ -12,10 +11,6 @@ class DisconnectedScreen extends StatefulWidget {
 }
 
 class _DisconnectedScreenState extends State<DisconnectedScreen> {
-  final _formKey = GlobalKey<FormState>();
-
-  TextEditingController urlController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
