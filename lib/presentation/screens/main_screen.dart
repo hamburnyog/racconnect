@@ -28,6 +28,7 @@ class _MainScreenState extends State<MainScreen> {
       appBar:
           !isLargeScreen
               ? AppBar(
+                surfaceTintColor: Colors.transparent,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

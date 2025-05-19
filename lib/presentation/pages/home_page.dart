@@ -20,58 +20,64 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Card(
-            color: Theme.of(context).primaryColor,
-            child: ListTile(
-              title: Text(
-                'No event for today',
-                // @TODO: Count holiday for the selected day
-                style: TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                'Today is ${DateFormat.yMMMMd().format(now)}',
-                style: TextStyle(color: Colors.white),
-              ),
-              trailing: IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedDay = now;
-                    _focusedDay = now;
-                  });
-                },
-                icon: Icon(Icons.calendar_today, color: Colors.white),
-              ),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TableCalendar(
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    title: Text(
+                      'No event for today',
+                      // @TODO: Count holiday for the selected day
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      'Today is ${DateFormat.yMMMMd().format(now)}',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    trailing: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedDay = now;
+                          _focusedDay = now;
+                        });
+                      },
+                      icon: Icon(Icons.calendar_today, color: Colors.white),
+                    ),
+                  ),
                 ),
-                // holidayPredicate: ,
-                // rowHeight: 80,
-                availableGestures: AvailableGestures.none,
-                firstDay: now.subtract(const Duration(days: 365)),
-                lastDay: now.add(const Duration(days: 365)),
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (day) {
-                  return isSameDay(_selectedDay, day);
-                },
-                onDaySelected: (selectedDay, focusedDay) {
-                  if (!isSameDay(_selectedDay, selectedDay)) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  }
-                },
-                onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
-                },
-              ),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TableCalendar(
+                      headerStyle: const HeaderStyle(
+                        formatButtonVisible: false,
+                        titleCentered: true,
+                      ),
+                      startingDayOfWeek: StartingDayOfWeek.monday,
+                      availableGestures: AvailableGestures.none,
+                      firstDay: now.subtract(const Duration(days: 365)),
+                      lastDay: now.add(const Duration(days: 365)),
+                      focusedDay: _focusedDay,
+                      selectedDayPredicate: (day) {
+                        return isSameDay(_selectedDay, day);
+                      },
+                      onDaySelected: (selectedDay, focusedDay) {
+                        if (!isSameDay(_selectedDay, selectedDay)) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        }
+                      },
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

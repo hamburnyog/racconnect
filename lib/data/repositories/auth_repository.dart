@@ -76,7 +76,6 @@ class AuthRepository {
       await pb.collection('users').requestVerification(email);
     } catch (e) {
       rethrow;
-      // throw e.toString();
     }
   }
 }

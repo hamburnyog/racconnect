@@ -17,7 +17,7 @@ Future<void> main() async {
     ),
   );
 
-  Bloc.observer = AppBlocObserver();
+  // Bloc.observer = AppBlocObserver();
 
   runApp(MyApp(appRouter: AppRouter(), connectivity: Connectivity()));
 }
@@ -47,6 +47,11 @@ class _MyAppState extends State<MyApp> {
         title: 'Racconnect Client',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+          ),
           inputDecorationTheme: InputDecorationTheme(
             contentPadding: const EdgeInsets.all(27),
             enabledBorder: OutlineInputBorder(

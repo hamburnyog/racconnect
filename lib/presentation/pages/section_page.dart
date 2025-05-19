@@ -245,16 +245,16 @@ class _SectionPageState extends State<SectionPage> {
                                         sectionModel.name,
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: IconButton(
-                                        icon: Icon(
-                                          Icons.edit,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                        onPressed: () {
+                                      trailing: GestureDetector(
+                                        onTap: () {
                                           _showSectionFormWithEdit(
                                             sectionModel,
                                           );
                                         },
+                                        child: Icon(
+                                          Icons.edit_note,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
                                       ),
                                     ),
                                   ),

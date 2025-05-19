@@ -43,7 +43,6 @@ class SectionCubit extends Cubit<SectionState> {
   Future<void> deleteSection({required String id}) async {
     try {
       emit(SectionLoading());
-      print(id);
       await sectionRepository.deleteSection(id: id);
       emit(SectionDeleteSuccess());
     } catch (e) {
@@ -65,14 +64,21 @@ class SectionCubit extends Cubit<SectionState> {
 
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
-      if (e.response['data'].isNotEmpty &&
-          e.response['data']['name']['code'] == 'validation_not_unique') {
+      final data = e.response?['data'];
+      final message = e.response?['message'];
+
+      if (data != null &&
+          data.isNotEmpty &&
+          data['name'] != null &&
+          data['name']['code'] == 'validation_not_unique') {
         emit(SectionError('The name is already taken.'));
-      } else if (e.response['data'].isNotEmpty &&
-          e.response['data']['code']['code'] == 'validation_not_unique') {
+      } else if (data != null &&
+          data.isNotEmpty &&
+          data['code'] != null &&
+          data['code']['code'] == 'validation_not_unique') {
         emit(SectionError('The code is already taken.'));
       } else {
-        emit(SectionError(e.response['message'].toString()));
+        emit(SectionError(message?.toString() ?? 'Unknown error'));
       }
     } else {
       emit(SectionError(e.toString()));
