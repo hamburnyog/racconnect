@@ -180,17 +180,45 @@ class _SignInScreenState extends State<SignInScreen> {
                         onTap: () {
                           Navigator.of(context).pushNamed('/signup');
                         },
-                        child: RichText(
-                          text: TextSpan(
-                            text: 'Don\'t have an account? ',
-                            style: Theme.of(context).textTheme.titleMedium,
-                            children: const [
-                              TextSpan(
-                                text: 'Sign Up',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                text: 'Don\'t have an account? ',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'Sign Up',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context).primaryColor,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(
+                                  context,
+                                ).pushNamed('/forgot-password');
+                              },
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).primaryColor,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

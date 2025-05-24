@@ -51,6 +51,14 @@ class AuthRepository {
     }
   }
 
+  Future<void> requestPasswordReset({required String email}) async {
+    try {
+      await pb.collection('users').requestPasswordReset(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       pb.authStore.clear();

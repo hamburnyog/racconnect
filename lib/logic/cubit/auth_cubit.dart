@@ -55,9 +55,17 @@ class AuthCubit extends Cubit<AuthState> {
 
   void signInWithGoogle() async {
     try {
-      // emit(AuthLoading());
       final userModel = await authRepository.signInWithGoogle();
       emit(AuthSignedIn(userModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  void requestPasswordReset(String email) async {
+    try {
+      await authRepository.requestPasswordReset(email: email);
+      emit(AuthPasswordResetSent());
     } catch (e) {
       errorMessage(e);
     }

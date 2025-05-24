@@ -8,6 +8,8 @@ final class AuthLoading extends AuthState {}
 
 final class AuthSignedUp extends AuthState {}
 
+final class AuthPasswordResetSent extends AuthState {}
+
 final class AuthSignedIn extends AuthState {
   final UserModel user;
   AuthSignedIn(this.user);

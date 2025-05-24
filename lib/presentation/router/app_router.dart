@@ -4,6 +4,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/presentation/screens/disconnected_screen.dart';
 import 'package:racconnect/presentation/screens/main_screen.dart';
+import 'package:racconnect/presentation/screens/password_reset_screen.dart';
 import 'package:racconnect/presentation/screens/sign_in_screen.dart';
 import 'package:racconnect/presentation/screens/sign_up_screen.dart';
 
@@ -48,6 +49,8 @@ class AppRouter {
               );
             case '/signup':
               return SignUpScreen();
+            case '/forgot-password':
+              return PasswordResetScreen();
             default:
               return DisconnectedScreen();
           }

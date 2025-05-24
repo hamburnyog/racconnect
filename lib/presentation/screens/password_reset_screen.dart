@@ -3,37 +3,28 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class PasswordResetScreen extends StatefulWidget {
+  const PasswordResetScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<PasswordResetScreen> createState() => _PasswordResetScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  final nameController = TextEditingController();
+class _PasswordResetScreenState extends State<PasswordResetScreen> {
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final passwordConfirmController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
     emailController.dispose();
-    passwordController.dispose();
-    passwordConfirmController.dispose();
-    nameController.dispose();
     formKey.currentState?.dispose();
     super.dispose();
   }
 
   void signUpUser() {
     if (formKey.currentState!.validate()) {
-      context.read<AuthCubit>().signUp(
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-        passwordConfirm: passwordConfirmController.text.trim(),
+      context.read<AuthCubit>().requestPasswordReset(
+        emailController.text.trim(),
       );
     }
   }
@@ -92,19 +83,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       SizedBox(height: 30),
                       TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(hintText: 'Name'),
-                        onFieldSubmitted: (_) => signUpUser(),
-                        validator: (value) {
-                          // TODO: IMPROVE VALIDATION
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a valid first name.';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
                         controller: emailController,
                         decoration: InputDecoration(hintText: 'Email Address'),
                         onFieldSubmitted: (_) => signUpUser(),
@@ -119,80 +97,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         },
                       ),
                       SizedBox(height: 15),
-                      TextFormField(
-                        controller: passwordController,
-                        decoration: InputDecoration(hintText: 'Password'),
-                        obscureText: true,
-                        onFieldSubmitted: (_) => signUpUser(),
-                        validator: (value) {
-                          // TODO: IMPROVE VALIDATION
-                          if (value == null ||
-                              value.trim().isEmpty ||
-                              value.length < 8) {
-                            return 'Please enter a valid pasword.';
-                          }
-                          if (value != passwordConfirmController.text) {
-                            return 'Passwords do not match.';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 15),
-                      TextFormField(
-                        controller: passwordConfirmController,
-                        decoration: InputDecoration(
-                          hintText: 'Confirm Password',
-                        ),
-                        onFieldSubmitted: (_) => signUpUser(),
-                        obscureText: true,
-                        validator: (value) {
-                          // TODO: IMPROVE VALIDATION
-                          if (value == null ||
-                              value.trim().isEmpty ||
-                              value.length < 8) {
-                            return 'Please enter a valid pasword.';
-                          }
-                          if (value != passwordController.text) {
-                            return 'Passwords do not match.';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 15),
                       ElevatedButton(
                         onPressed: signUpUser,
                         child: Text(
-                          'SIGN UP',
+                          'SEND PASSWORD RESET LINK',
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                       SizedBox(height: 15),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'By registering, you agree to the ',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              launchUrl(
-                                Uri.parse('https://privacy.codecarpentry.com/'),
-                              );
-                            },
-                            child: Text(
-                              'privacy policy',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).primaryColor,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                          Text('.', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                      SizedBox(height: 25),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pushNamed('/');
