@@ -4,10 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
-import 'package:racconnect/utility/app_bloc_observer.dart';
+// import 'package:racconnect/utility/app_bloc_observer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,7 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
         BlocProvider<SectionCubit>(create: (_) => SectionCubit()),
+        BlocProvider<HolidayCubit>(create: (_) => HolidayCubit()),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',

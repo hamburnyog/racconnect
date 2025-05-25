@@ -13,6 +13,9 @@ class DisconnectedScreen extends StatefulWidget {
 class _DisconnectedScreenState extends State<DisconnectedScreen> {
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 600;
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -20,41 +23,53 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      RichText(
-                        text: TextSpan(
-                          text: 'RACCO',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: 'nnect',
+                      Image.asset('assets/images/logo_bp.png', width: 50),
+                      const SizedBox(width: 10),
+                      Column(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              text: 'RACCO',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 30,
-                                color: Theme.of(context).disabledColor,
+                                color: Theme.of(context).primaryColor,
                               ),
+                              children: [
+                                TextSpan(
+                                  text: 'nnect',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 30,
+                                    color: Theme.of(context).disabledColor,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          Text(
+                            isSmallScreen
+                                ? 'RACCO IV-A Calabarzon'
+                                : 'Regional Alternative Child Care Office IV-A Calabarzon',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Regional Child Care Office IV-A Calabarzon',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                      const SizedBox(width: 10),
+                      Image.asset('assets/images/logo_nacc.png', width: 50),
                     ],
                   ),
-                ],
+                ),
               ),
               Lottie.asset(
                 'assets/animations/dino.json',

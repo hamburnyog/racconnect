@@ -40,6 +40,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 600;
+
     return Scaffold(
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
@@ -55,40 +58,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/logo_nacc.png',
-                            fit: BoxFit.contain,
-                            height: 40,
-                          ),
-                          SizedBox(width: 5),
-                          RichText(
-                            text: TextSpan(
-                              text: 'RACCO',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 30,
-                                color: Theme.of(context).primaryColor,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/logo_bp.png',
+                                width: 50,
                               ),
-                              children: [
-                                TextSpan(
-                                  text: 'nnect',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 30,
-                                    color: Theme.of(context).disabledColor,
+                              const SizedBox(width: 20),
+                              Column(
+                                children: [
+                                  RichText(
+                                    text: TextSpan(
+                                      text: 'RACCO',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 30,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'nnect',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 30,
+                                            color:
+                                                Theme.of(context).disabledColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  Text(
+                                    isSmallScreen
+                                        ? 'RACCO IV-A Calabarzon'
+                                        : 'Regional Alternative Child Care Office IV-A Calabarzon',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 20),
+                              Image.asset(
+                                'assets/images/logo_nacc.png',
+                                width: 50,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const Text(
-                        'Regional Alternative Child Care Office Calabarzon',
-                        style: TextStyle(fontSize: 12),
+                        ),
                       ),
                       SizedBox(height: 30),
                       TextFormField(

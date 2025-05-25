@@ -3,21 +3,22 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:racconnect/data/models/section_model.dart';
-import 'package:racconnect/logic/cubit/section_cubit.dart';
-import 'package:racconnect/presentation/widgets/section_form.dart';
+import 'package:intl/intl.dart';
+import 'package:racconnect/data/models/holiday_model.dart';
+import 'package:racconnect/logic/cubit/holiday_cubit.dart';
+import 'package:racconnect/presentation/widgets/holiday_form.dart';
 
-class SectionPage extends StatefulWidget {
-  const SectionPage({super.key});
+class HolidayPage extends StatefulWidget {
+  const HolidayPage({super.key});
 
   @override
-  State<SectionPage> createState() => _SectionPageState();
+  State<HolidayPage> createState() => _HolidayPageState();
 }
 
-class _SectionPageState extends State<SectionPage> {
+class _HolidayPageState extends State<HolidayPage> {
   final ScrollController _scrollController = ScrollController();
 
-  void _showSectionForm() {
+  void _showHolidayForm() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -25,31 +26,31 @@ class _SectionPageState extends State<SectionPage> {
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
-        return SectionForm();
+        return HolidayForm();
       },
     );
   }
 
-  void _showSectionFormWithEdit(SectionModel sectionModel) {
+  void _showHolidayFormWithEdit(HolidayModel holidayModel) {
     showModalBottomSheet(
       context: context,
       scrollControlDisabledMaxHeightRatio: 0.75,
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
-        return SectionForm(sectionModel: sectionModel);
+        return HolidayForm(holidayModel: holidayModel);
       },
     );
   }
 
-  void _deleteSection(String id) {
-    context.read<SectionCubit>().deleteSection(id: id);
+  void _deleteHoliday(String id) {
+    context.read<HolidayCubit>().deleteHoliday(id: id);
   }
 
   @override
   void initState() {
     super.initState();
-    context.read<SectionCubit>().getAllSections();
+    context.read<HolidayCubit>().getAllHolidays();
   }
 
   @override
@@ -63,7 +64,7 @@ class _SectionPageState extends State<SectionPage> {
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () async {
-        context.read<SectionCubit>().getAllSections();
+        context.read<HolidayCubit>().getAllHolidays();
       },
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -82,7 +83,7 @@ class _SectionPageState extends State<SectionPage> {
                 child: ListTile(
                   minTileHeight: 70,
                   title: Text(
-                    'Sections',
+                    'Holidays',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -92,21 +93,24 @@ class _SectionPageState extends State<SectionPage> {
                   subtitle:
                       MediaQuery.of(context).size.width > 600
                           ? Text(
-                            'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.',
+                            'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
                             ),
                           )
                           : null,
-                  leading: Icon(Icons.group_rounded, color: Colors.white),
+                  leading: Icon(
+                    Icons.calendar_month_outlined,
+                    color: Colors.white,
+                  ),
                   trailing:
                       MediaQuery.of(context).size.width > 600
                           ? ConstrainedBox(
                             constraints: BoxConstraints(maxWidth: 150),
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text('Add Section'),
+                              label: const Text('Add Holiday'),
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: Theme.of(context).primaryColor,
                                 backgroundColor: Colors.white,
@@ -114,20 +118,20 @@ class _SectionPageState extends State<SectionPage> {
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                               ),
-                              onPressed: _showSectionForm,
+                              onPressed: _showHolidayForm,
                             ),
                           )
                           : IconButton(
-                            onPressed: _showSectionForm,
+                            onPressed: _showHolidayForm,
                             icon: Icon(Icons.add, color: Colors.white),
                           ),
                 ),
               ),
               SizedBox(height: 10),
-              BlocBuilder<SectionCubit, SectionState>(
+              BlocBuilder<HolidayCubit, HolidayState>(
                 builder: (context, state) {
-                  var sections = [];
-                  if (state is SectionLoading) {
+                  var holidays = [];
+                  if (state is HolidayLoading) {
                     return Column(
                       children: [
                         SizedBox(height: 30),
@@ -136,7 +140,7 @@ class _SectionPageState extends State<SectionPage> {
                     );
                   }
 
-                  if (state is SectionError) {
+                  if (state is HolidayError) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -147,17 +151,17 @@ class _SectionPageState extends State<SectionPage> {
                     });
                   }
 
-                  if (state is SectionError ||
-                      state is SectionAddSuccess ||
-                      state is SectionUpdateSuccess ||
-                      state is SectionDeleteSuccess) {
-                    context.read<SectionCubit>().getAllSections();
+                  if (state is HolidayError ||
+                      state is HolidayAddSuccess ||
+                      state is HolidayUpdateSuccess ||
+                      state is HolidayDeleteSuccess) {
+                    context.read<HolidayCubit>().getAllHolidays();
                   }
 
-                  if (state is GetAllSectionSuccess) {
-                    sections = state.sectionModels.toList();
+                  if (state is GetAllHolidaySuccess) {
+                    holidays = state.holidayModels.toList();
 
-                    if (sections.isNotEmpty) {
+                    if (holidays.isNotEmpty) {
                       return Expanded(
                         child: Scrollbar(
                           controller: _scrollController,
@@ -167,9 +171,9 @@ class _SectionPageState extends State<SectionPage> {
                             physics: AlwaysScrollableScrollPhysics(),
                             scrollDirection: Axis.vertical,
                             controller: _scrollController,
-                            itemCount: sections.length,
+                            itemCount: holidays.length,
                             itemBuilder: (context, index) {
-                              final sectionModel = sections[index];
+                              final holidayModel = holidays[index];
                               return ClipRect(
                                 child: Dismissible(
                                   key: UniqueKey(),
@@ -196,7 +200,7 @@ class _SectionPageState extends State<SectionPage> {
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                _deleteSection(sectionModel.id);
+                                                _deleteHoliday(holidayModel.id);
                                                 Navigator.of(context).pop(true);
                                               },
                                               child: const Text("Delete"),
@@ -230,25 +234,27 @@ class _SectionPageState extends State<SectionPage> {
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
                                         child: Icon(
-                                          Icons.group,
+                                          Icons.calendar_month_outlined,
                                           color: Colors.white,
                                         ),
                                       ),
                                       title: Text(
-                                        sectionModel.code,
+                                        holidayModel.name,
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Theme.of(context).primaryColor,
                                         ),
                                       ),
                                       subtitle: Text(
-                                        sectionModel.name,
+                                        DateFormat(
+                                          'MMMM d, yyyy',
+                                        ).format(holidayModel.date),
                                         style: TextStyle(fontSize: 10),
                                       ),
                                       trailing: GestureDetector(
                                         onTap: () {
-                                          _showSectionFormWithEdit(
-                                            sectionModel,
+                                          _showHolidayFormWithEdit(
+                                            holidayModel,
                                           );
                                         },
                                         child: Icon(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
 import 'package:racconnect/utility/constants.dart';
@@ -210,7 +211,6 @@ class _MainScreenState extends State<MainScreen> {
                             )
                             .toList(),
                   ),
-
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(16),
@@ -228,6 +228,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Sections') {
                           return SectionPage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Holidays') {
+                          return HolidayPage();
                         } else {
                           return Text(
                             sidebarItemMenu[_selectedIndex].label.toString(),

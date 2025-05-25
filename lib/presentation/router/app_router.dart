@@ -38,6 +38,18 @@ class AppRouter {
                         ),
                       ),
                     );
+                    Navigator.of(context).pushReplacementNamed('/');
+                  }
+
+                  if (state is AuthPasswordResetSent) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Password reset sent! Kindly check your email to change your password.',
+                        ),
+                      ),
+                    );
+                    Navigator.of(context).pushReplacementNamed('/');
                   }
                 },
                 builder: (context, state) {

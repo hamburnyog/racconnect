@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:racconnect/data/models/event_model.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,8 +15,13 @@ class _HomePageState extends State<HomePage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
+  Map<DateTime, List<EventModel>> events = {};
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 600;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -55,6 +61,7 @@ class _HomePageState extends State<HomePage> {
                         formatButtonVisible: false,
                         titleCentered: true,
                       ),
+                      rowHeight: isSmallScreen ? 50 : 70,
                       startingDayOfWeek: StartingDayOfWeek.monday,
                       availableGestures: AvailableGestures.none,
                       firstDay: now.subtract(const Duration(days: 365)),
