@@ -46,7 +46,6 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         password: password,
       );
-
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);

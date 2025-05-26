@@ -38,7 +38,7 @@ class AppRouter {
                         ),
                       ),
                     );
-                    Navigator.of(context).pushReplacementNamed('/');
+                    Navigator.of(context).pop();
                   }
 
                   if (state is AuthPasswordResetSent) {
@@ -49,7 +49,7 @@ class AppRouter {
                         ),
                       ),
                     );
-                    Navigator.of(context).pushReplacementNamed('/');
+                    Navigator.of(context).pop();
                   }
                 },
                 builder: (context, state) {

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
         BlocProvider<SectionCubit>(create: (_) => SectionCubit()),
         BlocProvider<HolidayCubit>(create: (_) => HolidayCubit()),
+        BlocProvider<EventCubit>(create: (_) => EventCubit()),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',
