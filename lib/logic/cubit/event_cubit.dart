@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:racconnect/data/models/event_model.dart';
 import 'package:racconnect/data/repositories/event_repository.dart';
 
 part 'event_state.dart';

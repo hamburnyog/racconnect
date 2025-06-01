@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
+import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +25,19 @@ class _HomePageState extends State<HomePage> {
     _selectedDay = _focusedDay;
     loadEvents();
   }
+
+  // void _showAttendanceForm() {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     scrollControlDisabledMaxHeightRatio: 0.75,
+  //     showDragHandle: true,
+  //     useSafeArea: true,
+  //     builder: (BuildContext builder) {
+  //       return AttendanceForm();
+  //     },
+  //   );
+  // }
 
   @override
   void dispose() {
@@ -73,25 +87,54 @@ class _HomePageState extends State<HomePage> {
                 Card(
                   color: Theme.of(context).primaryColor,
                   child: ListTile(
+                    minTileHeight: 70,
                     title: Text(
-                      listOfDayEvents(_selectedDay!).isNotEmpty
-                          ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for today'
-                          : 'No event for today',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
                       'Today is ${DateFormat.yMMMMd().format(now)}',
-                      style: TextStyle(color: Colors.white),
+
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                    trailing: IconButton(
-                      onPressed: () {
+                    subtitle: GestureDetector(
+                      onTap: () {
                         setState(() {
                           _selectedDay = now;
                           _focusedDay = now;
                         });
                       },
-                      icon: Icon(Icons.calendar_today, color: Colors.white),
+                      child: Text(
+                        listOfDayEvents(_selectedDay!).isNotEmpty
+                            ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
+                            : 'No event for the selected day',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
+                    trailing:
+                        MediaQuery.of(context).size.width > 600
+                            ? ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 150),
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.more_time),
+                                label: const Text('Attendance'),
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor:
+                                      Theme.of(context).primaryColor,
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                ),
+                                // onPressed: _showAttendanceForm,
+                                onPressed: () {},
+                              ),
+                            )
+                            : IconButton(
+                              // onPressed: _showAttendanceForm,
+                              onPressed: () {},
+                              icon: Icon(Icons.more_time, color: Colors.white),
+                            ),
                   ),
                 ),
                 Padding(
