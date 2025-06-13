@@ -136,6 +136,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           SizedBox(height: 30),
                           TextFormField(
                             controller: nameController,
+                            keyboardType: TextInputType.name,
                             decoration: InputDecoration(hintText: 'Name'),
                             onFieldSubmitted: (_) => signUpUser(),
                             validator: (value) {
@@ -149,6 +150,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           SizedBox(height: 15),
                           TextFormField(
                             controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               hintText: 'Email Address',
                             ),

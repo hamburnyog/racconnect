@@ -7,8 +7,25 @@ class AttendanceRepository {
   Future<List<AttendanceModel>> getAllAttendances() async {
     try {
       final response = await pb
-          .collection('holidays')
-          .getFullList(fields: 'name,date', sort: '+date');
+          .collection('attendance')
+          .getFullList(sort: '+date');
+      return response
+          .map((e) => AttendanceModel.fromJson(e.toString()))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<AttendanceModel>> getEmployeeAttendance(employeeNumber) async {
+    try {
+      final response = await pb
+          .collection('attendance')
+          .getFullList(
+            filter: 'employeeNumber = "$employeeNumber"',
+            sort: '+timestamp',
+          );
+
       return response
           .map((e) => AttendanceModel.fromJson(e.toString()))
           .toList();
@@ -20,13 +37,14 @@ class AttendanceRepository {
   Future<AttendanceModel> addAttendance({
     required String employeeNumber,
     required DateTime timestamp,
-    required String type,
+    required String remarks,
   }) async {
     try {
       final body = <String, dynamic>{
         "employeeNumber": employeeNumber,
-        "timestamp": timestamp,
-        "type": type,
+        "timestamp": timestamp.toIso8601String(),
+        "type": 'WFH',
+        "remarks": remarks,
       };
 
       final response = await pb.collection('attendance').create(body: body);

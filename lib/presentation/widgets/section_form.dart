@@ -107,6 +107,7 @@ class _SectionFormState extends State<SectionForm> {
               TextFormField(
                 maxLength: 50,
                 controller: nameController,
+                keyboardType: TextInputType.name,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'This field is required';
@@ -134,6 +135,7 @@ class _SectionFormState extends State<SectionForm> {
               TextFormField(
                 maxLength: 20,
                 controller: codeController,
+                keyboardType: TextInputType.text,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'This field is required';

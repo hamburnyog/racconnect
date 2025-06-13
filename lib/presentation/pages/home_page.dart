@@ -26,18 +26,18 @@ class _HomePageState extends State<HomePage> {
     loadEvents();
   }
 
-  // void _showAttendanceForm() {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     scrollControlDisabledMaxHeightRatio: 0.75,
-  //     showDragHandle: true,
-  //     useSafeArea: true,
-  //     builder: (BuildContext builder) {
-  //       return AttendanceForm();
-  //     },
-  //   );
-  // }
+  void _showAttendanceForm() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      scrollControlDisabledMaxHeightRatio: 0.75,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (BuildContext builder) {
+        return AttendanceForm();
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -114,10 +114,13 @@ class _HomePageState extends State<HomePage> {
                     trailing:
                         MediaQuery.of(context).size.width > 600
                             ? ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: 150),
+                              constraints: BoxConstraints(
+                                maxWidth: 150,
+                                maxHeight: 40,
+                              ),
                               child: ElevatedButton.icon(
                                 icon: const Icon(Icons.more_time),
-                                label: const Text('Attendance'),
+                                label: const Text('WFH'),
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor:
                                       Theme.of(context).primaryColor,
@@ -126,13 +129,11 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(25),
                                   ),
                                 ),
-                                // onPressed: _showAttendanceForm,
-                                onPressed: () {},
+                                onPressed: _showAttendanceForm,
                               ),
                             )
                             : IconButton(
-                              // onPressed: _showAttendanceForm,
-                              onPressed: () {},
+                              onPressed: _showAttendanceForm,
                               icon: Icon(Icons.more_time, color: Colors.white),
                             ),
                   ),

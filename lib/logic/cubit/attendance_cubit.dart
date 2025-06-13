@@ -19,16 +19,28 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     }
   }
 
+  Future<void> getEmployeeAttendance({String? employeeNumber}) async {
+    try {
+      emit(AttendanceLoading());
+      final attendanceModel = await attendanceRepository.getEmployeeAttendance(
+        employeeNumber,
+      );
+      emit(GetEmployeeAttendanceSuccess(attendanceModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
   Future<void> addAttendance({
     required String employeeNumber,
-    required DateTime timestamp,
+    required String remarks,
   }) async {
     try {
       emit(AttendanceLoading());
       final attendanceModel = await attendanceRepository.addAttendance(
         employeeNumber: employeeNumber,
-        timestamp: timestamp,
-        type: 'WFH',
+        timestamp: DateTime.parse(DateTime.now().toIso8601String()),
+        remarks: remarks,
       );
       emit(AttendanceAddSuccess(attendanceModel));
     } catch (e) {

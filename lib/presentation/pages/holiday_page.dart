@@ -107,7 +107,10 @@ class _HolidayPageState extends State<HolidayPage> {
                   trailing:
                       MediaQuery.of(context).size.width > 600
                           ? ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 150),
+                            constraints: BoxConstraints(
+                              maxWidth: 150,
+                              maxHeight: 40,
+                            ),
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.add),
                               label: const Text('Add Holiday'),

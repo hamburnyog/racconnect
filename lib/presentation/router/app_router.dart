@@ -45,7 +45,7 @@ class AppRouter {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Password reset sent! Kindly check your email to change your password.',
+                          'Password reset sent to your email address! If it doesn\'t arrive in a few minutes, request again or contact an administrator.',
                         ),
                       ),
                     );

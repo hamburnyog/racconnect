@@ -63,7 +63,10 @@ class AuthCubit extends Cubit<AuthState> {
 
   void requestPasswordReset(String email) async {
     try {
+      emit(AuthLoading());
       await authRepository.requestPasswordReset(email: email);
+      // Delaying to simulate a network request, to give the user an impression that the email is not instant
+      await Future.delayed(const Duration(seconds: 3));
       emit(AuthPasswordResetSent());
     } catch (e) {
       errorMessage(e);

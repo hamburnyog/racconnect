@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';
@@ -17,6 +18,15 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   List<BottomNavigationBarItem> sidebarItemMenu = [];
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
+    context.read<AttendanceCubit>().getEmployeeAttendance(
+      employeeNumber: signedIn.user.employeeNumber ?? '',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

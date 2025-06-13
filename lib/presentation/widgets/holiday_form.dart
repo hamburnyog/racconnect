@@ -110,6 +110,7 @@ class _HolidayFormState extends State<HolidayForm> {
               TextFormField(
                 maxLength: 50,
                 controller: nameController,
+                keyboardType: TextInputType.name,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'This field is required';
@@ -131,6 +132,7 @@ class _HolidayFormState extends State<HolidayForm> {
               TextFormField(
                 controller: dateController,
                 readOnly: true,
+                keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'This field is required';

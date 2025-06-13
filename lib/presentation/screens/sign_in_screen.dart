@@ -14,6 +14,7 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  bool _obscureText = true;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -131,6 +132,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           TextFormField(
                             controller: emailController,
                             decoration: InputDecoration(hintText: 'Email'),
+                            keyboardType: TextInputType.emailAddress,
                             onFieldSubmitted: (_) => signInUser(),
                             validator: (value) {
                               // TODO: IMPROVE VALIDATION
@@ -143,19 +145,46 @@ class _SignInScreenState extends State<SignInScreen> {
                             },
                           ),
                           SizedBox(height: 15),
-                          TextFormField(
-                            controller: passwordController,
-                            decoration: InputDecoration(hintText: 'Password'),
-                            onFieldSubmitted: (_) => signInUser(),
-                            obscureText: true,
-                            validator: (value) {
-                              // TODO: IMPROVE VALIDATION
-                              if (value == null ||
-                                  value.trim().isEmpty ||
-                                  value.length < 8) {
-                                return 'Please enter a valid pasword.';
-                              }
-                              return null;
+                          StatefulBuilder(
+                            builder: (context, setState) {
+                              return TextFormField(
+                                controller: passwordController,
+                                decoration: InputDecoration(
+                                  hintText: 'Password',
+                                  suffixIcon: IconButton(
+                                    hoverColor: Colors.transparent,
+                                    focusColor: Colors.transparent,
+                                    splashColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    icon: Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 10.0,
+                                      ),
+                                      child: Icon(
+                                        _obscureText
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscureText = !_obscureText;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                onFieldSubmitted: (_) => signInUser(),
+                                obscureText: _obscureText,
+                                validator: (value) {
+                                  // TODO: IMPROVE VALIDATION
+                                  if (value == null ||
+                                      value.trim().isEmpty ||
+                                      value.length < 8) {
+                                    return 'Please enter a valid password.';
+                                  }
+                                  return null;
+                                },
+                              );
                             },
                           ),
                           SizedBox(height: 15),
@@ -222,9 +251,6 @@ class _SignInScreenState extends State<SignInScreen> {
                           SizedBox(height: 15),
                           GestureDetector(
                             onTap: () {
-                              // Navigator.of(
-                              //   context,
-                              // ).pushNamed('/forgot-password');
                               if (ModalRoute.of(context)?.settings.name !=
                                   '/forgot-password') {
                                 Navigator.of(

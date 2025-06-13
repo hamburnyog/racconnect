@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
-// import 'package:racconnect/utility/app_bloc_observer.dart';
+import 'package:racconnect/utility/app_bloc_observer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,7 @@ Future<void> main() async {
     ),
   );
 
-  // Bloc.observer = AppBlocObserver();
+  Bloc.observer = AppBlocObserver();
 
   runApp(MyApp(appRouter: AppRouter(), connectivity: Connectivity()));
 }
@@ -46,6 +47,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<SectionCubit>(create: (_) => SectionCubit()),
         BlocProvider<HolidayCubit>(create: (_) => HolidayCubit()),
         BlocProvider<EventCubit>(create: (_) => EventCubit()),
+        BlocProvider<AttendanceCubit>(create: (_) => AttendanceCubit()),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',
@@ -74,6 +76,7 @@ class _MyAppState extends State<MyApp> {
               borderSide: BorderSide(width: 3, color: Colors.red),
               borderRadius: BorderRadius.circular(10),
             ),
+            suffixIconConstraints: BoxConstraints(minHeight: 0, minWidth: 0),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
