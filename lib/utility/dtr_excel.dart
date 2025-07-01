@@ -872,24 +872,30 @@ Future<String?> getPlatformDownloadPath() async {
     if (Platform.isAndroid) {
       Directory directory = Directory('/storage/emulated/0/Download');
       if (!await directory.exists()) {
-        directory = await getExternalStorageDirectory() ?? directory;
+        directory =
+            await getExternalStorageDirectory() ??
+            await getApplicationDocumentsDirectory();
       }
       return directory.path;
     }
 
     if (Platform.isIOS) {
+      // iOS does not allow saving to the Downloads folder directly
       final directory = await getApplicationDocumentsDirectory();
       return directory.path;
     }
 
     if (Platform.isMacOS || Platform.isLinux) {
-      return '${Platform.environment['HOME']}/Downloads';
+      final home = Platform.environment['HOME'];
+      return home != null ? '$home/Downloads' : null;
     }
 
     if (Platform.isWindows) {
-      return '${Platform.environment['USERPROFILE']}\\Downloads';
+      final userProfile = Platform.environment['USERPROFILE'];
+      return userProfile != null ? '$userProfile\\Downloads' : null;
     }
   } catch (e) {
+    print('⚠️ Error resolving platform download path: $e');
     rethrow;
   }
 

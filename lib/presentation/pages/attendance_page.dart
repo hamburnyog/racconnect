@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -144,7 +146,10 @@ class _AttendancePageState extends State<AttendancePage> {
                                 monthlyLogs,
                               );
 
-                              if (context.mounted && filePath != null) {
+                              if (!context.mounted) return;
+
+                              if (filePath != null &&
+                                  (Platform.isAndroid || Platform.isIOS)) {
                                 final file = XFile(filePath);
                                 final box =
                                     context.findRenderObject() as RenderBox?;
@@ -159,9 +164,7 @@ class _AttendancePageState extends State<AttendancePage> {
                                   ),
                                 );
 
-                                if (!context.mounted) {
-                                  return;
-                                }
+                                if (!context.mounted) return;
 
                                 if (result.status ==
                                     ShareResultStatus.success) {
@@ -181,7 +184,9 @@ class _AttendancePageState extends State<AttendancePage> {
                                     ),
                                   );
                                 }
-                              } else if (context.mounted) {
+                              } else if (filePath == null &&
+                                  context.mounted &&
+                                  (Platform.isAndroid || Platform.isIOS)) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -237,7 +242,10 @@ class _AttendancePageState extends State<AttendancePage> {
                                   monthlyLogs,
                                 );
 
-                                if (context.mounted && filePath != null) {
+                                if (!context.mounted) return;
+
+                                if (filePath != null &&
+                                    (Platform.isAndroid || Platform.isIOS)) {
                                   final file = XFile(filePath);
                                   final box =
                                       context.findRenderObject() as RenderBox?;
@@ -252,9 +260,7 @@ class _AttendancePageState extends State<AttendancePage> {
                                     ),
                                   );
 
-                                  if (!context.mounted) {
-                                    return;
-                                  }
+                                  if (!context.mounted) return;
 
                                   if (result.status ==
                                       ShareResultStatus.success) {
@@ -274,7 +280,9 @@ class _AttendancePageState extends State<AttendancePage> {
                                       ),
                                     );
                                   }
-                                } else if (context.mounted) {
+                                } else if (filePath == null &&
+                                    context.mounted &&
+                                    (Platform.isAndroid || Platform.isIOS)) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
