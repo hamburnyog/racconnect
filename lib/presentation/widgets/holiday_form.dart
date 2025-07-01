@@ -45,10 +45,7 @@ class _HolidayFormState extends State<HolidayForm> {
     super.initState();
     if (widget.holidayModel != null) {
       nameController.text = widget.holidayModel!.name;
-      dateController.text =
-          widget.holidayModel!.date.toString().split(
-            ' ',
-          )[0]; // Format date to 'YYYY-MM-DD'
+      dateController.text = widget.holidayModel!.date.toString().split(' ')[0];
     }
   }
 

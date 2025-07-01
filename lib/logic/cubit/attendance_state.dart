@@ -19,8 +19,13 @@ final class AttendanceAddSuccess extends AttendanceState {
 }
 
 final class GetAllAttendanceSuccess extends AttendanceState {
-  final List<AttendanceModel> events;
-  const GetAllAttendanceSuccess(this.events);
+  final List<AttendanceModel> attendanceModels;
+  const GetAllAttendanceSuccess(this.attendanceModels);
+}
+
+final class GetTodayAttendanceSuccess extends AttendanceState {
+  final List<AttendanceModel> attendanceModels;
+  const GetTodayAttendanceSuccess(this.attendanceModels);
 }
 
 final class GetEmployeeAttendanceSuccess extends AttendanceState {

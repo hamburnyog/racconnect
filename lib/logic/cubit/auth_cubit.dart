@@ -73,6 +73,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  void refreshUser(UserModel updatedUser) {
+    emit(AuthSignedIn(updatedUser));
+  }
+
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
       if (e.response['data'].isNotEmpty &&

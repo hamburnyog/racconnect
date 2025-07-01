@@ -13,7 +13,7 @@ class AuthRepository {
     try {
       final response = await pb
           .collection('users')
-          .authWithPassword(email, password);
+          .authWithPassword(email, password, expand: 'profile.section');
 
       if (response.record.data.isNotEmpty) {
         final isVerified = response.record.getBoolValue('verified');
@@ -23,7 +23,7 @@ class AuthRepository {
         }
       }
 
-      return UserModel.fromJson(response.record.toString());
+      return UserModel.fromMap(response.record.toJson());
     } catch (e) {
       rethrow;
     }
@@ -35,7 +35,7 @@ class AuthRepository {
         url,
       ) async {
         await launchUrl(url);
-      });
+      }, expand: 'profile.section');
 
       if (response.record.data.isNotEmpty) {
         final isVerified = response.record.getBoolValue('verified');
@@ -44,8 +44,7 @@ class AuthRepository {
           throw 'Your account is inactive. Kindly check your email for the verification link or contact your administrator.';
         }
       }
-
-      return UserModel.fromJson(response.record.toString());
+      return UserModel.fromMap(response.record.toJson());
     } catch (e) {
       rethrow;
     }

@@ -1,15 +1,19 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
+
 class AttendanceModel {
   final String employeeNumber;
   final DateTime timestamp;
   final String type;
   final String remarks;
+  final String? ipAddress;
   AttendanceModel({
     required this.employeeNumber,
     required this.timestamp,
     required this.type,
     required this.remarks,
+    this.ipAddress,
   });
 
   AttendanceModel copyWith({
@@ -17,12 +21,14 @@ class AttendanceModel {
     DateTime? timestamp,
     String? type,
     String? remarks,
+    ValueGetter<String?>? ipAddress,
   }) {
     return AttendanceModel(
       employeeNumber: employeeNumber ?? this.employeeNumber,
       timestamp: timestamp ?? this.timestamp,
       type: type ?? this.type,
       remarks: remarks ?? this.remarks,
+      ipAddress: ipAddress != null ? ipAddress() : this.ipAddress,
     );
   }
 
@@ -32,6 +38,7 @@ class AttendanceModel {
       'timestamp': timestamp.millisecondsSinceEpoch,
       'type': type,
       'remarks': remarks,
+      'ipAddress': ipAddress,
     };
   }
 
@@ -39,11 +46,12 @@ class AttendanceModel {
     return AttendanceModel(
       employeeNumber: map['employeeNumber'] ?? '',
       timestamp:
-          (map['date'] is int
-              ? DateTime.fromMillisecondsSinceEpoch(map['date'])
-              : DateTime.parse(map['date'])),
+          (map['timestamp'] is int
+              ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'])
+              : DateTime.parse(map['timestamp'])),
       type: map['type'] ?? '',
       remarks: map['remarks'] ?? '',
+      ipAddress: map['ipAddress'] ?? '',
     );
   }
 
@@ -54,7 +62,7 @@ class AttendanceModel {
 
   @override
   String toString() {
-    return 'AttendanceModel(employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks)';
+    return 'AttendanceModel(employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks, ipAddress: $ipAddress)';
   }
 
   @override
@@ -65,7 +73,8 @@ class AttendanceModel {
         other.employeeNumber == employeeNumber &&
         other.timestamp == timestamp &&
         other.type == type &&
-        other.remarks == remarks;
+        other.remarks == remarks &&
+        other.ipAddress == ipAddress;
   }
 
   @override
@@ -73,6 +82,7 @@ class AttendanceModel {
     return employeeNumber.hashCode ^
         timestamp.hashCode ^
         type.hashCode ^
-        remarks.hashCode;
+        remarks.hashCode ^
+        ipAddress.hashCode;
   }
 }

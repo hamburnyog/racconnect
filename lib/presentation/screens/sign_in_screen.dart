@@ -135,7 +135,6 @@ class _SignInScreenState extends State<SignInScreen> {
                             keyboardType: TextInputType.emailAddress,
                             onFieldSubmitted: (_) => signInUser(),
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null ||
                                   value.trim().isEmpty ||
                                   !value.contains('@')) {
@@ -176,7 +175,6 @@ class _SignInScreenState extends State<SignInScreen> {
                                 onFieldSubmitted: (_) => signInUser(),
                                 obscureText: _obscureText,
                                 validator: (value) {
-                                  // TODO: IMPROVE VALIDATION
                                   if (value == null ||
                                       value.trim().isEmpty ||
                                       value.length < 8) {

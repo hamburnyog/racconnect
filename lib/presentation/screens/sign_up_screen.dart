@@ -137,12 +137,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           TextFormField(
                             controller: nameController,
                             keyboardType: TextInputType.name,
-                            decoration: InputDecoration(hintText: 'Name'),
+                            decoration: InputDecoration(
+                              hintText: 'Display Name',
+                            ),
                             onFieldSubmitted: (_) => signUpUser(),
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a valid first name.';
+                                return 'Please enter a valid display name.';
                               }
                               return null;
                             },
@@ -156,7 +157,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             onFieldSubmitted: (_) => signUpUser(),
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null ||
                                   value.trim().isEmpty ||
                                   !value.contains('@')) {
@@ -172,7 +172,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             obscureText: true,
                             onFieldSubmitted: (_) => signUpUser(),
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null ||
                                   value.trim().isEmpty ||
                                   value.length < 8) {
@@ -193,7 +192,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             onFieldSubmitted: (_) => signUpUser(),
                             obscureText: true,
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null ||
                                   value.trim().isEmpty ||
                                   value.length < 8) {

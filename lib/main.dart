@@ -8,9 +8,10 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
+import 'package:racconnect/logic/cubit/profile_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
-import 'package:racconnect/utility/app_bloc_observer.dart';
+// import 'package:racconnect/utility/app_bloc_observer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ Future<void> main() async {
     ),
   );
 
-  Bloc.observer = AppBlocObserver();
+  // Bloc.observer = AppBlocObserver();
 
   runApp(MyApp(appRouter: AppRouter(), connectivity: Connectivity()));
 }
@@ -48,6 +49,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<HolidayCubit>(create: (_) => HolidayCubit()),
         BlocProvider<EventCubit>(create: (_) => EventCubit()),
         BlocProvider<AttendanceCubit>(create: (_) => AttendanceCubit()),
+        BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',

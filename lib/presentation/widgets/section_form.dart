@@ -123,8 +123,8 @@ class _SectionFormState extends State<SectionForm> {
                 onFieldSubmitted:
                     (_) =>
                         (widget.sectionModel == null)
-                            ? addSection
-                            : saveSection,
+                            ? addSection()
+                            : saveSection(),
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   hintText: 'Enter a name',
@@ -151,8 +151,8 @@ class _SectionFormState extends State<SectionForm> {
                 onFieldSubmitted:
                     (_) =>
                         (widget.sectionModel == null)
-                            ? addSection
-                            : saveSection,
+                            ? addSection()
+                            : saveSection(),
                 decoration: const InputDecoration(
                   labelText: 'Code',
                   hintText: 'Enter an acronym or code',

@@ -131,7 +131,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                             ),
                             onFieldSubmitted: (_) => signUpUser(),
                             validator: (value) {
-                              // TODO: IMPROVE VALIDATION
                               if (value == null ||
                                   value.trim().isEmpty ||
                                   !value.contains('@')) {

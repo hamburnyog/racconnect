@@ -19,22 +19,78 @@ class _AttendanceFormState extends State<AttendanceForm> {
   TextEditingController accomplishmentController = TextEditingController();
   final now = DateTime.now();
   final formKey = GlobalKey<FormState>();
+  List<AttendanceModel> attendanceToday = [];
+
+  Future<void> loadAttendanceToday() async {
+    var cubit = context.read<AttendanceCubit>();
+    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
+    var employeeeNumber = signedIn.user.profile?.employeeNumber ?? '';
+    if (employeeeNumber.isNotEmpty) {
+      await cubit.getEmployeeAttendanceToday(employeeNumber: employeeeNumber);
+      final state = cubit.state;
+      if (state is GetTodayAttendanceSuccess) {
+        setState(() {
+          attendanceToday = state.attendanceModels;
+        });
+      }
+    }
+  }
 
   void addAttendance() {
     if (formKey.currentState!.validate()) {
-      AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
-      context.read<AttendanceCubit>().addAttendance(
-        employeeNumber: signedIn.user.employeeNumber ?? '',
-        remarks: accomplishmentController.text.trim(),
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Confirm Attendance'),
+              content: const Text(
+                'Are you sure you want to submit your attendance?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(100, 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    AuthSignedIn signedIn =
+                        context.read<AuthCubit>().state as AuthSignedIn;
+                    context.read<AttendanceCubit>().addAttendance(
+                      employeeNumber:
+                          signedIn.user.profile?.employeeNumber ?? '',
+                      remarks: accomplishmentController.text.trim(),
+                    );
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            ),
       );
-      Navigator.of(context).pop();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadAttendanceToday();
   }
 
   @override
   void dispose() {
     accomplishmentController.dispose();
     formKey.currentState?.dispose();
+    attendanceToday.clear();
     super.dispose();
   }
 
@@ -87,7 +143,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
               Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Text(
-                  DateFormat('MMM dd, y').format(now),
+                  DateFormat('MMMM dd, y').format(now),
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 30,
@@ -98,18 +154,139 @@ class _AttendanceFormState extends State<AttendanceForm> {
               StreamBuilder(
                 stream: Stream.periodic(const Duration(seconds: 1)),
                 builder: (context, snapshot) {
-                  return Text(
-                    DateFormat('h:mm:ss a').format(DateTime.now()),
-                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+                  return Column(
+                    children: [
+                      Text(
+                        DateFormat('h:mm:ss a').format(DateTime.now()),
+                        style: TextStyle(
+                          fontSize: 50,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (attendanceToday.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: const [
+                                          Icon(
+                                            Icons.login,
+                                            color: Colors.green,
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Time In',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        DateFormat('hh:mm a').format(
+                                          attendanceToday.first.timestamp,
+                                        ),
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(left: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: const [
+                                          Icon(Icons.logout, color: Colors.red),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Time Out',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        attendanceToday.length > 1
+                                            ? DateFormat('hh:mm a').format(
+                                              attendanceToday.last.timestamp,
+                                            )
+                                            : '--:--',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // SizedBox(height: 10),
+                      // if (attendanceToday.length >= 2)
+                      //   Padding(
+                      //     padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      //     child: Container(
+                      //       padding: const EdgeInsets.all(12),
+                      //       decoration: BoxDecoration(
+                      //         borderRadius: BorderRadius.circular(8),
+                      //         border: Border.all(color: Colors.red.shade400),
+                      //       ),
+                      //       child: Row(
+                      //         children: const [
+                      //           Icon(Icons.info_outline, color: Colors.red),
+                      //           SizedBox(width: 10),
+                      //           Expanded(
+                      //             child: Text(
+                      //               'You have already recorded at least two (2) attendance logs for today.',
+                      //               style: TextStyle(
+                      //                 fontSize: 10,
+                      //                 color: Colors.red,
+                      //                 fontWeight: FontWeight.w600,
+                      //               ),
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //   ),
+                    ],
                   );
                 },
               ),
-              SizedBox(height: 30),
+              SizedBox(height: 20),
               TextFormField(
-                maxLength: 50,
+                maxLength: 1000,
                 controller: accomplishmentController,
                 maxLines: 5,
-                minLines: 1,
+                minLines: 3,
                 keyboardType: TextInputType.multiline,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -118,13 +295,19 @@ class _AttendanceFormState extends State<AttendanceForm> {
                   return null;
                 },
                 onFieldSubmitted: (_) => addAttendance,
-                decoration: const InputDecoration(
-                  labelText: 'Remarks',
-                  hintText: 'Enter today\'s target(s) / accomplishment(s)',
+                decoration: InputDecoration(
+                  labelText:
+                      (attendanceToday.isEmpty)
+                          ? 'Target/s'
+                          : 'Accomplishment/s',
+                  hintText:
+                      (attendanceToday.isEmpty)
+                          ? 'Enter today\'s target/s'
+                          : 'Enter today\'s Accomplishment/s',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -143,7 +326,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                         Icon(Icons.timer, color: Colors.white),
                         SizedBox(width: 10),
                         Text(
-                          'Clock In',
+                          (attendanceToday.isEmpty) ? 'Time In' : 'Time Out',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,

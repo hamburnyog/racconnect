@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
+import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   final DateTime now = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool _lockClockIn = true;
 
   Map<String, List> mySelectedEvents = {};
 
@@ -24,6 +27,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _selectedDay = _focusedDay;
     loadEvents();
+    checkProfile();
   }
 
   void _showAttendanceForm() {
@@ -45,6 +49,20 @@ class _HomePageState extends State<HomePage> {
     _selectedDay = null;
     mySelectedEvents.clear();
     super.dispose();
+  }
+
+  Future<void> checkProfile() async {
+    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
+    var employeeeNumber = signedIn.user.profile?.employeeNumber ?? '';
+    if (employeeeNumber.isNotEmpty) {
+      setState(() {
+        _lockClockIn = false;
+      });
+    } else {
+      setState(() {
+        _lockClockIn = true;
+      });
+    }
   }
 
   Future<void> loadEvents() async {
@@ -77,7 +95,7 @@ class _HomePageState extends State<HomePage> {
     final bool isSmallScreen = width < 600;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Column(
         children: [
           Expanded(
@@ -111,31 +129,10 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    trailing:
-                        MediaQuery.of(context).size.width > 600
-                            ? ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: 150,
-                                maxHeight: 40,
-                              ),
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.more_time),
-                                label: const Text('WFH'),
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor:
-                                      Theme.of(context).primaryColor,
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(25),
-                                  ),
-                                ),
-                                onPressed: _showAttendanceForm,
-                              ),
-                            )
-                            : IconButton(
-                              onPressed: _showAttendanceForm,
-                              icon: Icon(Icons.more_time, color: Colors.white),
-                            ),
+                    trailing: ClockInButton(
+                      lockClockIn: _lockClockIn,
+                      onPressed: _showAttendanceForm,
+                    ),
                   ),
                 ),
                 Padding(
