@@ -197,7 +197,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 minTileHeight: 70,
                 leading: Icon(Icons.person_pin_rounded, color: Colors.white),
                 title: Text(
-                  isSmallScreen ? 'My Profile' : 'Profile Information',
+                  isSmallScreen ? 'Profile' : 'Profile Information',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

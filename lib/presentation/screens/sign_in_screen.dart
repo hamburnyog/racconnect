@@ -132,7 +132,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           SizedBox(height: 30),
                           TextFormField(
                             controller: emailController,
-                            decoration: InputDecoration(hintText: 'Email'),
+                            decoration: InputDecoration(
+                              hintText: 'Email Address',
+                            ),
                             keyboardType: TextInputType.emailAddress,
                             onFieldSubmitted: (_) => signInUser(),
                             validator: (value) {

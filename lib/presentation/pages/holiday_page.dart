@@ -90,16 +90,12 @@ class _HolidayPageState extends State<HolidayPage> {
                       color: Colors.white,
                     ),
                   ),
-                  subtitle:
-                      MediaQuery.of(context).size.width > 600
-                          ? Text(
-                            'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          )
-                          : null,
+                  subtitle: Text(
+                    MediaQuery.of(context).size.width > 600
+                        ? 'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.'
+                        : 'Manage your holidays here',
+                    style: TextStyle(color: Colors.white70, fontSize: 10),
+                  ),
                   leading: Icon(
                     Icons.calendar_month_outlined,
                     color: Colors.white,

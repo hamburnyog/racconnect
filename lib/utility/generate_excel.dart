@@ -947,7 +947,6 @@ Future<String?> getPlatformDownloadPath() async {
     }
 
     if (Platform.isIOS) {
-      // iOS does not allow saving to the Downloads folder directly
       final directory = await getApplicationDocumentsDirectory();
       return directory.path;
     }
@@ -962,7 +961,6 @@ Future<String?> getPlatformDownloadPath() async {
       return userProfile != null ? '$userProfile\\Downloads' : null;
     }
   } catch (e) {
-    print('⚠️ Error resolving platform download path: $e');
     rethrow;
   }
 

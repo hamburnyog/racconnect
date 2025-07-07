@@ -89,16 +89,12 @@ class _SectionPageState extends State<SectionPage> {
                       color: Colors.white,
                     ),
                   ),
-                  subtitle:
-                      MediaQuery.of(context).size.width > 600
-                          ? Text(
-                            'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          )
-                          : null,
+                  subtitle: Text(
+                    MediaQuery.of(context).size.width > 600
+                        ? 'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.'
+                        : 'Manage your sections here',
+                    style: TextStyle(color: Colors.white70, fontSize: 10),
+                  ),
                   leading: Icon(Icons.group_rounded, color: Colors.white),
                   trailing:
                       MediaQuery.of(context).size.width > 600

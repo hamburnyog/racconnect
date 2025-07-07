@@ -21,12 +21,42 @@ class EventRepository {
         }
       }
 
-      // TODO: bday notifs
-      // if (groupedEvents.containsKey('2025-08-30')) {
-      //   groupedEvents['2025-08-30']!.add('Ponce, William Owen O.,T=Birthday');
-      // } else {
-      //   groupedEvents['2025-08-30'] = ['Ponce, William Owen O.,T=Birthday'];
-      // }
+      final birthdayResponse = await pb
+          .collection('profiles')
+          .getFullList(
+            fields: 'lastName,firstName,middleName,birthdate',
+            sort: '+birthdate',
+          );
+
+      for (var profile in birthdayResponse) {
+        final birthdateRaw = profile.data['birthdate'];
+        if (birthdateRaw == null) continue;
+
+        final birthdate = DateTime.tryParse(birthdateRaw);
+        if (birthdate == null) continue;
+
+        final todayYear = DateTime.now().year;
+        final adjustedBirthdate = DateTime(
+          todayYear,
+          birthdate.month,
+          birthdate.day,
+        );
+        final date = adjustedBirthdate.toIso8601String().split('T')[0];
+
+        final lastName = profile.data['lastName'] ?? '';
+        final firstName = profile.data['firstName'] ?? '';
+        final middleName = profile.data['middleName'] ?? '';
+        final middleInitial = middleName.isNotEmpty ? '${middleName[0]}.' : '';
+
+        final fullName = '$lastName, $firstName $middleInitial';
+        final birthdayEntry = '$fullName,T=Birthday';
+
+        groupedEvents.putIfAbsent(date, () => []);
+
+        if (!groupedEvents[date]!.contains(birthdayEntry)) {
+          groupedEvents[date]!.add(birthdayEntry);
+        }
+      }
 
       return groupedEvents;
     } catch (e) {

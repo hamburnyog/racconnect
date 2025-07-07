@@ -320,7 +320,7 @@ Widget buildAttendanceRow({
 }
 
 Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
-  if (timeString == null || timeString == '—') {
+  if (timeString == null || timeString.trim() == '—') {
     return Text(
       '—',
       textAlign: TextAlign.center,
@@ -328,20 +328,33 @@ Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
     );
   }
 
-  final match = RegExp(r'^(\d{1,2}:\d{2})(AM|PM)$').firstMatch(timeString);
+  final match = RegExp(
+    r'^(\d{1,2}:\d{2})\s?(AM|PM)$',
+  ).firstMatch(timeString.trim().toUpperCase());
+
   if (match != null && isSmallScreen) {
+    final time = match.group(1)!; // e.g., 12:00
+    final period = match.group(2)!; // e.g., AM or PM
+
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(match.group(1)!, style: const TextStyle(fontSize: 12)),
         Text(
-          match.group(2)!,
-          style: const TextStyle(fontSize: 10, height: 1.2),
+          time,
+          style: const TextStyle(fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+        Text(
+          period,
+          style: const TextStyle(fontSize: 10, height: 1.1, color: Colors.grey),
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
+  // Fallback to plain text
   return Text(
     timeString,
     textAlign: TextAlign.center,
