@@ -21,11 +21,12 @@ class EventRepository {
         }
       }
 
-      if (groupedEvents.containsKey('2025-08-30')) {
-        groupedEvents['2025-08-30']!.add('Ponce, William Owen O.,T=Birthday');
-      } else {
-        groupedEvents['2025-08-30'] = ['Ponce, William Owen O.,T=Birthday'];
-      }
+      // TODO: bday notifs
+      // if (groupedEvents.containsKey('2025-08-30')) {
+      //   groupedEvents['2025-08-30']!.add('Ponce, William Owen O.,T=Birthday');
+      // } else {
+      //   groupedEvents['2025-08-30'] = ['Ponce, William Owen O.,T=Birthday'];
+      // }
 
       return groupedEvents;
     } catch (e) {

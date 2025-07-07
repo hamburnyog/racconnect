@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
@@ -87,18 +88,18 @@ class _SignInScreenState extends State<SignInScreen> {
                                       RichText(
                                         text: TextSpan(
                                           text: 'RACCO',
-                                          style: TextStyle(
+                                          style: GoogleFonts.righteous(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 30,
+                                            fontSize: 22,
                                             color:
                                                 Theme.of(context).primaryColor,
                                           ),
                                           children: [
                                             TextSpan(
                                               text: 'nnect',
-                                              style: TextStyle(
+                                              style: GoogleFonts.righteous(
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 30,
+                                                fontSize: 22,
                                                 color:
                                                     Theme.of(
                                                       context,
@@ -190,10 +191,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             onPressed: signInUser,
                             child: Text(
                               'SIGN IN',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
                           SizedBox(height: 15),
@@ -227,14 +225,14 @@ class _SignInScreenState extends State<SignInScreen> {
                                 RichText(
                                   text: TextSpan(
                                     text: 'Don\'t have an account? ',
-                                    style: TextStyle(
+                                    style: GoogleFonts.ubuntuMono(
                                       color: Colors.black,
                                       fontSize: 12,
                                     ),
                                     children: [
                                       TextSpan(
                                         text: 'Sign Up',
-                                        style: TextStyle(
+                                        style: GoogleFonts.ubuntuMono(
                                           fontSize: 12,
                                           color: Theme.of(context).primaryColor,
                                           decoration: TextDecoration.underline,
@@ -262,14 +260,14 @@ class _SignInScreenState extends State<SignInScreen> {
                                 RichText(
                                   text: TextSpan(
                                     text: 'Forgot Password? ',
-                                    style: TextStyle(
+                                    style: GoogleFonts.ubuntuMono(
                                       color: Colors.black,
                                       fontSize: 12,
                                     ),
                                     children: [
                                       TextSpan(
                                         text: 'Reset Password',
-                                        style: TextStyle(
+                                        style: GoogleFonts.ubuntuMono(
                                           fontSize: 12,
                                           color: Theme.of(context).primaryColor,
                                           decoration: TextDecoration.underline,

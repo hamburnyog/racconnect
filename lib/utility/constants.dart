@@ -29,11 +29,11 @@ enum ConnectionType { wifi, ethernet, mobile }
 
 const sideBarItemsDev = [
   ...sideBarItemsUser,
-  BottomNavigationBarItem(
-    icon: Icon(Icons.person_outline_rounded),
-    activeIcon: Icon(Icons.person_rounded),
-    label: 'Personnel',
-  ),
+  // BottomNavigationBarItem(
+  //   icon: Icon(Icons.person_outline_rounded),
+  //   activeIcon: Icon(Icons.person_rounded),
+  //   label: 'Personnel',
+  // ),
   BottomNavigationBarItem(
     icon: Icon(Icons.group_outlined),
     activeIcon: Icon(Icons.group_rounded),
@@ -48,11 +48,11 @@ const sideBarItemsDev = [
 
 const sideBarItemsOic = [
   ...sideBarItemsUser,
-  BottomNavigationBarItem(
-    icon: Icon(Icons.person_outline_rounded),
-    activeIcon: Icon(Icons.person_rounded),
-    label: 'Personnel',
-  ),
+  // BottomNavigationBarItem(
+  //   icon: Icon(Icons.person_outline_rounded),
+  //   activeIcon: Icon(Icons.person_rounded),
+  //   label: 'Personnel',
+  // ),
   BottomNavigationBarItem(
     icon: Icon(Icons.group_outlined),
     activeIcon: Icon(Icons.group_rounded),

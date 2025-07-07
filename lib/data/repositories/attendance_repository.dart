@@ -1,3 +1,4 @@
+import 'package:pocketbase/pocketbase.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
 import 'package:http/http.dart' as http;
@@ -114,6 +115,32 @@ class AttendanceRepository {
       final response = await pb.collection('attendance').create(body: body);
 
       return AttendanceModel.fromJson(response.toString());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AttendanceModel?> uploadAttendance({
+    required String employeeNumber,
+    required DateTime timestamp,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        "employeeNumber": employeeNumber,
+        "timestamp": timestamp.toIso8601String(),
+        "type": 'Biometrics',
+        "remarks": "Extracted from biometric device.",
+      };
+
+      final response = await pb.collection('attendance').create(body: body);
+      return AttendanceModel.fromJson(response.toString());
+    } on ClientException catch (e) {
+      if (e.statusCode == 400 &&
+          e.response.toString().contains('employeeNumber') &&
+          e.response.toString().contains('timestamp')) {
+        return null;
+      }
+      rethrow;
     } catch (e) {
       rethrow;
     }

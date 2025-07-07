@@ -286,7 +286,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                 maxLength: 1000,
                 controller: accomplishmentController,
                 maxLines: 5,
-                minLines: 3,
+                minLines: 1,
                 keyboardType: TextInputType.multiline,
                 validator: (value) {
                   if (value == null || value.isEmpty) {

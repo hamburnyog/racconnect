@@ -7,6 +7,7 @@ import 'package:racconnect/presentation/pages/home_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
 import 'package:racconnect/utility/constants.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -31,6 +32,7 @@ class _MainScreenState extends State<MainScreen> {
       appBar:
           !isLargeScreen
               ? AppBar(
+                centerTitle: true,
                 surfaceTintColor: Colors.transparent,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -42,7 +44,7 @@ class _MainScreenState extends State<MainScreen> {
                         RichText(
                           text: TextSpan(
                             text: 'RACCO',
-                            style: TextStyle(
+                            style: GoogleFonts.righteous(
                               fontWeight: FontWeight.bold,
                               fontSize: 22,
                               color: Theme.of(context).primaryColor,
@@ -50,7 +52,7 @@ class _MainScreenState extends State<MainScreen> {
                             children: [
                               TextSpan(
                                 text: 'nnect',
-                                style: TextStyle(
+                                style: GoogleFonts.righteous(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 22,
                                   color: Theme.of(context).disabledColor,
@@ -73,7 +75,6 @@ class _MainScreenState extends State<MainScreen> {
                   ],
                 ),
                 leading: SizedBox(),
-                centerTitle: true,
                 actions: [
                   IconButton(
                     onPressed: () {
@@ -86,6 +87,7 @@ class _MainScreenState extends State<MainScreen> {
               )
               : AppBar(
                 elevation: 0,
+                centerTitle: true,
                 titleSpacing: 0,
                 toolbarHeight: 70,
                 backgroundColor: Colors.transparent,
@@ -115,17 +117,17 @@ class _MainScreenState extends State<MainScreen> {
                             RichText(
                               text: TextSpan(
                                 text: 'RACCO',
-                                style: TextStyle(
+                                style: GoogleFonts.righteous(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 30,
+                                  fontSize: 22,
                                   color: Theme.of(context).primaryColor,
                                 ),
                                 children: [
                                   TextSpan(
                                     text: 'nnect',
-                                    style: TextStyle(
+                                    style: GoogleFonts.righteous(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 30,
+                                      fontSize: 22,
                                       color: Theme.of(context).disabledColor,
                                     ),
                                   ),

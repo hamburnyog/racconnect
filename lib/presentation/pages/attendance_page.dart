@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -7,9 +5,9 @@ import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
-import 'package:racconnect/utility/dtr_excel.dart';
+import 'package:racconnect/presentation/widgets/export_button.dart';
+import 'package:racconnect/presentation/widgets/import_button.dart';
 import 'package:racconnect/utility/group_attendance.dart';
-import 'package:share_plus/share_plus.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -24,6 +22,7 @@ class _AttendancePageState extends State<AttendancePage> {
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
   List<AttendanceModel> logs = [];
+  final ScrollController _scrollController = ScrollController();
 
   List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
@@ -35,6 +34,12 @@ class _AttendancePageState extends State<AttendancePage> {
   void initState() {
     super.initState();
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -88,330 +93,130 @@ class _AttendancePageState extends State<AttendancePage> {
               DateTime(h.date.year, h.date.month, h.date.day): h.name,
           };
         }
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Column(
-            children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  leading: const Icon(
-                    Icons.access_time_rounded,
-                    color: Colors.white,
-                  ),
-                  title: Text(
-                    isSmallScreen ? 'Attendance' : 'Attendance Records',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Column(
+                children: [
+                  Card(
+                    color: Theme.of(context).primaryColor,
+                    child: ListTile(
+                      minTileHeight: 70,
+                      leading: const Icon(
+                        Icons.access_time_rounded,
+                        color: Colors.white,
+                      ),
+                      title: Text(
+                        isSmallScreen ? 'Attendance' : 'Attendance Records',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      subtitle: Text(
+                        isSmallScreen
+                            ? 'Select a date to view records'
+                            : 'Select a date to view attendance records',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: isSmallScreen ? 11 : 14,
+                        ),
+                      ),
+                      trailing: ExportButton(
+                        selectedYear: selectedYear,
+                        selectedMonth: selectedMonth,
+                        holidayMap: holidayMap,
+                      ),
                     ),
                   ),
-                  subtitle: Text(
-                    isSmallScreen
-                        ? 'Select a date to view records'
-                        : 'Select a date to view attendance records',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: isSmallScreen ? 11 : 14,
-                    ),
-                  ),
-                  trailing:
-                      isSmallScreen
-                          ? IconButton(
-                            onPressed: () async {
-                              final profile =
-                                  (context.read<AuthCubit>().state
-                                          as AuthSignedIn)
-                                      .user
-                                      .profile!;
-                              final employeeNumber = profile.employeeNumber;
-                              final selectedDate = DateTime(
-                                selectedYear,
-                                selectedMonth,
-                              );
-
-                              final monthlyLogs = await context
-                                  .read<AttendanceCubit>()
-                                  .attendanceRepository
-                                  .getEmployeeAttendanceForMonth(
-                                    employeeNumber,
-                                    selectedDate,
-                                  );
-
-                              final filePath = await generateExcel(
-                                selectedDate,
-                                profile,
-                                monthlyLogs,
-                              );
-
-                              if (!context.mounted) return;
-
-                              if (filePath != null &&
-                                  (Platform.isAndroid || Platform.isIOS)) {
-                                final file = XFile(filePath);
-                                final box =
-                                    context.findRenderObject() as RenderBox?;
-
-                                final result = await SharePlus.instance.share(
-                                  ShareParams(
-                                    text: '📄 Generated DTR Excel file',
-                                    files: [file],
-                                    sharePositionOrigin:
-                                        box!.localToGlobal(Offset.zero) &
-                                        box.size,
-                                  ),
-                                );
-
-                                if (!context.mounted) return;
-
-                                if (result.status ==
-                                    ShareResultStatus.success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        '✅ File shared successfully!',
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'ℹ️ Share canceled or failed',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } else if (filePath == null &&
-                                  context.mounted &&
-                                  (Platform.isAndroid || Platform.isIOS)) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      '❌ Failed to generate Excel file',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.file_download,
-                              color: Colors.white,
-                            ),
-                          )
-                          : ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 150,
-                              maxHeight: 40,
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.download),
-                              label: const Text('Export'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Theme.of(context).primaryColor,
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              onPressed: () async {
-                                final profile =
-                                    (context.read<AuthCubit>().state
-                                            as AuthSignedIn)
-                                        .user
-                                        .profile!;
-                                final employeeNumber = profile.employeeNumber;
-                                final selectedDate = DateTime(
-                                  selectedYear,
-                                  selectedMonth,
-                                );
-
-                                final monthlyLogs = await context
-                                    .read<AttendanceCubit>()
-                                    .attendanceRepository
-                                    .getEmployeeAttendanceForMonth(
-                                      employeeNumber,
-                                      selectedDate,
-                                    );
-
-                                final filePath = await generateExcel(
-                                  selectedDate,
-                                  profile,
-                                  monthlyLogs,
-                                );
-
-                                if (!context.mounted) return;
-
-                                if (filePath != null &&
-                                    (Platform.isAndroid || Platform.isIOS)) {
-                                  final file = XFile(filePath);
-                                  final box =
-                                      context.findRenderObject() as RenderBox?;
-
-                                  final result = await SharePlus.instance.share(
-                                    ShareParams(
-                                      text: '📄 Generated DTR Excel file',
-                                      files: [file],
-                                      sharePositionOrigin:
-                                          box!.localToGlobal(Offset.zero) &
-                                          box.size,
-                                    ),
-                                  );
-
-                                  if (!context.mounted) return;
-
-                                  if (result.status ==
-                                      ShareResultStatus.success) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          '✅ File shared successfully!',
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'ℹ️ Share canceled or failed',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } else if (filePath == null &&
-                                    context.mounted &&
-                                    (Platform.isAndroid || Platform.isIOS)) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        '❌ Failed to generate Excel file',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  Expanded(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                value: selectedYear,
-                                decoration: const InputDecoration(
-                                  labelText: 'Year',
-                                ),
-                                items:
-                                    getYears().map((y) {
-                                      return DropdownMenuItem(
-                                        value: y,
-                                        child: Text('$y'),
-                                      );
-                                    }).toList(),
-                                onChanged:
-                                    (val) => _onDateFilterChanged(year: val),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                isExpanded: true,
-                                value: selectedMonth,
-                                decoration: const InputDecoration(
-                                  labelText: 'Month',
-                                ),
-                                items: List.generate(12, (i) {
-                                  return DropdownMenuItem(
-                                    value: i + 1,
-                                    child: Text(
-                                      DateFormat(
-                                        'MMMM',
-                                      ).format(DateTime(0, i + 1)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<int>(
+                                    value: selectedYear,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Year',
                                     ),
-                                  );
-                                }),
-                                onChanged:
-                                    (val) => _onDateFilterChanged(month: val),
+                                    items:
+                                        getYears().map((y) {
+                                          return DropdownMenuItem(
+                                            value: y,
+                                            child: Text('$y'),
+                                          );
+                                        }).toList(),
+                                    onChanged:
+                                        (val) =>
+                                            _onDateFilterChanged(year: val),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: DropdownButtonFormField<int>(
+                                    isExpanded: true,
+                                    value: selectedMonth,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Month',
+                                    ),
+                                    items: List.generate(12, (i) {
+                                      return DropdownMenuItem(
+                                        value: i + 1,
+                                        child: Text(
+                                          DateFormat(
+                                            'MMMM',
+                                          ).format(DateTime(0, i + 1)),
+                                        ),
+                                      );
+                                    }),
+                                    onChanged:
+                                        (val) =>
+                                            _onDateFilterChanged(month: val),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Expanded(
+                              child: Scrollbar(
+                                controller: _scrollController,
+                                thumbVisibility: true,
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  itemCount: days.length,
+                                  itemBuilder: (context, index) {
+                                    return buildAttendanceRow(
+                                      day: days[index],
+                                      attendanceMap: attendanceMap,
+                                      holidayMap: holidayMap,
+                                      isSmallScreen: isSmallScreen,
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        Container(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.1),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 10,
-                          ),
-                          child: Row(
-                            children: const [
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'Date (Day)',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Center(
-                                  child: Text(
-                                    'AM',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Center(
-                                  child: Text(
-                                    'PM',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1),
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: days.length,
-                            itemBuilder: (context, index) {
-                              return buildAttendanceRow(
-                                day: days[index],
-                                attendanceMap: attendanceMap,
-                                holidayMap: holidayMap,
-                                isSmallScreen: isSmallScreen,
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+            ImportButton(
+              selectedYear: selectedYear,
+              selectedMonth: selectedMonth,
+              onRefresh: _loadInitialData,
+            ),
+          ],
         );
       },
     );
@@ -450,7 +255,6 @@ Widget buildAttendanceRow({
       child: Row(
         children: [
           Expanded(
-            flex: 3,
             child: Text(
               DateFormat('MMM dd (E)').format(day),
               style: TextStyle(
@@ -461,12 +265,13 @@ Widget buildAttendanceRow({
             ),
           ),
           Expanded(
-            flex: 4,
+            flex: 5,
             child: Text(
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
+                fontSize: isSmallScreen ? 12 : 14,
                 color: Colors.grey.shade600,
               ),
             ),
@@ -482,50 +287,65 @@ Widget buildAttendanceRow({
     child: Row(
       children: [
         Expanded(
-          flex: 3,
-          child: Row(
-            children: [
-              Text(
-                DateFormat('MMM dd (E)').format(day),
-                style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
-              ),
-              SizedBox(width: 5),
+          child: Text(
+            DateFormat('MMM dd (E)').format(day),
+            style: TextStyle(
+              fontSize: isSmallScreen ? 12 : 14,
+              color: Colors.teal,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          child: buildTimeCell(data?['timeIn'], isSmallScreen: isSmallScreen),
+        ),
+        Expanded(
+          child: buildTimeCell(data?['lunchOut'], isSmallScreen: isSmallScreen),
+        ),
+        Expanded(
+          child: buildTimeCell(data?['lunchIn'], isSmallScreen: isSmallScreen),
+        ),
+        Expanded(
+          child: buildTimeCell(data?['timeOut'], isSmallScreen: isSmallScreen),
+        ),
+        Expanded(
+          child:
               data?['type'] != null
                   ? _buildBadge(data!['type']!, smallScreen: isSmallScreen)
-                  : const Text(''),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Text(
-            data?['timeIn'] ?? '—',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            data?['lunchOut'] ?? '—',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            data?['lunchIn'] ?? '—',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            data?['timeOut'] ?? '—',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
-          ),
+                  : const SizedBox.shrink(),
         ),
       ],
     ),
+  );
+}
+
+Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
+  if (timeString == null || timeString == '—') {
+    return Text(
+      '—',
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
+    );
+  }
+
+  final match = RegExp(r'^(\d{1,2}:\d{2})(AM|PM)$').firstMatch(timeString);
+  if (match != null && isSmallScreen) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(match.group(1)!, style: const TextStyle(fontSize: 12)),
+        Text(
+          match.group(2)!,
+          style: const TextStyle(fontSize: 10, height: 1.2),
+        ),
+      ],
+    );
+  }
+
+  return Text(
+    timeString,
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
   );
 }
 
@@ -536,10 +356,11 @@ Widget _buildBadge(String type, {bool smallScreen = false}) {
   final color = isWFH ? Colors.purple : Colors.teal;
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    margin: EdgeInsets.only(left: 5),
+    padding: const EdgeInsets.symmetric(vertical: 4),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(5),
     ),
     child: Center(
       child: Text(

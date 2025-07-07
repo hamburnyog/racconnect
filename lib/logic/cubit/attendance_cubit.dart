@@ -73,6 +73,22 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     }
   }
 
+  Future<void> uploadAttendance({
+    required String employeeNumber,
+    required DateTime timestamp,
+  }) async {
+    try {
+      emit(AttendanceLoading());
+      final attendance = await attendanceRepository.uploadAttendance(
+        employeeNumber: employeeNumber,
+        timestamp: timestamp,
+      );
+      emit(AttendanceAddSuccess(attendance));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
       final message = e.response?['message'];

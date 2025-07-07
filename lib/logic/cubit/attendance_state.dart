@@ -14,7 +14,7 @@ final class AttendanceError extends AttendanceState {
 }
 
 final class AttendanceAddSuccess extends AttendanceState {
-  final AttendanceModel attendanceModel;
+  final AttendanceModel? attendanceModel;
   const AttendanceAddSuccess(this.attendanceModel);
 }
 

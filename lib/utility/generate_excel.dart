@@ -12,6 +12,7 @@ Future<String?> generateExcel(
   DateTime selectedDate,
   ProfileModel profile,
   List<AttendanceModel> monthlyAttendance,
+  Map<DateTime, String> holidayMap,
 ) async {
   bool fileExists = false;
 
@@ -253,6 +254,8 @@ Future<String?> generateExcel(
     final isWeekend = monthDayName == 'Saturday' || monthDayName == 'Sunday';
 
     final currentDate = DateTime(currentYear, currentMonth, startingDay);
+    final isHoliday = holidayMap.containsKey(currentDate);
+    final holidayName = holidayMap[currentDate];
 
     final dayLogs =
         monthlyAttendance.where((log) {
@@ -318,6 +321,70 @@ Future<String?> generateExcel(
                 ? borderedCellStyle
                 : topBottomBorderCellStyle;
       }
+    } else if (isHoliday) {
+      // Column A (Day Number)
+      cellList['A$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('A$currrentRowNumber'),
+      );
+      cellList['A$currrentRowNumber'].value = IntCellValue(startingDay);
+      cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      // Merge B-E for holiday name
+      sheet.merge(
+        CellIndex.indexByString('B$currrentRowNumber'),
+        CellIndex.indexByString('E$currrentRowNumber'),
+        customValue: TextCellValue(holidayName!.toUpperCase()),
+      );
+
+      // Columns F and G - Late/Undertime Placeholder
+      for (var col in ['F', 'G']) {
+        cellList['$col$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('$col$currrentRowNumber'),
+        );
+        cellList['$col$currrentRowNumber'].value = null;
+        cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+      }
+
+      // Column I (Day Number - mirror)
+      cellList2['I$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('I$currrentRowNumber'),
+      );
+      cellList2['I$currrentRowNumber'].value = IntCellValue(startingDay);
+      cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      // Merge J-M for holiday name
+      sheet.merge(
+        CellIndex.indexByString('J$currrentRowNumber'),
+        CellIndex.indexByString('M$currrentRowNumber'),
+        customValue: TextCellValue(holidayName.toUpperCase()),
+      );
+
+      // Apply border styles
+      for (var col in ['B', 'C', 'D', 'E']) {
+        cellList['$col$currrentRowNumber'] ??= sheet.cell(
+          CellIndex.indexByString('$col$currrentRowNumber'),
+        );
+        cellList['$col$currrentRowNumber'].cellStyle = topBottomBorderCellStyle;
+      }
+
+      for (var col in ['J', 'K', 'L', 'M']) {
+        cellList['$col$currrentRowNumber'] ??= sheet.cell(
+          CellIndex.indexByString('$col$currrentRowNumber'),
+        );
+        cellList['$col$currrentRowNumber'].cellStyle = topBottomBorderCellStyle;
+      }
+
+      for (var col in ['N', 'O']) {
+        cellList['$col$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('$col$currrentRowNumber'),
+        );
+        cellList['$col$currrentRowNumber'].value = null;
+        cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+      }
+
+      startingDay++;
+      startingRowNumber++;
+      continue;
     } else {
       // Weekday with actual attendance
       cellList['A$currrentRowNumber'] = sheet.cell(

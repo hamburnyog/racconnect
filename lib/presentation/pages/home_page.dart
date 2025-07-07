@@ -25,9 +25,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    checkProfile();
     _selectedDay = _focusedDay;
     loadEvents();
-    checkProfile();
   }
 
   void _showAttendanceForm() {
@@ -108,7 +108,6 @@ class _HomePageState extends State<HomePage> {
                     minTileHeight: 70,
                     title: Text(
                       'Today is ${DateFormat.yMMMMd().format(now)}',
-
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

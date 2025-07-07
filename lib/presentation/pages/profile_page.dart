@@ -155,8 +155,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     position: positionController.text.trim(),
                     sectionId: sectionId ?? '',
                   );
-
-                  // authCubit.signOut();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,
@@ -216,7 +214,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 trailing:
                     isSmallScreen
                         ? IconButton(
-                          onPressed: () {},
+                          onPressed: saveProfile,
                           icon: const Icon(Icons.save, color: Colors.white),
                         )
                         : ConstrainedBox(
@@ -226,7 +224,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.save),
-                            label: const Text('Save Profile'),
+                            label: const Text('Save'),
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Theme.of(context).primaryColor,
                               backgroundColor: Colors.white,

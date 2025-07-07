@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -220,7 +221,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             children: [
                               Text(
                                 'By registering, you agree to the ',
-                                style: TextStyle(fontSize: 12),
+                                style: GoogleFonts.ubuntuMono(fontSize: 12),
                               ),
                               GestureDetector(
                                 onTap: () {
@@ -232,7 +233,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 },
                                 child: Text(
                                   'privacy policy',
-                                  style: TextStyle(
+                                  style: GoogleFonts.ubuntuMono(
                                     fontSize: 12,
                                     color: Theme.of(context).primaryColor,
                                     decoration: TextDecoration.underline,
@@ -250,14 +251,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             child: RichText(
                               text: TextSpan(
                                 text: 'Already have an account? ',
-                                style: TextStyle(
+                                style: GoogleFonts.ubuntuMono(
                                   color: Colors.black,
                                   fontSize: 12,
                                 ),
                                 children: [
                                   TextSpan(
                                     text: 'Sign In',
-                                    style: TextStyle(
+                                    style: GoogleFonts.ubuntuMono(
                                       fontSize: 12,
                                       color: Theme.of(context).primaryColor,
                                       decoration: TextDecoration.underline,

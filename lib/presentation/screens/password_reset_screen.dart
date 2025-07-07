@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 
@@ -157,15 +158,15 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                             },
                             child: RichText(
                               text: TextSpan(
-                                text: 'Already have an account? ',
-                                style: TextStyle(
+                                text: 'Click here to ',
+                                style: GoogleFonts.ubuntuMono(
                                   color: Colors.black,
                                   fontSize: 12,
                                 ),
                                 children: [
                                   TextSpan(
                                     text: 'Sign In',
-                                    style: TextStyle(
+                                    style: GoogleFonts.ubuntuMono(
                                       fontSize: 12,
                                       color: Theme.of(context).primaryColor,
                                       decoration: TextDecoration.underline,
