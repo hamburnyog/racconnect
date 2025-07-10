@@ -79,13 +79,6 @@ class ExportButton extends StatelessWidget {
             ),
           ),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: Colors.red,
-            content: Text('Failed to generate Excel file'),
-          ),
-        );
       }
     }
 

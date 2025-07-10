@@ -333,8 +333,8 @@ Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
   ).firstMatch(timeString.trim().toUpperCase());
 
   if (match != null && isSmallScreen) {
-    final time = match.group(1)!; // e.g., 12:00
-    final period = match.group(2)!; // e.g., AM or PM
+    final time = match.group(1)!;
+    final period = match.group(2)!;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -354,7 +354,6 @@ Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
     );
   }
 
-  // Fallback to plain text
   return Text(
     timeString,
     textAlign: TextAlign.center,
