@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
+import 'package:racconnect/presentation/widgets/leave_card.dart';
 import 'package:racconnect/utility/constants.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -28,7 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController employmentStatusController;
 
   final _formKey = GlobalKey<FormState>();
-
+  Map<String, dynamic> _leaveCredits = {};
   ProfileModel? profile;
   String emailAddress = '';
   List<Map<String, String>> sectionOptions = [];
@@ -92,6 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
       emailAddress = signedIn.user.email;
       profile = p;
       sectionId = p?.section;
+
       employeeNumberController = TextEditingController(
         text: p?.employeeNumber ?? '',
       );
@@ -106,6 +108,13 @@ class _ProfilePageState extends State<ProfilePage> {
       employmentStatusController = TextEditingController(
         text: p?.employmentStatus ?? '',
       );
+
+      _leaveCredits = {
+        'SL': p?.sl ?? 0,
+        'VL': p?.vl ?? 0,
+        'SPL': p?.spl ?? 0,
+        'CTO': p?.cto ?? 0,
+      };
     });
   }
 
@@ -249,6 +258,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (_leaveCredits.isNotEmpty)
+                              LeaveCard(leaveCredits: _leaveCredits),
+                            SizedBox(height: 10),
                             _formField(
                               'Employee Number',
                               employeeNumberController,
@@ -373,13 +385,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                 });
                               },
                               decoration: const InputDecoration(
-                                labelText: 'Gender',
+                                labelText: 'Sex',
                                 border: OutlineInputBorder(),
                               ),
                               validator:
                                   (value) =>
                                       (value == null || value.isEmpty)
-                                          ? 'Gender required'
+                                          ? 'Sex required'
                                           : null,
                             ),
                             SizedBox(height: 10),

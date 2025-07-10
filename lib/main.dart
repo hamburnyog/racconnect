@@ -58,6 +58,12 @@ class _MyAppState extends State<MyApp> {
         title: 'Racconnect Client',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            foregroundColor: Colors.black,
+            scrolledUnderElevation: 0,
+          ),
           textTheme: GoogleFonts.ubuntuMonoTextTheme(baseTheme.textTheme),
           inputDecorationTheme: InputDecorationTheme(
             contentPadding: const EdgeInsets.all(27),

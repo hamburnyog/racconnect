@@ -11,7 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_launcher_icons: ^0.14.3
   connectivity_plus: ^6.1.4
   cupertino_icons: ^1.0.8
   hydrated_bloc: ^10.0.0
@@ -36,6 +35,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+
 
 flutter:
   uses-material-design: true
@@ -57,3 +58,10 @@ flutter_launcher_icons:
       image_path: "assets/images/cc icon.png"
       adaptive_icon_background: "#FFFFFF"
       adaptive_icon_foreground: "assets/images/cc icon.png"
+    windows:
+      generate: true
+      image_path: "assets/images/cc icon.png"
+      icon_size: 48
+    macos:
+      generate: true
+      image_path: "assets/images/cc icon.png"
