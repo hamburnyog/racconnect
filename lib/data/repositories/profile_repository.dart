@@ -14,7 +14,7 @@ class ProfileRepository {
     required String gender,
     required String employmentStatus,
     required String position,
-    String? sectionId, // <- Add this line
+    String? sectionId,
   }) async {
     final data = {
       'employeeNumber': employeeNumber,
@@ -25,7 +25,7 @@ class ProfileRepository {
       'gender': gender,
       'employmentStatus': employmentStatus,
       'position': position,
-      if (sectionId != null) 'section': sectionId, // <- Include if set
+      if (sectionId != null) 'section': sectionId,
     };
 
     final record =

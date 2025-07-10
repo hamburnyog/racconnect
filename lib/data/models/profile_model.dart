@@ -14,6 +14,10 @@ class ProfileModel {
   final String employmentStatus;
   final String? section;
   final String? sectionName;
+  final double? sl;
+  final double? vl;
+  final double? spl;
+  final double? cto;
   ProfileModel({
     this.id,
     this.employeeNumber,
@@ -26,6 +30,10 @@ class ProfileModel {
     required this.employmentStatus,
     this.section,
     this.sectionName,
+    this.sl,
+    this.vl,
+    this.spl,
+    this.cto,
   });
 
   ProfileModel copyWith({
@@ -38,8 +46,12 @@ class ProfileModel {
     String? gender,
     String? position,
     String? employmentStatus,
-    String? section,
-    String? sectionName,
+    ValueGetter<String?>? section,
+    ValueGetter<String?>? sectionName,
+    ValueGetter<double?>? sl,
+    ValueGetter<double?>? vl,
+    ValueGetter<double?>? spl,
+    ValueGetter<double?>? cto,
   }) {
     return ProfileModel(
       id: id != null ? id() : this.id,
@@ -52,8 +64,12 @@ class ProfileModel {
       gender: gender ?? this.gender,
       position: position ?? this.position,
       employmentStatus: employmentStatus ?? this.employmentStatus,
-      section: section ?? this.section,
-      sectionName: sectionName ?? this.sectionName,
+      section: section != null ? section() : this.section,
+      sectionName: sectionName != null ? sectionName() : this.sectionName,
+      sl: sl != null ? sl() : this.sl,
+      vl: vl != null ? vl() : this.vl,
+      spl: spl != null ? spl() : this.spl,
+      cto: cto != null ? cto() : this.cto,
     );
   }
 
@@ -66,9 +82,14 @@ class ProfileModel {
       'lastName': lastName,
       'birthdate': birthdate.millisecondsSinceEpoch,
       'gender': gender,
+      'position': position,
       'employmentStatus': employmentStatus,
       'section': section,
       'sectionName': sectionName,
+      'sl': sl,
+      'vl': vl,
+      'spl': spl,
+      'cto': cto,
     };
   }
 
@@ -86,8 +107,12 @@ class ProfileModel {
       gender: map['gender'] ?? '',
       position: map['position'] ?? '',
       employmentStatus: map['employmentStatus'] ?? '',
-      section: map['section'] ?? '',
-      sectionName: map['sectionName'] ?? '',
+      section: map['section'],
+      sectionName: map['sectionName'],
+      sl: map['sl']?.toDouble(),
+      vl: map['vl']?.toDouble(),
+      spl: map['spl']?.toDouble(),
+      cto: map['cto']?.toDouble(),
     );
   }
 
@@ -98,7 +123,7 @@ class ProfileModel {
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName)';
+    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
   }
 
   @override
@@ -116,7 +141,11 @@ class ProfileModel {
         other.position == position &&
         other.employmentStatus == employmentStatus &&
         other.section == section &&
-        other.sectionName == sectionName;
+        other.sectionName == sectionName &&
+        other.sl == sl &&
+        other.vl == vl &&
+        other.spl == spl &&
+        other.cto == cto;
   }
 
   @override
@@ -129,8 +158,12 @@ class ProfileModel {
         birthdate.hashCode ^
         gender.hashCode ^
         position.hashCode ^
+        employmentStatus.hashCode ^
         section.hashCode ^
         sectionName.hashCode ^
-        employmentStatus.hashCode;
+        sl.hashCode ^
+        vl.hashCode ^
+        spl.hashCode ^
+        cto.hashCode;
   }
 }

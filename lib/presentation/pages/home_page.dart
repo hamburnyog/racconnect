@@ -53,8 +53,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> checkProfile() async {
     AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
-    var employeeeNumber = signedIn.user.profile?.employeeNumber ?? '';
-    if (employeeeNumber.isNotEmpty) {
+    var profile = signedIn.user.profile;
+    var employeeNumber = profile?.employeeNumber ?? '';
+
+    if (employeeNumber.isNotEmpty) {
       setState(() {
         _lockClockIn = false;
       });
@@ -134,6 +136,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+
                 Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: BlocBuilder<EventCubit, EventState>(

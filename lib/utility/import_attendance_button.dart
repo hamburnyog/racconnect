@@ -21,7 +21,7 @@ class AttendanceImport {
     required this.selectedYear,
     required this.selectedMonth,
     required this.internetCubit,
-    this.onImportSuccess, // ✅ optional callback
+    this.onImportSuccess,
   });
 
   final ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
