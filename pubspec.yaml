@@ -38,6 +38,23 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/cc icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/cc icon.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: true
+    image_path: "assets/images/cc icon.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/images/cc icon.png"
+
 flutter:
   uses-material-design: true
 
@@ -45,23 +62,3 @@ flutter:
     - assets/
     - assets/images/
     - assets/animations/
-
-flutter_launcher_icons:
-    android: true
-    ios: true
-    image_path: "assets/images/cc icon.png"
-    adaptive_icon_background: "#FFFFFF"
-    adaptive_icon_foreground: "assets/images/cc icon.png"
-    remove_alpha_ios: true
-    web:
-      generate: false
-      image_path: "assets/images/cc icon.png"
-      adaptive_icon_background: "#FFFFFF"
-      adaptive_icon_foreground: "assets/images/cc icon.png"
-    windows:
-      generate: true
-      image_path: "assets/images/cc icon.png"
-      icon_size: 48
-    macos:
-      generate: true
-      image_path: "assets/images/cc icon.png"
