@@ -15,6 +15,7 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
   groupedLogs.forEach((date, entries) {
     entries.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     final times = entries.map((e) => e.timestamp).toList();
+    final remarks = entries.map((e) => e.remarks).toList();
 
     String? type =
         entries
@@ -22,22 +23,51 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
             .type;
 
     String amIn = '—', amOut = '—', pmIn = '—', pmOut = '—';
+    String timeInRemarks = 'No targets specified';
+    String timeOutRemarks = 'No accomplishments specified';
+
+    final isWFH = type.toLowerCase().contains('wfh');
 
     if (times.length == 1) {
       amIn = timeFormat.format(times[0]);
+      timeInRemarks = remarks[0];
+      if (isWFH) {
+        amOut = '12:00 PM';
+        pmIn = '01:00 PM';
+      }
     } else if (times.length <= 3) {
       amIn = timeFormat.format(times.first);
       pmOut = timeFormat.format(times.last);
+      timeInRemarks = remarks.first;
+      timeOutRemarks = remarks.last;
+      if (isWFH) {
+        amOut = '12:00 PM';
+        pmIn = '01:00 PM';
+      }
     } else if (times.length == 4) {
       amIn = timeFormat.format(times[0]);
-      amOut = timeFormat.format(times[1]);
-      pmIn = timeFormat.format(times[2]);
       pmOut = timeFormat.format(times[3]);
+      timeInRemarks = remarks[0];
+      timeOutRemarks = remarks[3];
+      if (isWFH) {
+        amOut = '12:00 PM';
+        pmIn = '01:00 PM';
+      } else {
+        amOut = timeFormat.format(times[1]);
+        pmIn = timeFormat.format(times[2]);
+      }
     } else {
       amIn = timeFormat.format(times[0]);
-      amOut = timeFormat.format(times[1]);
-      pmIn = timeFormat.format(times[2]);
       pmOut = timeFormat.format(times.last);
+      timeInRemarks = remarks[0];
+      timeOutRemarks = remarks.last;
+      if (isWFH) {
+        amOut = '12:00 PM';
+        pmIn = '01:00 PM';
+      } else {
+        amOut = timeFormat.format(times[1]);
+        pmIn = timeFormat.format(times[2]);
+      }
     }
 
     result[date] = {
@@ -46,6 +76,8 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
       'lunchIn': pmIn,
       'timeOut': pmOut,
       'type': type,
+      'timeInRemarks': timeInRemarks,
+      'timeOutRemarks': timeOutRemarks,
     };
   });
 

@@ -8,6 +8,7 @@ import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
 import 'package:racconnect/utility/group_attendance.dart';
+import 'package:flutter/services.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -16,13 +17,18 @@ class AttendancePage extends StatefulWidget {
   State<AttendancePage> createState() => _AttendancePageState();
 }
 
-class _AttendancePageState extends State<AttendancePage> {
+class _AttendancePageState extends State<AttendancePage>
+    with SingleTickerProviderStateMixin {
   int selectedYear = DateTime.now().year;
   int selectedMonth = DateTime.now().month;
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+  late AnimationController _glowController;
+  late Animation<Color?> _glowAnimation;
 
   List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
@@ -33,11 +39,20 @@ class _AttendancePageState extends State<AttendancePage> {
   @override
   void initState() {
     super.initState();
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _glowAnimation = ColorTween(
+      begin: Colors.purple.withValues(alpha: 0.4),
+      end: Colors.purple.withValues(alpha: 0.8),
+    ).animate(_glowController);
     _loadInitialData();
   }
 
   @override
   void dispose() {
+    _glowController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -85,149 +100,165 @@ class _AttendancePageState extends State<AttendancePage> {
   Widget build(BuildContext context) {
     final days = getDaysInMonth(selectedYear, selectedMonth);
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
-    return BlocBuilder<HolidayCubit, HolidayState>(
-      builder: (context, state) {
-        if (state is GetAllHolidaySuccess) {
-          holidayMap = {
-            for (var h in state.holidayModels)
-              DateTime(h.date.year, h.date.month, h.date.day): h.name,
-          };
-        }
-        return Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Column(
-                children: [
-                  Card(
-                    color: Theme.of(context).primaryColor,
-                    child: ListTile(
-                      minTileHeight: 70,
-                      leading: const Icon(
-                        Icons.access_time_rounded,
-                        color: Colors.white,
-                      ),
-                      title: Text(
-                        isSmallScreen ? 'Attendance' : 'Attendance Records',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      subtitle: Text(
-                        isSmallScreen
-                            ? 'Select a date to view records'
-                            : 'Select a date to view attendance records',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: isSmallScreen ? 11 : 14,
-                        ),
-                      ),
-                      trailing: ExportButton(
-                        selectedYear: selectedYear,
-                        selectedMonth: selectedMonth,
-                        holidayMap: holidayMap,
-                      ),
-                    ),
+    return ScaffoldMessenger(
+      key: _scaffoldMessengerKey,
+      child: Scaffold(
+        body: BlocBuilder<HolidayCubit, HolidayState>(
+          builder: (context, state) {
+            if (state is GetAllHolidaySuccess) {
+              holidayMap = {
+                for (var h in state.holidayModels)
+                  DateTime(h.date.year, h.date.month, h.date.day): h.name,
+              };
+            }
+            return Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
                   ),
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                  child: Column(
+                    children: [
+                      Card(
+                        color: Theme.of(context).primaryColor,
+                        child: ListTile(
+                          minTileHeight: 70,
+                          leading: const Icon(
+                            Icons.access_time_rounded,
+                            color: Colors.white,
+                          ),
+                          title: Text(
+                            isSmallScreen ? 'Attendance' : 'Attendance Records',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: Text(
+                            isSmallScreen
+                                ? 'Select a date to view records'
+                                : 'Select a date to view attendance records',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isSmallScreen ? 11 : 14,
+                            ),
+                          ),
+                          trailing: ExportButton(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            holidayMap: holidayMap,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    value: selectedYear,
-                                    isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Year',
-                                    ),
-                                    items:
-                                        getYears().map((y) {
-                                          return DropdownMenuItem(
-                                            value: y,
-                                            child: Text('$y'),
-                                          );
-                                        }).toList(),
-                                    onChanged:
-                                        (val) =>
-                                            _onDateFilterChanged(year: val),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    isExpanded: true,
-                                    value: selectedMonth,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Month',
-                                    ),
-                                    items: List.generate(12, (i) {
-                                      return DropdownMenuItem(
-                                        value: i + 1,
-                                        child: Text(
-                                          DateFormat(
-                                            'MMMM',
-                                          ).format(DateTime(0, i + 1)),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        value: selectedYear,
+                                        isExpanded: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Year',
                                         ),
-                                      );
-                                    }),
-                                    onChanged:
-                                        (val) =>
-                                            _onDateFilterChanged(month: val),
+                                        items:
+                                            getYears().map((y) {
+                                              return DropdownMenuItem(
+                                                value: y,
+                                                child: Text('$y'),
+                                              );
+                                            }).toList(),
+                                        onChanged:
+                                            (val) =>
+                                                _onDateFilterChanged(year: val),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        isExpanded: true,
+                                        value: selectedMonth,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Month',
+                                        ),
+                                        items: List.generate(12, (i) {
+                                          return DropdownMenuItem(
+                                            value: i + 1,
+                                            child: Text(
+                                              DateFormat(
+                                                'MMMM',
+                                              ).format(DateTime(0, i + 1)),
+                                            ),
+                                          );
+                                        }),
+                                        onChanged:
+                                            (val) => _onDateFilterChanged(
+                                              month: val,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  child: Scrollbar(
+                                    controller: _scrollController,
+                                    thumbVisibility: true,
+                                    child: ListView.builder(
+                                      controller: _scrollController,
+                                      itemCount: days.length,
+                                      itemBuilder: (context, index) {
+                                        return buildAttendanceRow(
+                                          context: context,
+                                          scaffoldMessengerKey:
+                                              _scaffoldMessengerKey,
+                                          day: days[index],
+                                          attendanceMap: attendanceMap,
+                                          holidayMap: holidayMap,
+                                          isSmallScreen: isSmallScreen,
+                                          glowAnimation: _glowAnimation,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            Expanded(
-                              child: Scrollbar(
-                                controller: _scrollController,
-                                thumbVisibility: true,
-                                child: ListView.builder(
-                                  controller: _scrollController,
-                                  itemCount: days.length,
-                                  itemBuilder: (context, index) {
-                                    return buildAttendanceRow(
-                                      day: days[index],
-                                      attendanceMap: attendanceMap,
-                                      holidayMap: holidayMap,
-                                      isSmallScreen: isSmallScreen,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            ImportButton(
-              selectedYear: selectedYear,
-              selectedMonth: selectedMonth,
-              onRefresh: _loadInitialData,
-            ),
-          ],
-        );
-      },
+                ),
+                ImportButton(
+                  selectedYear: selectedYear,
+                  selectedMonth: selectedMonth,
+                  onRefresh: _loadInitialData,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
 
 Widget buildAttendanceRow({
+  required BuildContext context,
+  required GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
   required DateTime day,
   required Map<String, Map<String, String>> attendanceMap,
   required Map<DateTime, String> holidayMap,
   required bool isSmallScreen,
+  required Animation<Color?> glowAnimation,
 }) {
   final dateKey = DateFormat('yyyy-MM-dd').format(day);
   final data = attendanceMap[dateKey];
@@ -281,41 +312,185 @@ Widget buildAttendanceRow({
     );
   }
 
-  return Container(
-    color: rowColor,
-    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            DateFormat('MMM dd (E)').format(day),
+  final isWFH = data?['type']?.toLowerCase().contains('wfh') ?? false;
+
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap:
+        isWFH
+            ? () => _showRemarksDialog(
+              context,
+              scaffoldMessengerKey: scaffoldMessengerKey,
+              day: day,
+              timeInRemarks: data?['timeInRemarks'] ?? 'No targets specified',
+              timeOutRemarks:
+                  data?['timeOutRemarks'] ?? 'No accomplishments specified',
+            )
+            : null,
+    child: AnimatedBuilder(
+      animation: glowAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration:
+              isWFH
+                  ? BoxDecoration(
+                    color: rowColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: glowAnimation.value ?? Colors.purple,
+                      width: 1.5,
+                    ),
+                  )
+                  : BoxDecoration(color: rowColor),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  DateFormat('MMM dd (E)').format(day),
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 14,
+                    color: Colors.teal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: buildTimeCell(
+                  data?['timeIn'],
+                  isSmallScreen: isSmallScreen,
+                ),
+              ),
+              Expanded(
+                child: buildTimeCell(
+                  data?['lunchOut'],
+                  isSmallScreen: isSmallScreen,
+                ),
+              ),
+              Expanded(
+                child: buildTimeCell(
+                  data?['lunchIn'],
+                  isSmallScreen: isSmallScreen,
+                ),
+              ),
+              Expanded(
+                child: buildTimeCell(
+                  data?['timeOut'],
+                  isSmallScreen: isSmallScreen,
+                ),
+              ),
+              Expanded(
+                child:
+                    data?['type'] != null
+                        ? _buildBadge(
+                          data!['type']!,
+                          smallScreen: isSmallScreen,
+                        )
+                        : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+void _showRemarksDialog(
+  BuildContext context, {
+  required GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  required DateTime day,
+  required String timeInRemarks,
+  required String timeOutRemarks,
+}) {
+  showDialog(
+    context: context,
+    builder:
+        (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: Colors.white,
+          titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          title: Text(
+            'WFH Remarks - ${DateFormat('MMM dd, yyyy').format(day)}',
             style: TextStyle(
-              fontSize: isSmallScreen ? 12 : 14,
-              color: Colors.teal,
               fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Colors.teal.shade700,
             ),
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Targets (Time In):',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                    CopyFeedbackIconButton(
+                      textToCopy: timeInRemarks,
+                      tooltip: 'Copy Targets',
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  timeInRemarks,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                ),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Accomplishments (Time Out):',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                    CopyFeedbackIconButton(
+                      textToCopy: timeOutRemarks,
+                      tooltip: 'Copy Accomplishments',
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  timeOutRemarks,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: TextStyle(color: Colors.teal.shade700),
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: buildTimeCell(data?['timeIn'], isSmallScreen: isSmallScreen),
-        ),
-        Expanded(
-          child: buildTimeCell(data?['lunchOut'], isSmallScreen: isSmallScreen),
-        ),
-        Expanded(
-          child: buildTimeCell(data?['lunchIn'], isSmallScreen: isSmallScreen),
-        ),
-        Expanded(
-          child: buildTimeCell(data?['timeOut'], isSmallScreen: isSmallScreen),
-        ),
-        Expanded(
-          child:
-              data?['type'] != null
-                  ? _buildBadge(data!['type']!, smallScreen: isSmallScreen)
-                  : const SizedBox.shrink(),
-        ),
-      ],
-    ),
   );
 }
 
@@ -385,4 +560,43 @@ Widget _buildBadge(String type, {bool smallScreen = false}) {
       ),
     ),
   );
+}
+
+class CopyFeedbackIconButton extends StatefulWidget {
+  final String textToCopy;
+  final String tooltip;
+
+  const CopyFeedbackIconButton({
+    super.key,
+    required this.textToCopy,
+    required this.tooltip,
+  });
+
+  @override
+  State<CopyFeedbackIconButton> createState() => _CopyFeedbackIconButtonState();
+}
+
+class _CopyFeedbackIconButtonState extends State<CopyFeedbackIconButton> {
+  bool copied = false;
+
+  void _copyText() {
+    Clipboard.setData(ClipboardData(text: widget.textToCopy));
+    setState(() => copied = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        copied ? Icons.check_circle : Icons.copy,
+        size: 20,
+        color: copied ? Colors.green : Colors.teal,
+      ),
+      tooltip: widget.tooltip,
+      onPressed: _copyText,
+    );
+  }
 }

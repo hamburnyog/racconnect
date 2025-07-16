@@ -33,11 +33,18 @@ Future<String?> generateExcel(
   String fullName = '$firstName $middleInitial $lastName'.trim().toUpperCase();
 
   String position = profile.position;
-  String supervisor = 'JOHN S. CALIDGUID, RSW, MPA';
-  String supervisorDesignation = 'Officer-in-charge, SWO IV';
+  String supervisor =
+      profile.section ==
+              'y78rsxd4495cz25' // Hardcode for now
+          ? 'HON. ROWENA M. MACALINTAL, ASEC'
+          : 'JOHN S. CALIDGUID, RSW, MPA';
+  String supervisorDesignation =
+      profile.section ==
+              'y78rsxd4495cz25' // Hardcode for now
+          ? 'Deputy Director for Operations and Services'
+          : 'Officer-in-charge, SWO IV';
 
   // Headers
-
   String monthYearText =
       'FOR THE MONTH OF ${monthName.toUpperCase()} ${currentYear.toString()}';
 
@@ -241,13 +248,15 @@ Future<String?> generateExcel(
   cell38.cellStyle = borderedCellStyle;
 
   // Days
-
   var monthDayNames = getDayNamesInMonth(currentYear, currentMonth);
   var startingDay = 1;
   var startingRowNumber = 13;
 
   Map<String, dynamic> cellList = {};
   Map<String, dynamic> cellList2 = {};
+
+  int totalLateUndertimeHours = 0;
+  int totalLateUndertimeMinutes = 0;
 
   for (var monthDayName in monthDayNames) {
     var currrentRowNumber = startingRowNumber.toString();
@@ -265,28 +274,26 @@ Future<String?> generateExcel(
         }).toList();
 
     final logTimes = extractLogTimes(dayLogs);
-    final amIn = logTimes['amIn'] ?? '';
-    final amOut = logTimes['amOut'] ?? '';
-    final pmIn = logTimes['pmIn'] ?? '';
-    final pmOut = logTimes['pmOut'] ?? '';
+    bool isWFH = dayLogs.any((log) => log.type.toLowerCase() == 'wfh');
+    String amIn = logTimes['amIn'] ?? '';
+    String amOut = isWFH ? '12:00 PM' : (logTimes['amOut'] ?? '');
+    String pmIn = isWFH ? '1:00 PM' : (logTimes['pmIn'] ?? '');
+    String pmOut = logTimes['pmOut'] ?? '';
 
     if (isWeekend) {
-      // Your weekend format (unchanged)
-      // A column
+      // Weekend format
       cellList['A$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('A$currrentRowNumber'),
       );
       cellList['A$currrentRowNumber'].value = IntCellValue(startingDay);
       cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-      // Merge B-E
       sheet.merge(
         CellIndex.indexByString('B$currrentRowNumber'),
         CellIndex.indexByString('E$currrentRowNumber'),
         customValue: TextCellValue(monthDayName.toUpperCase()),
       );
 
-      // Border setup for weekend columns
       for (var col in ['B', 'C', 'D', 'E', 'F', 'G']) {
         cellList['$col$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('$col$currrentRowNumber'),
@@ -297,21 +304,18 @@ Future<String?> generateExcel(
                 : topBottomBorderCellStyle;
       }
 
-      // I column
       cellList2['I$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('I$currrentRowNumber'),
       );
       cellList2['I$currrentRowNumber'].value = IntCellValue(startingDay);
       cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-      // Merge J-M
       sheet.merge(
         CellIndex.indexByString('J$currrentRowNumber'),
         CellIndex.indexByString('M$currrentRowNumber'),
         customValue: TextCellValue(monthDayName.toUpperCase()),
       );
 
-      // Border setup for weekend mirrored columns
       for (var col in ['J', 'K', 'L', 'M', 'N', 'O']) {
         cellList['$col$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('$col$currrentRowNumber'),
@@ -322,21 +326,19 @@ Future<String?> generateExcel(
                 : topBottomBorderCellStyle;
       }
     } else if (isHoliday) {
-      // Column A (Day Number)
+      // Holiday format
       cellList['A$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('A$currrentRowNumber'),
       );
       cellList['A$currrentRowNumber'].value = IntCellValue(startingDay);
       cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-      // Merge B-E for holiday name
       sheet.merge(
         CellIndex.indexByString('B$currrentRowNumber'),
         CellIndex.indexByString('E$currrentRowNumber'),
         customValue: TextCellValue(holidayName!.toUpperCase()),
       );
 
-      // Columns F and G - Late/Undertime Placeholder
       for (var col in ['F', 'G']) {
         cellList['$col$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('$col$currrentRowNumber'),
@@ -345,21 +347,18 @@ Future<String?> generateExcel(
         cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
       }
 
-      // Column I (Day Number - mirror)
       cellList2['I$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('I$currrentRowNumber'),
       );
       cellList2['I$currrentRowNumber'].value = IntCellValue(startingDay);
       cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-      // Merge J-M for holiday name
       sheet.merge(
         CellIndex.indexByString('J$currrentRowNumber'),
         CellIndex.indexByString('M$currrentRowNumber'),
         customValue: TextCellValue(holidayName.toUpperCase()),
       );
 
-      // Apply border styles
       for (var col in ['B', 'C', 'D', 'E']) {
         cellList['$col$currrentRowNumber'] ??= sheet.cell(
           CellIndex.indexByString('$col$currrentRowNumber'),
@@ -381,10 +380,6 @@ Future<String?> generateExcel(
         cellList['$col$currrentRowNumber'].value = null;
         cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
       }
-
-      startingDay++;
-      startingRowNumber++;
-      continue;
     } else {
       // Weekday with actual attendance
       cellList['A$currrentRowNumber'] = sheet.cell(
@@ -396,43 +391,207 @@ Future<String?> generateExcel(
       cellList['B$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('B$currrentRowNumber'),
       );
-      cellList['B$currrentRowNumber'].value = TextCellValue(
-        amIn.isNotEmpty ? amIn : '00:00 PM',
-      );
+      cellList['B$currrentRowNumber'].value = TextCellValue(amIn);
       cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
 
       cellList['C$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('C$currrentRowNumber'),
       );
-      cellList['C$currrentRowNumber'].value = TextCellValue(
-        amOut.isNotEmpty ? amOut : '00:00 PM',
-      );
+      cellList['C$currrentRowNumber'].value = TextCellValue(amOut);
       cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
 
       cellList['D$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('D$currrentRowNumber'),
       );
-      cellList['D$currrentRowNumber'].value = TextCellValue(
-        pmIn.isNotEmpty ? pmIn : '00:00 PM',
-      );
+      cellList['D$currrentRowNumber'].value = TextCellValue(pmIn);
       cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
 
       cellList['E$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('E$currrentRowNumber'),
       );
-      cellList['E$currrentRowNumber'].value = TextCellValue(
-        pmOut.isNotEmpty ? pmOut : '00:00 PM',
-      );
+      cellList['E$currrentRowNumber'].value = TextCellValue(pmOut);
       cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-      // Placeholder for late/undertime (you can compute here)
-      for (var col in ['F', 'G']) {
-        cellList['$col$currrentRowNumber'] = sheet.cell(
-          CellIndex.indexByString('$col$currrentRowNumber'),
+      // Calculate late/undertime
+      int lateHours = 0;
+      int lateMinutes = 0;
+      int undertimeHours = 0;
+      int undertimeMinutes = 0;
+
+      if (amIn.isNotEmpty && pmOut.isNotEmpty) {
+        final dateFormat = DateFormat('h:mm a');
+        final isMonday = monthDayName == 'Monday';
+        final isWFHHalfDay =
+            isWFH && dateFormat.parse(amIn).hour >= 12; // 12:00 PM or later
+
+        final earliestInTime = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+          7,
+          0,
         );
-        cellList['$col$currrentRowNumber'].value = null;
-        cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        final expectedInTime =
+            isWFHHalfDay
+                ? DateTime(
+                  currentDate.year,
+                  currentDate.month,
+                  currentDate.day,
+                  12,
+                  0,
+                )
+                : DateTime(
+                  currentDate.year,
+                  currentDate.month,
+                  currentDate.day,
+                  isMonday ? 9 : 9,
+                  isMonday ? 0 : 30,
+                );
+        final minOutTime = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+          16,
+          0,
+        );
+        final maxOutTime = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+          isMonday ? 18 : 18,
+          isMonday ? 0 : 30,
+        );
+
+        try {
+          // Parse times with correct date
+          var amInTime = dateFormat
+              .parse(amIn)
+              .copyWith(
+                year: currentDate.year,
+                month: currentDate.month,
+                day: currentDate.day,
+              );
+          var pmOutTime = dateFormat
+              .parse(pmOut)
+              .copyWith(
+                year: currentDate.year,
+                month: currentDate.month,
+                day: currentDate.day,
+              );
+
+          // Adjust for PM/AM times
+          if (!isWFHHalfDay && amInTime.hour >= 12) {
+            amInTime = amInTime.add(Duration(days: 1));
+          }
+          if (pmOutTime.hour < 12) {
+            pmOutTime = pmOutTime.add(Duration(days: 1));
+          }
+
+          // Cap time-in at 7:00 AM for full days
+          if (!isWFHHalfDay && amInTime.isBefore(earliestInTime)) {
+            amInTime = earliestInTime;
+          }
+
+          // Calculate late
+          if (amInTime.isAfter(expectedInTime)) {
+            final difference = amInTime.difference(expectedInTime);
+            final totalMinutes = difference.inMinutes;
+            lateHours = totalMinutes ~/ 60;
+            lateMinutes = totalMinutes % 60;
+          }
+
+          // Calculate expected out time
+          final expectedOutTime =
+              isWFHHalfDay
+                  ? amInTime.add(Duration(hours: 4))
+                  : amInTime.add(Duration(hours: 8));
+          final effectiveOutTime =
+              isWFHHalfDay
+                  ? expectedOutTime.isAfter(minOutTime)
+                      ? expectedOutTime
+                      : minOutTime
+                  : expectedOutTime.isAfter(minOutTime)
+                  ? expectedOutTime
+                  : minOutTime;
+
+          // Cap logout time at maxOutTime
+          final effectivePmOutTime =
+              pmOutTime.isAfter(maxOutTime) ? maxOutTime : pmOutTime;
+
+          // Calculate undertime
+          if (effectivePmOutTime.isBefore(effectiveOutTime)) {
+            final difference = effectiveOutTime.difference(effectivePmOutTime);
+            final totalMinutes = difference.inMinutes;
+            undertimeHours = totalMinutes ~/ 60;
+            undertimeMinutes = totalMinutes % 60;
+          }
+
+          // Calculate lunch overbreak (non-WFH only)
+          if (!isWFH && amOut.isNotEmpty && pmIn.isNotEmpty) {
+            try {
+              final amOutTime = dateFormat
+                  .parse(amOut)
+                  .copyWith(
+                    year: currentDate.year,
+                    month: currentDate.month,
+                    day: currentDate.day,
+                  );
+              final pmInTime = dateFormat
+                  .parse(pmIn)
+                  .copyWith(
+                    year: currentDate.year,
+                    month: currentDate.month,
+                    day: currentDate.day,
+                  );
+              final lunchDuration = pmInTime.difference(amOutTime).inMinutes;
+              if (lunchDuration > 60) {
+                final overbreakMinutes = lunchDuration - 60;
+                undertimeHours += overbreakMinutes ~/ 60;
+                undertimeMinutes += overbreakMinutes % 60;
+              }
+            } catch (e) {
+              // Skip overbreak if parsing fails
+            }
+          }
+        } catch (e) {
+          // Handle parsing errors by leaving late/undertime as 0
+        }
       }
+
+      // Total late/undertime for the day
+      int totalDayHours = lateHours + undertimeHours;
+      int totalDayMinutes = lateMinutes + undertimeMinutes;
+      if (totalDayMinutes >= 60) {
+        totalDayHours += totalDayMinutes ~/ 60;
+        totalDayMinutes = totalDayMinutes % 60;
+      }
+
+      // Update running total
+      totalLateUndertimeHours += totalDayHours;
+      totalLateUndertimeMinutes += totalDayMinutes;
+      if (totalLateUndertimeMinutes >= 60) {
+        totalLateUndertimeHours += totalLateUndertimeMinutes ~/ 60;
+        totalLateUndertimeMinutes = totalLateUndertimeMinutes % 60;
+      }
+
+      // Set late/undertime for the day (blank if 0)
+      cellList['F$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('F$currrentRowNumber'),
+      );
+      cellList['F$currrentRowNumber'].value =
+          totalDayHours > 0
+              ? TextCellValue(totalDayHours.toString())
+              : TextCellValue('');
+      cellList['F$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      cellList['G$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('G$currrentRowNumber'),
+      );
+      cellList['G$currrentRowNumber'].value =
+          totalDayMinutes > 0
+              ? TextCellValue(totalDayMinutes.toString())
+              : TextCellValue('');
+      cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
 
       // Mirrored columns I to O
       cellList2['I$currrentRowNumber'] = sheet.cell(
@@ -447,27 +606,71 @@ Future<String?> generateExcel(
         cellList['$col$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('$col$currrentRowNumber'),
         );
-        cellList['$col$currrentRowNumber'].value = TextCellValue(
-          val.isNotEmpty ? val : '00:00 PM',
-        );
+        cellList['$col$currrentRowNumber'].value = TextCellValue(val);
         cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
       });
 
-      for (var col in ['N', 'O']) {
-        cellList['$col$currrentRowNumber'] = sheet.cell(
-          CellIndex.indexByString('$col$currrentRowNumber'),
-        );
-        cellList['$col$currrentRowNumber'].value = null;
-        cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-      }
+      cellList['N$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('N$currrentRowNumber'),
+      );
+      cellList['N$currrentRowNumber'].value =
+          totalDayHours > 0
+              ? TextCellValue(totalDayHours.toString())
+              : TextCellValue('');
+      cellList['N$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      cellList['O$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('O$currrentRowNumber'),
+      );
+      cellList['O$currrentRowNumber'].value =
+          totalDayMinutes > 0
+              ? TextCellValue(totalDayMinutes.toString())
+              : TextCellValue('');
+      cellList['O$currrentRowNumber'].cellStyle = borderedCellStyle;
     }
 
     startingDay++;
     startingRowNumber++;
   }
 
-  // Total
+  // Total late/undertime for the month (blank if 0)
+  cellList['F$startingRowNumber'] = sheet.cell(
+    CellIndex.indexByString('F$startingRowNumber'),
+  );
+  cellList['F$startingRowNumber'].value =
+      totalLateUndertimeHours > 0
+          ? TextCellValue(totalLateUndertimeHours.toString())
+          : TextCellValue('');
+  cellList['F$startingRowNumber'].cellStyle = borderedCellStyle;
 
+  cellList['G$startingRowNumber'] = sheet.cell(
+    CellIndex.indexByString('G$startingRowNumber'),
+  );
+  cellList['G$startingRowNumber'].value =
+      totalLateUndertimeMinutes > 0
+          ? TextCellValue(totalLateUndertimeMinutes.toString())
+          : TextCellValue('');
+  cellList['G$startingRowNumber'].cellStyle = borderedCellStyle;
+
+  cellList['N$startingRowNumber'] = sheet.cell(
+    CellIndex.indexByString('N$startingRowNumber'),
+  );
+  cellList['N$startingRowNumber'].value =
+      totalLateUndertimeHours > 0
+          ? TextCellValue(totalLateUndertimeHours.toString())
+          : TextCellValue('');
+  cellList['N$startingRowNumber'].cellStyle = borderedCellStyle;
+
+  cellList['O$startingRowNumber'] = sheet.cell(
+    CellIndex.indexByString('O$startingRowNumber'),
+  );
+  cellList['O$startingRowNumber'].value =
+      totalLateUndertimeMinutes > 0
+          ? TextCellValue(totalLateUndertimeMinutes.toString())
+          : TextCellValue('');
+  cellList['O$startingRowNumber'].cellStyle = borderedCellStyle;
+
+  // Total row (remaining cells)
   sheet.merge(
     CellIndex.indexByString('A$startingRowNumber'),
     CellIndex.indexByString('E$startingRowNumber'),
@@ -499,16 +702,6 @@ Future<String?> generateExcel(
   );
   cellList['E$startingRowNumber'].cellStyle = topBottomBorderCellStyle;
 
-  cellList['F$startingRowNumber'] = sheet.cell(
-    CellIndex.indexByString('F$startingRowNumber'),
-  );
-  cellList['F$startingRowNumber'].cellStyle = borderedCellStyle;
-
-  cellList['G$startingRowNumber'] = sheet.cell(
-    CellIndex.indexByString('G$startingRowNumber'),
-  );
-  cellList['G$startingRowNumber'].cellStyle = borderedCellStyle;
-
   sheet.merge(
     CellIndex.indexByString('I$startingRowNumber'),
     CellIndex.indexByString('M$startingRowNumber'),
@@ -539,18 +732,7 @@ Future<String?> generateExcel(
   );
   cellList['M$startingRowNumber'].cellStyle = borderedCellStyle;
 
-  cellList['N$startingRowNumber'] = sheet.cell(
-    CellIndex.indexByString('N$startingRowNumber'),
-  );
-  cellList['N$startingRowNumber'].cellStyle = borderedCellStyle;
-
-  cellList['O$startingRowNumber'] = sheet.cell(
-    CellIndex.indexByString('O$startingRowNumber'),
-  );
-  cellList['O$startingRowNumber'].cellStyle = borderedCellStyle;
-
   // Certification
-
   var certificationStartNumber = startingRowNumber + 2;
   var certificationEndNumber = startingRowNumber + 4;
   var attestationRowNumber = certificationEndNumber + 4;
@@ -576,17 +758,6 @@ Future<String?> generateExcel(
     CellIndex.indexByString('I$certificationStartNumber'),
   );
   cellList['I$certificationStartNumber'].cellStyle = centerWrappedTextStyle;
-
-  sheet.merge(
-    CellIndex.indexByString('D$attestationRowNumber'),
-    CellIndex.indexByString('G$attestationRowNumber'),
-    customValue: TextCellValue(employeeText),
-  );
-
-  cellList['D$attestationRowNumber'] = sheet.cell(
-    CellIndex.indexByString('D$attestationRowNumber'),
-  );
-  cellList['D$attestationRowNumber'].cellStyle = leftAlignedStyle;
 
   sheet.merge(
     CellIndex.indexByString('D$attestationRowNumber'),
@@ -965,4 +1136,28 @@ Future<String?> getPlatformDownloadPath() async {
   }
 
   return null;
+}
+
+extension DateTimeCopyWith on DateTime {
+  DateTime copyWith({
+    int? year,
+    int? month,
+    int? day,
+    int? hour,
+    int? minute,
+    int? second,
+    int? millisecond,
+    int? microsecond,
+  }) {
+    return DateTime(
+      year ?? this.year,
+      month ?? this.month,
+      day ?? this.day,
+      hour ?? this.hour,
+      minute ?? this.minute,
+      second ?? this.second,
+      millisecond ?? this.millisecond,
+      microsecond ?? this.microsecond,
+    );
+  }
 }
