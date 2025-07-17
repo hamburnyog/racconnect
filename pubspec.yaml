@@ -2,7 +2,7 @@ name: racconnect
 description: "RACCONNECT App"
 
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.2+3
 
 environment:
   sdk: ^3.7.2
