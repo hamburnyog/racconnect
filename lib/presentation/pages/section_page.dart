@@ -60,6 +60,9 @@ class _SectionPageState extends State<SectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 700;
+
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () async {
@@ -90,14 +93,14 @@ class _SectionPageState extends State<SectionPage> {
                     ),
                   ),
                   subtitle: Text(
-                    MediaQuery.of(context).size.width > 600
+                    !isSmallScreen
                         ? 'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.'
                         : 'Manage your sections here',
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   leading: Icon(Icons.group_rounded, color: Colors.white),
                   trailing:
-                      MediaQuery.of(context).size.width > 600
+                      !isSmallScreen
                           ? ConstrainedBox(
                             constraints: BoxConstraints(
                               maxWidth: 150,

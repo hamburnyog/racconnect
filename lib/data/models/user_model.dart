@@ -1,17 +1,19 @@
 import 'dart:convert';
-
 import 'package:flutter/widgets.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 
 class UserModel {
   final String? id;
+  final String? avatar;
   final String email;
   final String name;
   final bool? verified;
   final String? role;
   final ProfileModel? profile;
+
   UserModel({
     this.id,
+    this.avatar,
     required this.email,
     required this.name,
     this.verified,
@@ -21,7 +23,7 @@ class UserModel {
 
   UserModel copyWith({
     ValueGetter<String?>? id,
-    ValueGetter<String?>? employeeNumber,
+    ValueGetter<String?>? avatar,
     String? email,
     String? name,
     ValueGetter<bool?>? verified,
@@ -30,6 +32,7 @@ class UserModel {
   }) {
     return UserModel(
       id: id != null ? id() : this.id,
+      avatar: avatar != null ? avatar() : this.avatar,
       email: email ?? this.email,
       name: name ?? this.name,
       verified: verified != null ? verified() : this.verified,
@@ -41,6 +44,7 @@ class UserModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'avatar': avatar,
       'email': email,
       'name': name,
       'verified': verified,
@@ -53,14 +57,15 @@ class UserModel {
     final expand = map['expand'] as Map<String, dynamic>?;
 
     return UserModel(
-      id: map['id'],
-      email: map['email'] ?? '',
-      name: map['name'] ?? '',
-      verified: map['verified'],
-      role: map['role'],
+      id: map['id'] as String?,
+      avatar: map['avatar'] as String?,
+      email: map['email'] as String? ?? '',
+      name: map['name'] as String? ?? '',
+      verified: map['verified'] as bool?,
+      role: map['role'] as String?,
       profile:
           expand != null && expand['profile'] != null
-              ? ProfileModel.fromMap(expand['profile'])
+              ? ProfileModel.fromMap(expand['profile'] as Map<String, dynamic>)
               : null,
     );
   }
@@ -68,11 +73,11 @@ class UserModel {
   String toJson() => json.encode(toMap());
 
   factory UserModel.fromJson(String source) =>
-      UserModel.fromMap(json.decode(source));
+      UserModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, name: $name, verified: $verified, role: $role, profile: $profile)';
+    return 'UserModel(id: $id, avatar: $avatar, email: $email, name: $name, verified: $verified, role: $role, profile: $profile)';
   }
 
   @override
@@ -81,6 +86,7 @@ class UserModel {
 
     return other is UserModel &&
         other.id == id &&
+        other.avatar == avatar &&
         other.email == email &&
         other.name == name &&
         other.verified == verified &&
@@ -91,6 +97,7 @@ class UserModel {
   @override
   int get hashCode {
     return id.hashCode ^
+        avatar.hashCode ^
         email.hashCode ^
         name.hashCode ^
         verified.hashCode ^

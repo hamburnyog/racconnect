@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 600;
+    final bool isSmallScreen = width < 700;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -106,33 +106,34 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Card(
                   color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: Text(
-                      'Today is ${DateFormat.yMMMMd().format(now)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDay = now;
+                        _focusedDay = now;
+                      });
+                    },
+                    child: ListTile(
+                      leading: Icon(Icons.home, color: Colors.white),
+                      minTileHeight: 70,
+                      title: Text(
+                        'Today is ${DateFormat.yMMMMd().format(now)}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    subtitle: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedDay = now;
-                          _focusedDay = now;
-                        });
-                      },
-                      child: Text(
+                      subtitle: Text(
                         listOfDayEvents(_selectedDay!).isNotEmpty
                             ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
                             : 'No event for the selected day',
                         style: TextStyle(color: Colors.white),
                       ),
-                    ),
-                    trailing: ClockInButton(
-                      lockClockIn: _lockClockIn,
-                      onPressed: _showAttendanceForm,
+                      trailing: ClockInButton(
+                        lockClockIn: _lockClockIn,
+                        onPressed: _showAttendanceForm,
+                      ),
                     ),
                   ),
                 ),

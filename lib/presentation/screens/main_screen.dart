@@ -21,71 +21,61 @@ class _MainScreenState extends State<MainScreen> {
   List<BottomNavigationBarItem> sidebarItemMenu = [];
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  String? getPocketBaseFileUrl(String? filename, String? recordId) {
+    if (filename == null ||
+        filename.isEmpty ||
+        recordId == null ||
+        recordId.isEmpty) {
+      return null;
+    }
+    return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
+  }
+
+  String getUserInitial(AuthState state) {
+    if (state is AuthSignedIn) {
+      String name = state.user.name;
+      return name.isNotEmpty ? name[0].toUpperCase() : '';
+    }
+    return '';
+  }
+
+  Widget getAvatarWidget(BuildContext context) {
+    final state = context.read<AuthCubit>().state;
+    String? avatarUrl;
+
+    if (state is AuthSignedIn) {
+      avatarUrl = getPocketBaseFileUrl(state.user.avatar, state.user.id);
+    }
+
+    return avatarUrl != null && avatarUrl.isNotEmpty
+        ? CircleAvatar(
+          radius: 20,
+          backgroundImage: NetworkImage(avatarUrl),
+          onBackgroundImageError:
+              (error, stackTrace) => CircleAvatar(
+                radius: 20,
+                backgroundColor: Theme.of(context).primaryColor,
+                child: const Icon(Icons.person, color: Colors.white, size: 24),
+              ),
+        )
+        : CircleAvatar(
+          radius: 20,
+          backgroundColor: Theme.of(context).primaryColor,
+          child: const Icon(Icons.person, color: Colors.white, size: 24),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 600;
+    final bool isSmallScreen = width < 700;
     final bool isLargeScreen = width > 800;
 
     return Scaffold(
       key: _scaffoldKey,
       appBar:
-          !isLargeScreen
+          !isSmallScreen
               ? AppBar(
-                centerTitle: true,
-                surfaceTintColor: Colors.transparent,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/images/logo_bp.png', width: 40),
-                    const SizedBox(width: 10),
-                    Column(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            text: 'RACCO',
-                            style: GoogleFonts.righteous(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'nnect',
-                                style: GoogleFonts.righteous(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
-                                  color: Theme.of(context).disabledColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          'RACCO IV-A Calabarzon',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 10),
-                    Image.asset('assets/images/logo_nacc.png', width: 40),
-                  ],
-                ),
-                leading: SizedBox(),
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      context.read<AuthCubit>().signOut();
-                      Navigator.pushReplacementNamed(context, '/');
-                    },
-                    icon: Icon(Icons.logout),
-                  ),
-                ],
-              )
-              : AppBar(
                 elevation: 0,
                 centerTitle: true,
                 titleSpacing: 0,
@@ -93,14 +83,46 @@ class _MainScreenState extends State<MainScreen> {
                 backgroundColor: Colors.transparent,
                 scrolledUnderElevation: 0.0,
                 surfaceTintColor: Colors.transparent,
-                leading: SizedBox.shrink(),
+                leadingWidth: 200,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      getAvatarWidget(context),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: BlocBuilder<AuthCubit, AuthState>(
+                          builder: (context, state) {
+                            String userName = 'User';
+                            if (state is AuthSignedIn &&
+                                state.user.name.isNotEmpty) {
+                              userName = state.user.email;
+                              userName = userName.split('@').first;
+                            }
+                            return Text(
+                              userName,
+                              style: GoogleFonts.aBeeZee(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 actions: [
                   IconButton(
                     onPressed: () {
                       context.read<AuthCubit>().signOut();
                       Navigator.pushReplacementNamed(context, '/');
                     },
-                    icon: Icon(Icons.logout),
+                    icon: const Icon(Icons.logout),
                   ),
                 ],
                 title: Padding(
@@ -149,6 +171,63 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ),
+              )
+              : AppBar(
+                centerTitle: true,
+                surfaceTintColor: Colors.transparent,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/images/logo_bp.png', width: 40),
+                    const SizedBox(width: 10),
+                    Column(
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            text: 'RACCO',
+                            style: GoogleFonts.righteous(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'nnect',
+                                style: GoogleFonts.righteous(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                  color: Theme.of(context).disabledColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          'RACCO IV-A Calabarzon',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+                    Image.asset('assets/images/logo_nacc.png', width: 40),
+                  ],
+                ),
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: getAvatarWidget(context),
+                ),
+                actions: [
+                  IconButton(
+                    onPressed: () {
+                      context.read<AuthCubit>().signOut();
+                      Navigator.pushReplacementNamed(context, '/');
+                    },
+                    icon: const Icon(Icons.logout),
+                  ),
+                ],
               ),
       bottomNavigationBar:
           isSmallScreen

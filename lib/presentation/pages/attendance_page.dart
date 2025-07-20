@@ -40,12 +40,12 @@ class _AttendancePageState extends State<AttendancePage>
   void initState() {
     super.initState();
     _glowController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
     _glowAnimation = ColorTween(
-      begin: Colors.purple.withValues(alpha: 0.4),
-      end: Colors.purple.withValues(alpha: 0.8),
+      begin: Colors.purple.withValues(alpha: 0.1),
+      end: Colors.purple.withValues(alpha: 0.4),
     ).animate(_glowController);
     _loadInitialData();
   }
@@ -272,118 +272,128 @@ Widget buildAttendanceRow({
   final isNonWorkingDay = holidayName != null || isWeekend;
 
   if (isNonWorkingDay) {
-    return Container(
-      color: rowColor,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              DateFormat('MMM dd (E)').format(day),
-              style: TextStyle(
-                fontSize: isSmallScreen ? 12 : 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: rowColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade100, width: 1.5),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                DateFormat('MMM dd (E)').format(day),
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: isSmallScreen ? 12 : 14,
-                color: Colors.grey.shade600,
+            Expanded(
+              flex: 5,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: isSmallScreen ? 12 : 14,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   final isWFH = data?['type']?.toLowerCase().contains('wfh') ?? false;
 
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap:
-        isWFH
-            ? () => _showRemarksDialog(
-              context,
-              scaffoldMessengerKey: scaffoldMessengerKey,
-              day: day,
-              timeInRemarks: data?['timeInRemarks'] ?? 'No targets specified',
-              timeOutRemarks:
-                  data?['timeOutRemarks'] ?? 'No accomplishments specified',
-            )
-            : null,
-    child: AnimatedBuilder(
-      animation: glowAnimation,
-      builder: (context, child) {
-        return Container(
-          decoration:
-              isWFH
-                  ? BoxDecoration(
-                    color: rowColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: glowAnimation.value ?? Colors.purple,
-                      width: 1.5,
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 1.0),
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap:
+          isWFH
+              ? () => _showRemarksDialog(
+                context,
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                day: day,
+                timeInRemarks: data?['timeInRemarks'] ?? 'No targets specified',
+                timeOutRemarks:
+                    data?['timeOutRemarks'] ?? 'No accomplishments specified',
+              )
+              : null,
+      child: AnimatedBuilder(
+        animation: glowAnimation,
+        builder: (context, child) {
+          return Container(
+            decoration:
+                isWFH
+                    ? BoxDecoration(
+                      color: rowColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: glowAnimation.value ?? Colors.purple,
+                        width: 1.5,
+                      ),
+                    )
+                    : BoxDecoration(color: rowColor),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    DateFormat('MMM dd (E)').format(day),
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 14,
+                      color: Colors.teal,
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-                  : BoxDecoration(color: rowColor),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  DateFormat('MMM dd (E)').format(day),
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 12 : 14,
-                    color: Colors.teal,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              Expanded(
-                child: buildTimeCell(
-                  data?['timeIn'],
-                  isSmallScreen: isSmallScreen,
+                Expanded(
+                  child: buildTimeCell(
+                    data?['timeIn'],
+                    isSmallScreen: isSmallScreen,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: buildTimeCell(
-                  data?['lunchOut'],
-                  isSmallScreen: isSmallScreen,
+                Expanded(
+                  child: buildTimeCell(
+                    data?['lunchOut'],
+                    isSmallScreen: isSmallScreen,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: buildTimeCell(
-                  data?['lunchIn'],
-                  isSmallScreen: isSmallScreen,
+                Expanded(
+                  child: buildTimeCell(
+                    data?['lunchIn'],
+                    isSmallScreen: isSmallScreen,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: buildTimeCell(
-                  data?['timeOut'],
-                  isSmallScreen: isSmallScreen,
+                Expanded(
+                  child: buildTimeCell(
+                    data?['timeOut'],
+                    isSmallScreen: isSmallScreen,
+                  ),
                 ),
-              ),
-              Expanded(
-                child:
-                    data?['type'] != null
-                        ? _buildBadge(
-                          data!['type']!,
-                          smallScreen: isSmallScreen,
-                        )
-                        : const SizedBox.shrink(),
-              ),
-            ],
-          ),
-        );
-      },
+                Expanded(
+                  child:
+                      data?['type'] != null
+                          ? _buildBadge(
+                            data!['type']!,
+                            smallScreen: isSmallScreen,
+                          )
+                          : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     ),
   );
 }

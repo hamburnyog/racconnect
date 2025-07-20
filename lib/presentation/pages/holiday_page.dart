@@ -61,6 +61,9 @@ class _HolidayPageState extends State<HolidayPage> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 700;
+
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () async {
@@ -91,7 +94,7 @@ class _HolidayPageState extends State<HolidayPage> {
                     ),
                   ),
                   subtitle: Text(
-                    MediaQuery.of(context).size.width > 600
+                    !isSmallScreen
                         ? 'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.'
                         : 'Manage your holidays here',
                     style: TextStyle(color: Colors.white70, fontSize: 10),
@@ -101,7 +104,7 @@ class _HolidayPageState extends State<HolidayPage> {
                     color: Colors.white,
                   ),
                   trailing:
-                      MediaQuery.of(context).size.width > 600
+                      !isSmallScreen
                           ? ConstrainedBox(
                             constraints: BoxConstraints(
                               maxWidth: 150,

@@ -40,7 +40,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 600;
+    final bool isSmallScreen = width < 700;
 
     return Scaffold(
       body: SafeArea(

@@ -184,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 600;
+    final bool isSmallScreen = width < 700;
 
     return BlocListener<ProfileCubit, ProfileState>(
       listener: (context, state) {
@@ -355,13 +355,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                   });
                                 },
                                 decoration: const InputDecoration(
-                                  labelText: 'Section',
+                                  labelText: 'Unit',
                                   border: OutlineInputBorder(),
                                 ),
                                 validator:
                                     (value) =>
                                         value == null || value.isEmpty
-                                            ? 'Section required'
+                                            ? 'Unit required'
                                             : null,
                               )
                             else
