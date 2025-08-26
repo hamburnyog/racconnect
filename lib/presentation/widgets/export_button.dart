@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/utility/generate_excel.dart';
@@ -11,12 +12,14 @@ class ExportButton extends StatelessWidget {
   final int selectedYear;
   final int selectedMonth;
   final Map<DateTime, String> holidayMap;
+  final Map<DateTime, SuspensionModel> suspensionMap;
 
   const ExportButton({
     super.key,
     required this.selectedYear,
     required this.selectedMonth,
     required this.holidayMap,
+    required this.suspensionMap,
   });
 
   @override
@@ -49,6 +52,7 @@ class ExportButton extends StatelessWidget {
         profile!,
         monthlyLogs,
         holidayMap,
+        suspensionMap,
       );
 
       if (!context.mounted) return;

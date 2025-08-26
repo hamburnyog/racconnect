@@ -132,9 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder:
           (ctx) => AlertDialog(
             title: const Text('Confirm Update'),
-            content: const Text(
-              'Saving your profile will log you out to refresh permissions. Continue?',
-            ),
+            content: const Text('Are you sure you want to continue?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -166,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text('Yes, Save & Logout'),
+                child: const Text('Yes, Save'),
               ),
             ],
           ),
@@ -181,7 +179,20 @@ class _ProfilePageState extends State<ProfilePage> {
     return BlocListener<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is SaveProfileSuccess) {
-          context.read<AuthCubit>().signOut();
+          final authCubit = context.read<AuthCubit>();
+          final authState = authCubit.state;
+          if (authState is AuthenticatedState) {
+            final updatedUser = authState.user.copyWith(
+              profile: () => state.profile,
+            );
+            authCubit.refreshUser(updatedUser);
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
         } else if (state is ProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error), backgroundColor: Colors.red),

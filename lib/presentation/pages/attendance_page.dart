@@ -7,6 +7,8 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
+import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/utility/group_attendance.dart';
 import 'package:flutter/services.dart';
 
@@ -23,6 +25,7 @@ class _AttendancePageState extends State<AttendancePage>
   int selectedMonth = DateTime.now().month;
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
+  Map<DateTime, SuspensionModel> suspensionMap = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
@@ -59,6 +62,7 @@ class _AttendancePageState extends State<AttendancePage>
 
   Future<void> _loadInitialData() async {
     context.read<HolidayCubit>().getAllHolidays();
+    context.read<SuspensionCubit>().getAllSuspensions();
 
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthenticatedState) {
@@ -81,7 +85,7 @@ class _AttendancePageState extends State<AttendancePage>
                   .toList();
 
           setState(() {
-            attendanceMap = groupAttendance(filteredLogs);
+            attendanceMap = groupAttendance(filteredLogs, suspensionMap);
           });
         }
       }
@@ -108,132 +112,152 @@ class _AttendancePageState extends State<AttendancePage>
               DateTime(h.date.year, h.date.month, h.date.day): h.name,
           };
         }
-        return Stack(
-          key: _scaffoldMessengerKey,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Column(
-                children: [
-                  Card(
-                    color: Theme.of(context).primaryColor,
-                    child: ListTile(
-                      minTileHeight: 70,
-                      leading: const Icon(
-                        Icons.access_time_rounded,
-                        color: Colors.white,
-                      ),
-                      title: Text(
-                        isSmallScreen ? 'Attendance' : 'Attendance Records',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+        return BlocBuilder<SuspensionCubit, SuspensionState>(
+          builder: (context, suspensionState) {
+            if (suspensionState is GetAllSuspensionSuccess) {
+              suspensionMap = {
+                for (var s in suspensionState.suspensionModels)
+                  DateTime(s.datetime.year, s.datetime.month, s.datetime.day):
+                      s,
+              };
+            }
+            return Stack(
+              key: _scaffoldMessengerKey,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  child: Column(
+                    children: [
+                      Card(
+                        color: Theme.of(context).primaryColor,
+                        child: ListTile(
+                          minTileHeight: 70,
+                          leading: const Icon(
+                            Icons.access_time_rounded,
+                            color: Colors.white,
+                          ),
+                          title: Text(
+                            isSmallScreen ? 'Attendance' : 'Attendance Records',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: Text(
+                            !isSmallScreen
+                                ? 'Click on any WFH row to view targets and accomplishments. Use the Export button to generate your DTR.'
+                                : 'View your attendance here',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                          trailing: ExportButton(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            holidayMap: holidayMap,
+                            suspensionMap: suspensionMap,
+                          ),
                         ),
                       ),
-                      subtitle: Text(
-                        !isSmallScreen
-                            ? 'Click on any WFH row to view targets and accomplishments. Use the Export button to generate your DTR.'
-                            : 'View your attendance here',
-                        style: TextStyle(color: Colors.white70, fontSize: 10),
-                      ),
-                      trailing: ExportButton(
-                        selectedYear: selectedYear,
-                        selectedMonth: selectedMonth,
-                        holidayMap: holidayMap,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      Expanded(
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    initialValue: selectedYear,
-                                    isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Year',
-                                    ),
-                                    items:
-                                        getYears().map((y) {
-                                          return DropdownMenuItem(
-                                            value: y,
-                                            child: Text('$y'),
-                                          );
-                                        }).toList(),
-                                    onChanged:
-                                        (val) =>
-                                            _onDateFilterChanged(year: val),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    isExpanded: true,
-                                    initialValue: selectedMonth,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Month',
-                                    ),
-                                    items: List.generate(12, (i) {
-                                      return DropdownMenuItem(
-                                        value: i + 1,
-                                        child: Text(
-                                          DateFormat(
-                                            'MMMM',
-                                          ).format(DateTime(0, i + 1)),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        initialValue: selectedYear,
+                                        isExpanded: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Year',
                                         ),
-                                      );
-                                    }),
-                                    onChanged:
-                                        (val) =>
-                                            _onDateFilterChanged(month: val),
+                                        items:
+                                            getYears().map((y) {
+                                              return DropdownMenuItem(
+                                                value: y,
+                                                child: Text('$y'),
+                                              );
+                                            }).toList(),
+                                        onChanged:
+                                            (val) =>
+                                                _onDateFilterChanged(year: val),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        isExpanded: true,
+                                        initialValue: selectedMonth,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Month',
+                                        ),
+                                        items: List.generate(12, (i) {
+                                          return DropdownMenuItem(
+                                            value: i + 1,
+                                            child: Text(
+                                              DateFormat(
+                                                'MMMM',
+                                              ).format(DateTime(0, i + 1)),
+                                            ),
+                                          );
+                                        }),
+                                        onChanged:
+                                            (val) => _onDateFilterChanged(
+                                              month: val,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  child: Scrollbar(
+                                    controller: _scrollController,
+                                    thumbVisibility: true,
+                                    child: ListView.builder(
+                                      controller: _scrollController,
+                                      itemCount: days.length,
+                                      itemBuilder: (context, index) {
+                                        return buildAttendanceRow(
+                                          context: context,
+                                          scaffoldMessengerKey:
+                                              _scaffoldMessengerKey,
+                                          day: days[index],
+                                          attendanceMap: attendanceMap,
+                                          holidayMap: holidayMap,
+                                          suspensionMap: suspensionMap,
+                                          isSmallScreen: isSmallScreen,
+                                          glowAnimation: _glowAnimation,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            Expanded(
-                              child: Scrollbar(
-                                controller: _scrollController,
-                                thumbVisibility: true,
-                                child: ListView.builder(
-                                  controller: _scrollController,
-                                  itemCount: days.length,
-                                  itemBuilder: (context, index) {
-                                    return buildAttendanceRow(
-                                      context: context,
-                                      scaffoldMessengerKey:
-                                          _scaffoldMessengerKey,
-                                      day: days[index],
-                                      attendanceMap: attendanceMap,
-                                      holidayMap: holidayMap,
-                                      isSmallScreen: isSmallScreen,
-                                      glowAnimation: _glowAnimation,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            ImportButton(
-              selectedYear: selectedYear,
-              selectedMonth: selectedMonth,
-              onRefresh: _loadInitialData,
-            ),
-          ],
+                ),
+                ImportButton(
+                  selectedYear: selectedYear,
+                  selectedMonth: selectedMonth,
+                  onRefresh: _loadInitialData,
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -246,6 +270,7 @@ Widget buildAttendanceRow({
   required DateTime day,
   required Map<String, Map<String, String>> attendanceMap,
   required Map<DateTime, String> holidayMap,
+  required Map<DateTime, SuspensionModel> suspensionMap,
   required bool isSmallScreen,
   required Animation<Color?> glowAnimation,
 }) {
@@ -258,7 +283,7 @@ Widget buildAttendanceRow({
 
   final rowColor =
       holidayName != null
-          ? Colors.orange.shade50
+          ? Colors.green.shade50
           : isWeekend
           ? Colors.grey.shade200
           : isToday
@@ -268,12 +293,24 @@ Widget buildAttendanceRow({
   final label = holidayName ?? (isWeekend ? 'Weekend' : '');
   final isNonWorkingDay = holidayName != null || isWeekend;
 
-  if (isNonWorkingDay) {
+  final isSuspension = suspensionMap.containsKey(day);
+  final suspensionModel = suspensionMap[day];
+
+  if (isNonWorkingDay ||
+      (isSuspension && suspensionModel?.isHalfday == false)) {
+    String displayLabel = label;
+    Color? effectiveRowColor = rowColor;
+
+    if (isSuspension && suspensionModel?.isHalfday == false) {
+      displayLabel = suspensionModel!.name;
+      effectiveRowColor = Colors.orange.withValues(alpha: 0.1);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.0),
       child: Container(
         decoration: BoxDecoration(
-          color: rowColor,
+          color: effectiveRowColor,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.shade100, width: 1.5),
         ),
@@ -293,7 +330,7 @@ Widget buildAttendanceRow({
             Expanded(
               flex: 5,
               child: Text(
-                label,
+                displayLabel,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -309,6 +346,30 @@ Widget buildAttendanceRow({
   }
 
   final isWFH = data?['type']?.toLowerCase().contains('wfh') ?? false;
+
+  String? displayTimeIn = data?['timeIn'];
+  String? displayLunchOut = data?['lunchOut'];
+  String? displayLunchIn = data?['lunchIn'];
+  String? displayTimeOut = data?['timeOut'];
+  String? displayType = data?['type'];
+
+  if (isSuspension && suspensionModel!.isHalfday) {
+    if (displayTimeIn != null && displayTimeIn != '—') {
+      displayLunchOut = DateFormat('h:mm a').format(suspensionModel.datetime);
+      // displayLunchIn = suspensionModel.name;
+      // displayTimeOut = null;
+      displayLunchIn = '-';
+      displayTimeOut = '-';
+    } else {
+      displayTimeIn = '—';
+      displayLunchOut = DateFormat('h:mm a').format(suspensionModel.datetime);
+      // displayLunchIn = suspensionModel.name;
+      // displayTimeOut = null;
+      displayLunchIn = '-';
+      displayTimeOut = '-';
+    }
+    displayType = 'suspension';
+  }
 
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 1.0),
@@ -355,35 +416,38 @@ Widget buildAttendanceRow({
                 ),
                 Expanded(
                   child: buildTimeCell(
-                    data?['timeIn'],
+                    displayTimeIn,
                     isSmallScreen: isSmallScreen,
                   ),
                 ),
                 Expanded(
                   child: buildTimeCell(
-                    data?['lunchOut'],
+                    displayLunchOut,
                     isSmallScreen: isSmallScreen,
                   ),
                 ),
                 Expanded(
+                  // flex:
+                  //     // (displayType == 'suspension' && displayTimeOut == null)
+                  //     //     ? 2
+                  //     //     : 1,
                   child: buildTimeCell(
-                    data?['lunchIn'],
+                    displayLunchIn,
                     isSmallScreen: isSmallScreen,
                   ),
                 ),
+                // if (displayType != 'suspension' ||
+                //     displayType == 'suspension' && displayTimeOut != null)
                 Expanded(
                   child: buildTimeCell(
-                    data?['timeOut'],
+                    displayTimeOut,
                     isSmallScreen: isSmallScreen,
                   ),
                 ),
                 Expanded(
                   child:
-                      data?['type'] != null
-                          ? _buildBadge(
-                            data!['type']!,
-                            smallScreen: isSmallScreen,
-                          )
+                      displayType != null
+                          ? _buildBadge(displayType, smallScreen: isSmallScreen)
                           : const SizedBox.shrink(),
                 ),
               ],
@@ -538,8 +602,21 @@ Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
 Widget _buildBadge(String type, {bool smallScreen = false}) {
   final normalized = type.toLowerCase();
   final isWFH = normalized.contains('wfh');
+  final isSuspension = normalized.contains('suspension');
 
-  final color = isWFH ? Colors.purple : Colors.teal;
+  Color color;
+  String text;
+
+  if (isSuspension) {
+    color = Colors.orange;
+    text = 'SUSP.';
+  } else if (isWFH) {
+    color = Colors.purple;
+    text = 'WFH';
+  } else {
+    color = Colors.teal;
+    text = 'BIO';
+  }
 
   return Container(
     margin: EdgeInsets.only(left: 5),
@@ -550,11 +627,11 @@ Widget _buildBadge(String type, {bool smallScreen = false}) {
     ),
     child: Center(
       child: Text(
-        isWFH ? 'WFH' : 'BIO',
+        text,
         style: TextStyle(
           fontSize: smallScreen ? 8 : 14,
           fontWeight: FontWeight.w600,
-          color: color.shade400,
+          color: color,
         ),
       ),
     ),

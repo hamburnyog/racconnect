@@ -71,13 +71,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> loadEvents() async {
-    var eventCubit = context.read<EventCubit>();
+    final eventCubit = context.read<EventCubit>();
+    final suspensionCubit = context.read<SuspensionCubit>();
+
     await eventCubit.getAllEvents();
     final eventState = eventCubit.state;
 
-    var suspensionCubit = context.read<SuspensionCubit>();
     await suspensionCubit.getAllSuspensions();
     final suspensionState = suspensionCubit.state;
+
+    if (!mounted) return;
 
     if (eventState is GetAllEventSuccess) {
       setState(() {
@@ -86,21 +89,23 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (suspensionState is GetAllSuspensionSuccess) {
-      for (var suspension in suspensionState.suspensionModels) {
-        final dateKey = DateFormat('yyyy-MM-dd').format(suspension.datetime);
-        final time = DateFormat('hh:mm a').format(suspension.datetime);
-        final title =
-            suspension.isHalfday
-                ? '${suspension.name} ($time)'
-                : suspension.name;
-        final eventString = '${title},T=Suspension';
+      setState(() {
+        for (var suspension in suspensionState.suspensionModels) {
+          final dateKey = DateFormat('yyyy-MM-dd').format(suspension.datetime);
+          final time = DateFormat('hh:mm a').format(suspension.datetime);
+          final title =
+              suspension.isHalfday
+                  ? '${suspension.name} ($time)'
+                  : suspension.name;
+          final eventString = '$title,T=Suspension';
 
-        if (mySelectedEvents.containsKey(dateKey)) {
-          mySelectedEvents[dateKey]!.add(eventString);
-        } else {
-          mySelectedEvents[dateKey] = [eventString];
+          if (mySelectedEvents.containsKey(dateKey)) {
+            mySelectedEvents[dateKey]!.add(eventString);
+          } else {
+            mySelectedEvents[dateKey] = [eventString];
+          }
         }
-      }
+      });
     }
   }
 

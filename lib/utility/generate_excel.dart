@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
 
 import 'constants.dart';
 
@@ -13,6 +14,7 @@ Future<String?> generateExcel(
   ProfileModel profile,
   List<AttendanceModel> monthlyAttendance,
   Map<DateTime, String> holidayMap,
+  Map<DateTime, SuspensionModel> suspensionMap,
 ) async {
   bool fileExists = false;
 
@@ -276,12 +278,53 @@ Future<String?> generateExcel(
     final logTimes = extractLogTimes(dayLogs);
     bool isWFH = dayLogs.any((log) => log.type.toLowerCase() == 'wfh');
     String amIn = logTimes['amIn'] ?? '';
-    String amOut = isWFH ? '12:00 PM' : (logTimes['amOut'] ?? '');
-    String pmIn = isWFH ? '1:00 PM' : (logTimes['pmIn'] ?? '');
     String pmOut = logTimes['pmOut'] ?? '';
 
+    final dateFormat = DateFormat('h:mm a');
+
+    String amOut = logTimes['amOut'] ?? '';
+    String pmIn = logTimes['pmIn'] ?? '';
+
+    final isSuspension = suspensionMap.containsKey(currentDate);
+    final suspensionModel = suspensionMap[currentDate];
+
+    if (isSuspension) {
+      if (suspensionModel!.isHalfday) {
+        if (amIn.isNotEmpty) {
+          amOut = dateFormat.format(suspensionModel.datetime);
+          pmIn = '';
+          pmOut = '';
+        } else {
+          amIn = '';
+          amOut = '';
+          pmIn = '';
+          pmOut = '';
+        }
+      } else {
+        amIn = '';
+        amOut = '';
+        pmIn = '';
+        pmOut = '';
+      }
+    } else if (isWFH) {
+      final amInDateTime =
+          amIn.isNotEmpty
+              ? dateFormat
+                  .parse(amIn)
+                  .copyWith(
+                    year: currentDate.year,
+                    month: currentDate.month,
+                    day: currentDate.day,
+                  )
+              : null;
+
+      if (amInDateTime != null && amInDateTime.hour < 12) {
+        amOut = '12:00 PM';
+        pmIn = '1:00 PM';
+      }
+    }
+
     if (isWeekend) {
-      // Weekend format
       cellList['A$currrentRowNumber'] = sheet.cell(
         CellIndex.indexByString('A$currrentRowNumber'),
       );
@@ -379,6 +422,140 @@ Future<String?> generateExcel(
         );
         cellList['$col$currrentRowNumber'].value = null;
         cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+      }
+    } else if (isSuspension) {
+      // NEW SUSPENSION BLOCK
+      cellList['A$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('A$currrentRowNumber'),
+      );
+      cellList['A$currrentRowNumber'].value = IntCellValue(startingDay);
+      cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      if (suspensionModel!.isHalfday && amIn.isNotEmpty) {
+        // Half-day suspension with time-in
+        // Display amIn and amOut (which is suspension time)
+        cellList['B$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('B$currrentRowNumber'),
+        );
+        cellList['B$currrentRowNumber'].value = TextCellValue(amIn);
+        cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        cellList['C$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('C$currrentRowNumber'),
+        );
+        cellList['C$currrentRowNumber'].value = TextCellValue(amOut);
+        cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        // Merge PM cells and display suspension name
+        sheet.merge(
+          CellIndex.indexByString('D$currrentRowNumber'),
+          CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
+          customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+        );
+        for (var col in ['D', 'E']) {
+          // Apply styles to merged cells
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].cellStyle =
+              topBottomBorderCellStyle;
+        }
+
+        // Set late/undertime to null for half-day suspension
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
+      } else {
+        // Full-day suspension or half-day with no time-in (treated as full absence)
+        sheet.merge(
+          CellIndex.indexByString('B$currrentRowNumber'),
+          CellIndex.indexByString('E$currrentRowNumber'), // Merges B, C, D, E
+          customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+        );
+        for (var col in ['B', 'C', 'D', 'E']) {
+          // Apply styles to merged cells
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].cellStyle =
+              topBottomBorderCellStyle;
+        }
+
+        // Set late/undertime to null for full-day suspension
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
+      }
+
+      // Mirrored columns I to O (similar to holiday logic)
+      cellList2['I$currrentRowNumber'] = sheet.cell(
+        CellIndex.indexByString('I$currrentRowNumber'),
+      );
+      cellList2['I$currrentRowNumber'].value = IntCellValue(startingDay);
+      cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+      if (suspensionModel.isHalfday && amIn.isNotEmpty) {
+        cellList['J$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('J$currrentRowNumber'),
+        );
+        cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
+        cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        cellList['K$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('K$currrentRowNumber'),
+        );
+        cellList['K$currrentRowNumber'].value = TextCellValue(amOut);
+        cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        sheet.merge(
+          CellIndex.indexByString('L$currrentRowNumber'),
+          CellIndex.indexByString('M$currrentRowNumber'),
+          customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+        );
+        for (var col in ['L', 'M']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].cellStyle =
+              topBottomBorderCellStyle;
+        }
+
+        for (var col in ['N', 'O']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
+      } else {
+        sheet.merge(
+          CellIndex.indexByString('J$currrentRowNumber'),
+          CellIndex.indexByString('M$currrentRowNumber'),
+          customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+        );
+        for (var col in ['J', 'K', 'L', 'M']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].cellStyle =
+              topBottomBorderCellStyle;
+        }
+
+        for (var col in ['N', 'O']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
       }
     } else {
       // Weekday with actual attendance
@@ -854,7 +1031,8 @@ Future<String?> generateExcel(
   sheet.merge(
     CellIndex.indexByString('D$attestationRowNumber'),
     CellIndex.indexByString('G$attestationRowNumber'),
-    customValue: TextCellValue(supervisorText),
+    customValue: TextCellValue(''),
+    // customValue: TextCellValue(supervisorText),
   );
 
   cellList['D$attestationRowNumber'] = sheet.cell(
@@ -865,7 +1043,8 @@ Future<String?> generateExcel(
   sheet.merge(
     CellIndex.indexByString('L$attestationRowNumber'),
     CellIndex.indexByString('O$attestationRowNumber'),
-    customValue: TextCellValue(supervisorText),
+    customValue: TextCellValue(''),
+    // customValue: TextCellValue(supervisorText),
   );
 
   cellList['L$attestationRowNumber'] = sheet.cell(

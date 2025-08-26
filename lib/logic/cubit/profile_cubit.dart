@@ -23,7 +23,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   }) async {
     try {
       emit(ProfileLoading());
-      await profileRepository.saveProfile(
+      final updatedProfile = await profileRepository.saveProfile(
         id: id,
         employeeNumber: employeeNumber,
         firstName: firstName,
@@ -35,7 +35,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         position: position,
         sectionId: sectionId,
       );
-      emit(SaveProfileSuccess());
+      emit(SaveProfileSuccess(updatedProfile));
     } catch (e) {
       errorMessage(e);
     }

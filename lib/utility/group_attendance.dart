@@ -1,7 +1,11 @@
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
 
-Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
+Map<String, Map<String, String>> groupAttendance(
+  List<AttendanceModel> logs,
+  Map<DateTime, SuspensionModel> suspensionMap,
+) {
   final Map<String, List<AttendanceModel>> groupedLogs = {};
 
   for (var log in logs) {
@@ -28,12 +32,47 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
 
     final isWFH = type.toLowerCase().contains('wfh');
 
-    if (times.length == 1) {
+    final currentDate = DateTime.parse(date);
+    final isSuspension = suspensionMap.containsKey(currentDate);
+    final suspensionModel = suspensionMap[currentDate];
+
+    if (isSuspension) {
+      if (suspensionModel!.isHalfday) {
+        if (times.isNotEmpty) {
+          amIn = timeFormat.format(times.first);
+          amOut = timeFormat.format(suspensionModel.datetime);
+          pmIn = '—';
+          pmOut = '—';
+          timeInRemarks = remarks.first;
+          timeOutRemarks = 'Suspension: ${suspensionModel.name}';
+        } else {
+          amIn = '—';
+          amOut = '—';
+          pmIn = '—';
+          pmOut = '—';
+          timeInRemarks = 'Absent';
+          timeOutRemarks = 'Absent';
+        }
+      } else {
+        amIn = '—';
+        amOut = '—';
+        pmIn = '—';
+        pmOut = '—';
+        timeInRemarks = 'Absent';
+        timeOutRemarks = 'Absent';
+      }
+    } else if (times.length == 1) {
       amIn = timeFormat.format(times[0]);
       timeInRemarks = remarks[0];
       if (isWFH) {
-        amOut = '12:00 PM';
-        pmIn = '01:00 PM';
+        final amInDateTime = times[0];
+        if (amInDateTime.hour >= 12) {
+          amOut = '—';
+          pmIn = '—';
+        } else {
+          amOut = '12:00 PM';
+          pmIn = '01:00 PM';
+        }
       }
     } else if (times.length <= 3) {
       amIn = timeFormat.format(times.first);
@@ -41,8 +80,14 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
       timeInRemarks = remarks.first;
       timeOutRemarks = remarks.last;
       if (isWFH) {
-        amOut = '12:00 PM';
-        pmIn = '01:00 PM';
+        final amInDateTime = times.first;
+        if (amInDateTime.hour >= 12) {
+          amOut = '—';
+          pmIn = '—';
+        } else {
+          amOut = '12:00 PM';
+          pmIn = '01:00 PM';
+        }
       }
     } else if (times.length == 4) {
       amIn = timeFormat.format(times[0]);
@@ -50,8 +95,14 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
       timeInRemarks = remarks[0];
       timeOutRemarks = remarks[3];
       if (isWFH) {
-        amOut = '12:00 PM';
-        pmIn = '01:00 PM';
+        final amInDateTime = times[0];
+        if (amInDateTime.hour >= 12) {
+          amOut = '—';
+          pmIn = '—';
+        } else {
+          amOut = '12:00 PM';
+          pmIn = '01:00 PM';
+        }
       } else {
         amOut = timeFormat.format(times[1]);
         pmIn = timeFormat.format(times[2]);
@@ -62,8 +113,14 @@ Map<String, Map<String, String>> groupAttendance(List<AttendanceModel> logs) {
       timeInRemarks = remarks[0];
       timeOutRemarks = remarks.last;
       if (isWFH) {
-        amOut = '12:00 PM';
-        pmIn = '01:00 PM';
+        final amInDateTime = times[0];
+        if (amInDateTime.hour >= 12) {
+          amOut = '—';
+          pmIn = '—';
+        } else {
+          amOut = '12:00 PM';
+          pmIn = '01:00 PM';
+        }
       } else {
         amOut = timeFormat.format(times[1]);
         pmIn = timeFormat.format(times[2]);

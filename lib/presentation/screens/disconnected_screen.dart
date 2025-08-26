@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 class DisconnectedScreen extends StatefulWidget {
@@ -13,9 +14,6 @@ class DisconnectedScreen extends StatefulWidget {
 class _DisconnectedScreenState extends State<DisconnectedScreen> {
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -27,47 +25,25 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset('assets/images/logo_bp.png', width: 50),
-                      const SizedBox(width: 10),
-                      Column(
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              text: 'RACCO',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 30,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: 'nnect',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 30,
-                                    color: Theme.of(context).disabledColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            isSmallScreen
-                                ? 'RACCO IV-A Calabarzon'
-                                : 'Regional Alternative Child Care Office IV-A Calabarzon',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'RACCO',
+                      style: GoogleFonts.righteous(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30,
+                        color: Theme.of(context).primaryColor,
                       ),
-                      const SizedBox(width: 10),
-                      Image.asset('assets/images/logo_nacc.png', width: 50),
-                    ],
+                      children: [
+                        TextSpan(
+                          text: 'nnect',
+                          style: GoogleFonts.righteous(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 30,
+                            color: Theme.of(context).disabledColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

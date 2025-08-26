@@ -13,7 +13,10 @@ final class ProfileError extends ProfileState {
   const ProfileError(this.error);
 }
 
-final class SaveProfileSuccess extends ProfileState {}
+final class SaveProfileSuccess extends ProfileState {
+  final ProfileModel profile;
+  const SaveProfileSuccess(this.profile);
+}
 
 final class GetProfileSuccess extends ProfileState {}
 
