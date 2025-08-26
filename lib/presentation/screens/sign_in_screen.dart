@@ -75,57 +75,25 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/logo_bp.png',
-                                    width: 50,
+                              child: RichText(
+                                text: TextSpan(
+                                  text: 'RACCO',
+                                  style: GoogleFonts.righteous(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 30,
+                                    color: Theme.of(context).primaryColor,
                                   ),
-                                  const SizedBox(width: 20),
-                                  Column(
-                                    children: [
-                                      RichText(
-                                        text: TextSpan(
-                                          text: 'RACCO',
-                                          style: GoogleFonts.righteous(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 22,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text: 'nnect',
-                                              style: GoogleFonts.righteous(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 22,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).disabledColor,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'nnect',
+                                      style: GoogleFonts.righteous(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 30,
+                                        color: Theme.of(context).disabledColor,
                                       ),
-                                      Text(
-                                        isSmallScreen
-                                            ? 'RACCO IV-A Calabarzon'
-                                            : 'Regional Alternative Child Care Office IV-A Calabarzon',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Image.asset(
-                                    'assets/images/logo_nacc.png',
-                                    width: 50,
-                                  ),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

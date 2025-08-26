@@ -1,51 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:racconnect/data/models/holiday_model.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
+import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 
-import 'package:racconnect/logic/cubit/holiday_cubit.dart';
-
-class HolidayForm extends StatefulWidget {
-  final HolidayModel? holidayModel;
-  const HolidayForm({this.holidayModel, super.key});
+class SuspensionForm extends StatefulWidget {
+  final SuspensionModel? suspensionModel;
+  const SuspensionForm({this.suspensionModel, super.key});
 
   @override
-  State<HolidayForm> createState() => _HolidayFormState();
+  State<SuspensionForm> createState() => _SuspensionFormState();
 }
 
-class _HolidayFormState extends State<HolidayForm> {
+class _SuspensionFormState extends State<SuspensionForm> {
   TextEditingController nameController = TextEditingController();
   TextEditingController dateController = TextEditingController();
+  TextEditingController timeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-
-  void addHoliday() {
-    if (formKey.currentState!.validate()) {
-      context.read<HolidayCubit>().addHoliday(
-        name: nameController.text.trim(),
-        date: DateTime.parse(dateController.text),
-      );
-      Navigator.of(context).pop();
-    }
-  }
-
-  void saveHoliday() {
-    if (formKey.currentState!.validate()) {
-      final holidayId = widget.holidayModel?.id ?? '';
-      context.read<HolidayCubit>().updateHoliday(
-        id: holidayId,
-        name: nameController.text.trim(),
-        date: DateTime.parse(dateController.text),
-      );
-      Navigator.of(context).pop();
-    }
-  }
+  bool isHalfday = false;
+  TimeOfDay selectedTime = TimeOfDay.now();
 
   @override
   void initState() {
     super.initState();
-    if (widget.holidayModel != null) {
-      nameController.text = widget.holidayModel!.name;
-      dateController.text = widget.holidayModel!.date.toString().split(' ')[0];
+    if (widget.suspensionModel != null) {
+      nameController.text = widget.suspensionModel!.name;
+      dateController.text =
+          widget.suspensionModel!.datetime.toIso8601String().split('T').first;
+      isHalfday = widget.suspensionModel!.isHalfday;
+      if (isHalfday) {
+        selectedTime = TimeOfDay.fromDateTime(widget.suspensionModel!.datetime);
+      }
+    }
+  }
+
+  void addSuspension() {
+    if (formKey.currentState!.validate()) {
+      if (isHalfday && timeController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Time is required when half-day suspension is checked',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      DateTime finalDateTime;
+      final date = DateTime.parse(dateController.text);
+      if (isHalfday) {
+        finalDateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
+      } else {
+        finalDateTime = date;
+      }
+      context.read<SuspensionCubit>().addSuspension(
+        name: nameController.text,
+        datetime: finalDateTime,
+        isHalfday: isHalfday,
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
+  void saveSuspension() {
+    if (formKey.currentState!.validate()) {
+      if (isHalfday && timeController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Time is required when suspension is enabled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      DateTime finalDateTime;
+      final date = DateTime.parse(dateController.text);
+      if (isHalfday) {
+        finalDateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
+      } else {
+        finalDateTime = date;
+      }
+      context.read<SuspensionCubit>().updateSuspension(
+        id: widget.suspensionModel!.id!,
+        name: nameController.text,
+        datetime: finalDateTime,
+        isHalfday: isHalfday,
+      );
+      Navigator.of(context).pop();
     }
   }
 
@@ -53,8 +107,17 @@ class _HolidayFormState extends State<HolidayForm> {
   void dispose() {
     nameController.dispose();
     dateController.dispose();
+    timeController.dispose();
     formKey.currentState?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.suspensionModel != null && isHalfday) {
+      timeController.text = selectedTime.format(context);
+    }
   }
 
   @override
@@ -84,7 +147,7 @@ class _HolidayFormState extends State<HolidayForm> {
                     child: Row(
                       children: [
                         Text(
-                          'Holiday',
+                          'Suspension',
                           style: TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -94,7 +157,7 @@ class _HolidayFormState extends State<HolidayForm> {
                         Spacer(),
                         Center(
                           child: SvgPicture.asset(
-                            'assets/images/calendar.svg',
+                            'assets/images/rain.svg',
                             height: 100,
                           ),
                         ),
@@ -116,9 +179,9 @@ class _HolidayFormState extends State<HolidayForm> {
                 },
                 onFieldSubmitted:
                     (_) =>
-                        (widget.holidayModel == null)
-                            ? addHoliday
-                            : saveHoliday,
+                        (widget.suspensionModel == null)
+                            ? addSuspension
+                            : saveSuspension,
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   hintText: 'Enter a name',
@@ -165,6 +228,50 @@ class _HolidayFormState extends State<HolidayForm> {
                 ),
               ),
               SizedBox(height: 20),
+              Row(
+                children: [
+                  Checkbox(
+                    value: isHalfday,
+                    onChanged: (value) {
+                      setState(() {
+                        isHalfday = value ?? false;
+                        if (!isHalfday) {
+                          timeController.clear();
+                        }
+                      });
+                    },
+                  ),
+                  Text('Halfday Suspension? Check to include suspension time'),
+                ],
+              ),
+              if (isHalfday)
+                TextFormField(
+                  controller: timeController,
+                  readOnly: true,
+                  onTap: () async {
+                    FocusScope.of(context).requestFocus(FocusNode());
+                    TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
+                    if (pickedTime != null) {
+                      setState(() {
+                        selectedTime = pickedTime;
+                        timeController.text = pickedTime.format(context);
+                      });
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Suspension Time',
+                    hintText: 'Select a time',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Padding(
+                      padding: EdgeInsets.only(right: 26.0),
+                      child: Icon(Icons.access_time),
+                    ),
+                  ),
+                ),
+              SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -175,7 +282,9 @@ class _HolidayFormState extends State<HolidayForm> {
                     ),
                   ),
                   onPressed:
-                      (widget.holidayModel == null) ? addHoliday : saveHoliday,
+                      (widget.suspensionModel == null)
+                          ? addSuspension
+                          : saveSuspension,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(

@@ -23,15 +23,17 @@ class _AttendanceFormState extends State<AttendanceForm> {
 
   Future<void> loadAttendanceToday() async {
     var cubit = context.read<AttendanceCubit>();
-    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
-    var employeeNumber = signedIn.user.profile?.employeeNumber ?? '';
-    if (employeeNumber.isNotEmpty) {
-      await cubit.getEmployeeAttendanceToday(employeeNumber: employeeNumber);
-      final state = cubit.state;
-      if (state is GetTodayAttendanceSuccess) {
-        setState(() {
-          attendanceToday = state.attendanceModels;
-        });
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      var employeeNumber = authState.user.profile?.employeeNumber ?? '';
+      if (employeeNumber.isNotEmpty) {
+        await cubit.getEmployeeAttendanceToday(employeeNumber: employeeNumber);
+        final state = cubit.state;
+        if (state is GetTodayAttendanceSuccess) {
+          setState(() {
+            attendanceToday = state.attendanceModels;
+          });
+        }
       }
     }
   }
@@ -63,13 +65,14 @@ class _AttendanceFormState extends State<AttendanceForm> {
                   ),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    AuthSignedIn signedIn =
-                        context.read<AuthCubit>().state as AuthSignedIn;
-                    context.read<AttendanceCubit>().addAttendance(
-                      employeeNumber:
-                          signedIn.user.profile?.employeeNumber ?? '',
-                      remarks: accomplishmentController.text.trim(),
-                    );
+                    final authState = context.read<AuthCubit>().state;
+                    if (authState is AuthenticatedState) {
+                      context.read<AttendanceCubit>().addAttendance(
+                            employeeNumber:
+                                authState.user.profile?.employeeNumber ?? '',
+                            remarks: accomplishmentController.text.trim(),
+                          );
+                    }
                   },
                   child: const Text('Confirm'),
                 ),

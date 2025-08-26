@@ -9,8 +9,8 @@ class HolidayRepository {
           .collection('holidays')
           .getFullList(
             sort: '+date',
-            filter:
-                'date >= "${DateTime.now().year}-01-01" && date <= "${DateTime.now().year}-12-31"',
+            // filter:
+            //     'date >= "${DateTime.now().year}-01-01" && date <= "${DateTime.now().year}-12-31"',
           );
       return response.map((e) => HolidayModel.fromJson(e.toString())).toList();
     } catch (e) {

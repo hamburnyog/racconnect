@@ -16,3 +16,8 @@ final class ProfileError extends ProfileState {
 final class SaveProfileSuccess extends ProfileState {}
 
 final class GetProfileSuccess extends ProfileState {}
+
+final class GetAllProfilesSuccess extends ProfileState {
+  final List<ProfileModel> profiles;
+  const GetAllProfilesSuccess(this.profiles);
+}

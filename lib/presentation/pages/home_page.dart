@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
+import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -52,29 +53,54 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> checkProfile() async {
-    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
-    var profile = signedIn.user.profile;
-    var employeeNumber = profile?.employeeNumber ?? '';
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      var profile = authState.user.profile;
+      var employeeNumber = profile?.employeeNumber ?? '';
 
-    if (employeeNumber.isNotEmpty) {
-      setState(() {
-        _lockClockIn = false;
-      });
-    } else {
-      setState(() {
-        _lockClockIn = true;
-      });
+      if (employeeNumber.isNotEmpty) {
+        setState(() {
+          _lockClockIn = false;
+        });
+      } else {
+        setState(() {
+          _lockClockIn = true;
+        });
+      }
     }
   }
 
   Future<void> loadEvents() async {
-    var cubit = context.read<EventCubit>();
-    await cubit.getAllEvents();
-    final state = cubit.state;
-    if (state is GetAllEventSuccess) {
+    var eventCubit = context.read<EventCubit>();
+    await eventCubit.getAllEvents();
+    final eventState = eventCubit.state;
+
+    var suspensionCubit = context.read<SuspensionCubit>();
+    await suspensionCubit.getAllSuspensions();
+    final suspensionState = suspensionCubit.state;
+
+    if (eventState is GetAllEventSuccess) {
       setState(() {
-        mySelectedEvents = Map<String, List>.from(state.events);
+        mySelectedEvents = Map<String, List>.from(eventState.events);
       });
+    }
+
+    if (suspensionState is GetAllSuspensionSuccess) {
+      for (var suspension in suspensionState.suspensionModels) {
+        final dateKey = DateFormat('yyyy-MM-dd').format(suspension.datetime);
+        final time = DateFormat('hh:mm a').format(suspension.datetime);
+        final title =
+            suspension.isHalfday
+                ? '${suspension.name} ($time)'
+                : suspension.name;
+        final eventString = '${title},T=Suspension';
+
+        if (mySelectedEvents.containsKey(dateKey)) {
+          mySelectedEvents[dateKey]!.add(eventString);
+        } else {
+          mySelectedEvents[dateKey] = [eventString];
+        }
+      }
     }
   }
 
@@ -117,7 +143,9 @@ class _HomePageState extends State<HomePage> {
                       leading: Icon(Icons.home, color: Colors.white),
                       minTileHeight: 70,
                       title: Text(
-                        'Today is ${DateFormat.yMMMMd().format(now)}',
+                        (isSmallScreen)
+                            ? DateFormat.yMMMMd().format(now)
+                            : 'Today is ${DateFormat.yMMMMd().format(now)}',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -127,8 +155,13 @@ class _HomePageState extends State<HomePage> {
                       subtitle: Text(
                         listOfDayEvents(_selectedDay!).isNotEmpty
                             ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
+                            : (_selectedDay == null ||
+                                (_selectedDay!.year == now.year &&
+                                    _selectedDay!.month == now.month &&
+                                    _selectedDay!.day == now.day))
+                            ? 'No event for today'
                             : 'No event for the selected day',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.white, fontSize: 10),
                       ),
                       trailing: ClockInButton(
                         lockClockIn: _lockClockIn,
@@ -180,7 +213,10 @@ class _HomePageState extends State<HomePage> {
                                         ',T=',
                                       );
                                       final title = parts[0];
-                                      final type = parts[1];
+                                      final type =
+                                          parts.length > 1
+                                              ? parts[1]
+                                              : 'Unknown';
 
                                       return Chip(
                                         avatar: CircleAvatar(
@@ -192,6 +228,8 @@ class _HomePageState extends State<HomePage> {
                                                   return Icons.event;
                                                 case 'Birthday':
                                                   return Icons.cake;
+                                                case 'Suspension':
+                                                  return Icons.flood;
                                                 default:
                                                   return Icons.event;
                                               }
@@ -199,13 +237,13 @@ class _HomePageState extends State<HomePage> {
                                             color: () {
                                               switch (type) {
                                                 case 'Holiday':
-                                                  return Theme.of(
-                                                    context,
-                                                  ).primaryColor;
+                                                  return Colors.green;
                                                 case 'Birthday':
                                                   return Colors.red;
+                                                case 'Suspension':
+                                                  return Colors.orange;
                                                 default:
-                                                  return Colors.green;
+                                                  return Colors.grey;
                                               }
                                             }(),
                                             size: 18,
@@ -238,7 +276,7 @@ class _HomePageState extends State<HomePage> {
                         titleCentered: true,
                       ),
                       rowHeight: isSmallScreen ? 40 : 60,
-                      startingDayOfWeek: StartingDayOfWeek.monday,
+                      startingDayOfWeek: StartingDayOfWeek.sunday,
                       availableGestures: AvailableGestures.none,
                       firstDay: now.subtract(const Duration(days: 365)),
                       lastDay: now.add(const Duration(days: 365)),
@@ -277,6 +315,43 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               text.toUpperCase(),
                               style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        },
+                        markerBuilder: (context, date, events) {
+                          if (events.isEmpty) return null;
+                          return Positioned(
+                            bottom: isSmallScreen ? 2 : 5,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children:
+                                  events.map((event) {
+                                    final parts = event.toString().split(',T=');
+                                    final type =
+                                        parts.length > 1 ? parts[1] : 'Unknown';
+                                    return Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 1.5,
+                                      ),
+                                      width: isSmallScreen ? 6 : 8,
+                                      height: isSmallScreen ? 6 : 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: () {
+                                          switch (type) {
+                                            case 'Birthday':
+                                              return Colors.red;
+                                            case 'Holiday':
+                                              return Colors.green;
+                                            case 'Suspension':
+                                              return Colors.orange;
+                                            default:
+                                              return Colors.grey;
+                                          }
+                                        }(),
+                                      ),
+                                    );
+                                  }).toList(),
                             ),
                           );
                         },

@@ -61,7 +61,7 @@ class _AttendancePageState extends State<AttendancePage>
     context.read<HolidayCubit>().getAllHolidays();
 
     final authState = context.read<AuthCubit>().state;
-    if (authState is AuthSignedIn) {
+    if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
         final cubit = context.read<AttendanceCubit>();
@@ -132,13 +132,10 @@ class _AttendancePageState extends State<AttendancePage>
                         ),
                       ),
                       subtitle: Text(
-                        isSmallScreen
-                            ? 'Select a date to view records'
-                            : 'Select a date to view attendance records',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: isSmallScreen ? 11 : 14,
-                        ),
+                        !isSmallScreen
+                            ? 'Click on any WFH row to view targets and accomplishments. Use the Export button to generate your DTR.'
+                            : 'View your attendance here',
+                        style: TextStyle(color: Colors.white70, fontSize: 10),
                       ),
                       trailing: ExportButton(
                         selectedYear: selectedYear,
@@ -158,7 +155,7 @@ class _AttendancePageState extends State<AttendancePage>
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<int>(
-                                    value: selectedYear,
+                                    initialValue: selectedYear,
                                     isExpanded: true,
                                     decoration: const InputDecoration(
                                       labelText: 'Year',
@@ -179,7 +176,7 @@ class _AttendancePageState extends State<AttendancePage>
                                 Expanded(
                                   child: DropdownButtonFormField<int>(
                                     isExpanded: true,
-                                    value: selectedMonth,
+                                    initialValue: selectedMonth,
                                     decoration: const InputDecoration(
                                       labelText: 'Month',
                                     ),

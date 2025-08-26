@@ -85,4 +85,26 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<List<UserModel>> getUsers() async {
+    try {
+      final response = await pb.collection('users').getFullList(expand: 'profile.section');
+      final users = response.map((e) => UserModel.fromMap(e.toJson())).toList();
+      users.sort((a, b) {
+        if (a.profile == null && b.profile == null) {
+          return 0;
+        }
+        if (a.profile == null) {
+          return 1;
+        }
+        if (b.profile == null) {
+          return -1;
+        }
+        return a.profile!.lastName.compareTo(b.profile!.lastName);
+      });
+      return users;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

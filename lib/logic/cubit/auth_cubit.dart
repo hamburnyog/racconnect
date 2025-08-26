@@ -89,4 +89,17 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthError(e.toString()));
     }
   }
+
+  void getUsers() async {
+    if (state is AuthenticatedState) {
+      final user = (state as AuthenticatedState).user;
+      try {
+        emit(UsersLoading(user));
+        final users = await authRepository.getUsers();
+        emit(GetAllUsersSuccess(user, users));
+      } catch (e) {
+        errorMessage(e);
+      }
+    }
+  }
 }

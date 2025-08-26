@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/widgets.dart';
 
 class ProfileModel {
@@ -14,10 +13,12 @@ class ProfileModel {
   final String employmentStatus;
   final String? section;
   final String? sectionName;
+  final String? sectionCode; // New field
   final double? sl;
   final double? vl;
   final double? spl;
   final double? cto;
+
   ProfileModel({
     this.id,
     this.employeeNumber,
@@ -30,6 +31,7 @@ class ProfileModel {
     required this.employmentStatus,
     this.section,
     this.sectionName,
+    this.sectionCode, // Added to constructor
     this.sl,
     this.vl,
     this.spl,
@@ -48,6 +50,7 @@ class ProfileModel {
     String? employmentStatus,
     ValueGetter<String?>? section,
     ValueGetter<String?>? sectionName,
+    ValueGetter<String?>? sectionCode, // Added to copyWith
     ValueGetter<double?>? sl,
     ValueGetter<double?>? vl,
     ValueGetter<double?>? spl,
@@ -66,6 +69,8 @@ class ProfileModel {
       employmentStatus: employmentStatus ?? this.employmentStatus,
       section: section != null ? section() : this.section,
       sectionName: sectionName != null ? sectionName() : this.sectionName,
+      sectionCode:
+          sectionCode != null ? sectionCode() : this.sectionCode, // Added
       sl: sl != null ? sl() : this.sl,
       vl: vl != null ? vl() : this.vl,
       spl: spl != null ? spl() : this.spl,
@@ -86,6 +91,7 @@ class ProfileModel {
       'employmentStatus': employmentStatus,
       'section': section,
       'sectionName': sectionName,
+      'sectionCode': sectionCode, // Added to toMap
       'sl': sl,
       'vl': vl,
       'spl': spl,
@@ -108,7 +114,8 @@ class ProfileModel {
       position: map['position'] ?? '',
       employmentStatus: map['employmentStatus'] ?? '',
       section: map['section'],
-      sectionName: map['sectionName'],
+      sectionName: map['expand']?['section']?['name'],
+      sectionCode: map['expand']?['section']?['code'], // Added to fromMap
       sl: map['sl']?.toDouble(),
       vl: map['vl']?.toDouble(),
       spl: map['spl']?.toDouble(),
@@ -123,7 +130,7 @@ class ProfileModel {
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
+    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sectionCode: $sectionCode, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
   }
 
   @override
@@ -142,6 +149,7 @@ class ProfileModel {
         other.employmentStatus == employmentStatus &&
         other.section == section &&
         other.sectionName == sectionName &&
+        other.sectionCode == sectionCode && // Added to equality check
         other.sl == sl &&
         other.vl == vl &&
         other.spl == spl &&
@@ -161,6 +169,7 @@ class ProfileModel {
         employmentStatus.hashCode ^
         section.hashCode ^
         sectionName.hashCode ^
+        sectionCode.hashCode ^ // Added to hashCode
         sl.hashCode ^
         vl.hashCode ^
         spl.hashCode ^

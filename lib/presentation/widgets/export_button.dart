@@ -23,8 +23,9 @@ class ExportButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isWideScreen = MediaQuery.of(context).size.width > 600;
 
+    final authState = context.read<AuthCubit>().state;
     final profile =
-        (context.read<AuthCubit>().state as AuthSignedIn).user.profile;
+        authState is AuthenticatedState ? authState.user.profile : null;
     final employeeNumber = profile?.employeeNumber ?? '';
     final isProfileComplete = employeeNumber.isNotEmpty;
 

@@ -27,7 +27,7 @@ class ImportButton extends StatelessWidget {
     final authState = context.read<AuthCubit>().state;
 
     final isDeveloper =
-        authState is AuthSignedIn && authState.user.role == 'Developer';
+        authState is AuthenticatedState && authState.user.role == 'Developer';
 
     if (!_isDesktop || !isDeveloper) return const SizedBox.shrink();
 

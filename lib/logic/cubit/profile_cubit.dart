@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/repositories/profile_repository.dart';
 
 part 'profile_state.dart';
@@ -35,6 +36,16 @@ class ProfileCubit extends Cubit<ProfileState> {
         sectionId: sectionId,
       );
       emit(SaveProfileSuccess());
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> getAllProfiles() async {
+    try {
+      emit(ProfileLoading());
+      final profiles = await profileRepository.getAllProfiles();
+      emit(GetAllProfilesSuccess(profiles));
     } catch (e) {
       errorMessage(e);
     }

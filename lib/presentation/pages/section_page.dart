@@ -108,7 +108,7 @@ class _SectionPageState extends State<SectionPage> {
                             ),
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text('Add Section'),
+                              label: const Text('Add'),
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: Theme.of(context).primaryColor,
                                 backgroundColor: Colors.white,
@@ -125,7 +125,6 @@ class _SectionPageState extends State<SectionPage> {
                           ),
                 ),
               ),
-              SizedBox(height: 10),
               BlocBuilder<SectionCubit, SectionState>(
                 builder: (context, state) {
                   var sections = [];

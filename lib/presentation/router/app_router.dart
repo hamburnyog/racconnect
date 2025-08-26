@@ -53,7 +53,7 @@ class AppRouter {
                   }
                 },
                 builder: (context, state) {
-                  if (state is AuthSignedIn) {
+                  if (state is AuthenticatedState) {
                     return MainScreen();
                   }
                   return SignInScreen();

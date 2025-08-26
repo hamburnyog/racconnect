@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/attendance_page.dart';
 import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';
+import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
+import 'package:racconnect/presentation/pages/suspension_page.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -32,19 +35,18 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   String getUserInitial(AuthState state) {
-    if (state is AuthSignedIn) {
+    if (state is AuthenticatedState) {
       String name = state.user.name;
       return name.isNotEmpty ? name[0].toUpperCase() : '';
     }
     return '';
   }
 
-  Widget getAvatarWidget(BuildContext context) {
-    final state = context.read<AuthCubit>().state;
+  Widget getAvatarWidget(BuildContext context, UserModel? user) {
     String? avatarUrl;
 
-    if (state is AuthSignedIn) {
-      avatarUrl = getPocketBaseFileUrl(state.user.avatar, state.user.id);
+    if (user != null) {
+      avatarUrl = getPocketBaseFileUrl(user.avatar, user.id);
     }
 
     return avatarUrl != null && avatarUrl.isNotEmpty
@@ -84,24 +86,22 @@ class _MainScreenState extends State<MainScreen> {
                 scrolledUnderElevation: 0.0,
                 surfaceTintColor: Colors.transparent,
                 leadingWidth: 200,
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      getAvatarWidget(context),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: BlocBuilder<AuthCubit, AuthState>(
-                          builder: (context, state) {
-                            String userName = 'User';
-                            if (state is AuthSignedIn &&
-                                state.user.name.isNotEmpty) {
-                              userName = state.user.email;
-                              userName = userName.split('@').first;
-                            }
-                            return Text(
-                              userName,
+                leading: BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    UserModel? user;
+                    if (state is AuthenticatedState) {
+                      user = state.user;
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          getAvatarWidget(context, user),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              user?.email.split('@').first ?? 'User',
                               style: GoogleFonts.aBeeZee(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -109,12 +109,12 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
-                            );
-                          },
-                        ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
                 actions: [
                   IconButton(
@@ -129,45 +129,25 @@ class _MainScreenState extends State<MainScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/images/logo_bp.png', width: 50),
-                        const SizedBox(width: 20),
-                        Column(
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                text: 'RACCO',
-                                style: GoogleFonts.righteous(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'nnect',
-                                    style: GoogleFonts.righteous(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 22,
-                                      color: Theme.of(context).disabledColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              'Regional Child Care Office IV-A Calabarzon',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'RACCO',
+                        style: GoogleFonts.righteous(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Theme.of(context).primaryColor,
                         ),
-                        const SizedBox(width: 20),
-                        Image.asset('assets/images/logo_nacc.png', width: 50),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: 'nnect',
+                            style: GoogleFonts.righteous(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: Theme.of(context).disabledColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -175,49 +155,37 @@ class _MainScreenState extends State<MainScreen> {
               : AppBar(
                 centerTitle: true,
                 surfaceTintColor: Colors.transparent,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/images/logo_bp.png', width: 40),
-                    const SizedBox(width: 10),
-                    Column(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            text: 'RACCO',
-                            style: GoogleFonts.righteous(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'nnect',
-                                style: GoogleFonts.righteous(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
-                                  color: Theme.of(context).disabledColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          'RACCO IV-A Calabarzon',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
+                title: RichText(
+                  text: TextSpan(
+                    text: 'RACCO',
+                    style: GoogleFonts.righteous(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Theme.of(context).primaryColor,
                     ),
-                    const SizedBox(width: 10),
-                    Image.asset('assets/images/logo_nacc.png', width: 40),
-                  ],
+                    children: [
+                      TextSpan(
+                        text: 'nnect',
+                        style: GoogleFonts.righteous(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Theme.of(context).disabledColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: getAvatarWidget(context),
+                leading: BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    UserModel? user;
+                    if (state is AuthenticatedState) {
+                      user = state.user;
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: getAvatarWidget(context, user),
+                    );
+                  },
                 ),
                 actions: [
                   IconButton(
@@ -233,17 +201,18 @@ class _MainScreenState extends State<MainScreen> {
           isSmallScreen
               ? BlocBuilder<AuthCubit, AuthState>(
                 builder: (context, state) {
-                  sidebarItemMenu = sideBarItemsUser;
-                  if (state is AuthSignedIn && state.user.role == 'Developer') {
-                    sidebarItemMenu = sideBarItemsDev;
-                  } else if (state is AuthSignedIn &&
-                      state.user.role == 'OIC') {
-                    sidebarItemMenu = sideBarItemsOic;
-                  } else if (state is AuthSignedIn && state.user.role == 'HR') {
-                    sidebarItemMenu = sideBarItemsHr;
-                  } else if (state is AuthSignedIn &&
-                      state.user.role == 'Records') {
-                    sidebarItemMenu = sideBarItemsRecords;
+                  if (state is AuthenticatedState) {
+                    final user = state.user;
+                    sidebarItemMenu = sideBarItemsUser;
+                    if (user.role == 'Developer') {
+                      sidebarItemMenu = sideBarItemsDev;
+                    } else if (user.role == 'OIC') {
+                      sidebarItemMenu = sideBarItemsOic;
+                    } else if (user.role == 'HR') {
+                      sidebarItemMenu = sideBarItemsHr;
+                    } else if (user.role == 'Records') {
+                      sidebarItemMenu = sideBarItemsRecords;
+                    }
                   }
                   return BottomNavigationBar(
                     items: sidebarItemMenu,
@@ -262,37 +231,52 @@ class _MainScreenState extends State<MainScreen> {
       body: SafeArea(
         child: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
-            sidebarItemMenu = sideBarItemsUser;
-            if (state is AuthSignedIn && state.user.role == 'Developer') {
-              sidebarItemMenu = sideBarItemsDev;
-            } else if (state is AuthSignedIn && state.user.role == 'OIC') {
-              sidebarItemMenu = sideBarItemsOic;
-            } else if (state is AuthSignedIn && state.user.role == 'HR') {
-              sidebarItemMenu = sideBarItemsHr;
-            } else if (state is AuthSignedIn && state.user.role == 'Records') {
-              sidebarItemMenu = sideBarItemsRecords;
+            if (state is AuthenticatedState) {
+              final user = state.user;
+              sidebarItemMenu = sideBarItemsUser;
+              if (user.role == 'Developer') {
+                sidebarItemMenu = sideBarItemsDev;
+              } else if (user.role == 'OIC') {
+                sidebarItemMenu = sideBarItemsOic;
+              } else if (user.role == 'HR') {
+                sidebarItemMenu = sideBarItemsHr;
+              } else if (user.role == 'Records') {
+                sidebarItemMenu = sideBarItemsRecords;
+              }
             }
+
             return Row(
               children: <Widget>[
                 if (!isSmallScreen)
-                  NavigationRail(
-                    selectedIndex: _selectedIndex,
-                    onDestinationSelected: (int index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
-                    extended: isLargeScreen,
-                    destinations:
-                        sidebarItemMenu
-                            .map(
-                              (item) => NavigationRailDestination(
-                                icon: item.icon,
-                                selectedIcon: item.activeIcon,
-                                label: Text(item.label!),
-                              ),
-                            )
-                            .toList(),
+                  SizedBox(
+                    child: SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height,
+                        ),
+                        child: IntrinsicHeight(
+                          child: NavigationRail(
+                            selectedIndex: _selectedIndex,
+                            onDestinationSelected: (int index) {
+                              setState(() {
+                                _selectedIndex = index;
+                              });
+                            },
+                            extended: isLargeScreen,
+                            destinations:
+                                sidebarItemMenu
+                                    .map(
+                                      (item) => NavigationRailDestination(
+                                        icon: item.icon,
+                                        selectedIcon: item.activeIcon,
+                                        label: Text(item.label!),
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 Expanded(
                   child: Container(
@@ -309,6 +293,9 @@ class _MainScreenState extends State<MainScreen> {
                         if (sidebarItemMenu[_selectedIndex].label == 'Home') {
                           return HomePage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Personnel') {
+                          return PersonnelPage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Sections') {
                           return SectionPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
@@ -320,6 +307,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Attendance') {
                           return AttendancePage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Suspensions') {
+                          return SuspensionPage();
                         } else {
                           return Text(
                             sidebarItemMenu[_selectedIndex].label.toString(),

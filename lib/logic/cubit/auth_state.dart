@@ -10,9 +10,22 @@ final class AuthSignedUp extends AuthState {}
 
 final class AuthPasswordResetSent extends AuthState {}
 
-final class AuthSignedIn extends AuthState {
+sealed class AuthenticatedState extends AuthState {
   final UserModel user;
-  AuthSignedIn(this.user);
+  AuthenticatedState(this.user);
+}
+
+final class AuthSignedIn extends AuthenticatedState {
+  AuthSignedIn(super.user);
+}
+
+final class UsersLoading extends AuthenticatedState {
+  UsersLoading(super.user);
+}
+
+final class GetAllUsersSuccess extends AuthenticatedState {
+  final List<UserModel> users;
+  GetAllUsersSuccess(super.user, this.users);
 }
 
 final class AuthError extends AuthState {

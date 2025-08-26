@@ -29,11 +29,11 @@ enum ConnectionType { wifi, ethernet, mobile }
 
 const sideBarItemsDev = [
   ...sideBarItemsUser,
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.person_outline_rounded),
-  //   activeIcon: Icon(Icons.person_rounded),
-  //   label: 'Personnel',
-  // ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline_rounded),
+    activeIcon: Icon(Icons.person_rounded),
+    label: 'Personnel',
+  ),
   BottomNavigationBarItem(
     icon: Icon(Icons.group_outlined),
     activeIcon: Icon(Icons.group_rounded),
@@ -44,15 +44,20 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.calendar_month),
     label: 'Holidays',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.flood_outlined),
+    activeIcon: Icon(Icons.flood),
+    label: 'Suspensions',
+  ),
 ];
 
 const sideBarItemsOic = [
   ...sideBarItemsUser,
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.person_outline_rounded),
-  //   activeIcon: Icon(Icons.person_rounded),
-  //   label: 'Personnel',
-  // ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline_rounded),
+    activeIcon: Icon(Icons.person_rounded),
+    label: 'Personnel',
+  ),
   BottomNavigationBarItem(
     icon: Icon(Icons.group_outlined),
     activeIcon: Icon(Icons.group_rounded),
@@ -62,6 +67,11 @@ const sideBarItemsOic = [
 
 const sideBarItemsHr = [
   ...sideBarItemsUser,
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline_rounded),
+    activeIcon: Icon(Icons.person_rounded),
+    label: 'Personnel',
+  ),
   BottomNavigationBarItem(
     icon: Icon(Icons.calendar_month_outlined),
     activeIcon: Icon(Icons.calendar_month),

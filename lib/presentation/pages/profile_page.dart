@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
-import 'package:racconnect/presentation/widgets/leave_card.dart';
 import 'package:racconnect/utility/constants.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -29,9 +28,8 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController employmentStatusController;
 
   final _formKey = GlobalKey<FormState>();
-  Map<String, dynamic> _leaveCredits = {};
+  // Map<String, dynamic> _leaveCredits = {};
   ProfileModel? profile;
-  String emailAddress = '';
   List<Map<String, String>> sectionOptions = [];
   String? sectionId;
 
@@ -86,36 +84,30 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> loadProfile() async {
-    AuthSignedIn signedIn = context.read<AuthCubit>().state as AuthSignedIn;
-    final p = signedIn.user.profile;
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final p = authState.user.profile;
 
-    setState(() {
-      emailAddress = signedIn.user.email;
-      profile = p;
-      sectionId = p?.section;
+      setState(() {
+        profile = p;
+        sectionId = p?.section;
 
-      employeeNumberController = TextEditingController(
-        text: p?.employeeNumber ?? '',
-      );
-      firstNameController = TextEditingController(text: p?.firstName ?? '');
-      middleNameController = TextEditingController(text: p?.middleName ?? '');
-      lastNameController = TextEditingController(text: p?.lastName ?? '');
-      birthdateController = TextEditingController(
-        text: p != null ? DateFormat('yyyy-MM-dd').format(p.birthdate) : '',
-      );
-      genderController = TextEditingController(text: p?.gender ?? '');
-      positionController = TextEditingController(text: p?.position ?? '');
-      employmentStatusController = TextEditingController(
-        text: p?.employmentStatus ?? '',
-      );
-
-      _leaveCredits = {
-        'SL': p?.sl ?? 0,
-        'VL': p?.vl ?? 0,
-        'SPL': p?.spl ?? 0,
-        'CTO': p?.cto ?? 0,
-      };
-    });
+        employeeNumberController = TextEditingController(
+          text: p?.employeeNumber ?? '',
+        );
+        firstNameController = TextEditingController(text: p?.firstName ?? '');
+        middleNameController = TextEditingController(text: p?.middleName ?? '');
+        lastNameController = TextEditingController(text: p?.lastName ?? '');
+        birthdateController = TextEditingController(
+          text: p != null ? DateFormat('yyyy-MM-dd').format(p.birthdate) : '',
+        );
+        genderController = TextEditingController(text: p?.gender ?? '');
+        positionController = TextEditingController(text: p?.position ?? '');
+        employmentStatusController = TextEditingController(
+          text: p?.employmentStatus ?? '',
+        );
+      });
+    }
   }
 
   void saveProfile() {
@@ -133,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final authCubit = context.read<AuthCubit>();
     final authState = authCubit.state;
 
-    if (authState is! AuthSignedIn) return;
+    if (authState is! AuthenticatedState) return;
 
     showDialog(
       context: context,
@@ -206,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 minTileHeight: 70,
                 leading: Icon(Icons.person_pin_rounded, color: Colors.white),
                 title: Text(
-                  isSmallScreen ? 'Profile' : 'Profile Information',
+                  'Profile',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -214,11 +206,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 subtitle: Text(
-                  emailAddress,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: isSmallScreen ? 11 : 14,
-                  ),
+                  !isSmallScreen
+                      ? 'Kindly ensure your profile information is up to date'
+                      : 'Kindly keep your profile up to date',
+                  style: TextStyle(color: Colors.white70, fontSize: 10),
                 ),
                 trailing:
                     isSmallScreen
@@ -258,9 +249,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (_leaveCredits.isNotEmpty)
-                              LeaveCard(leaveCredits: _leaveCredits),
-                            SizedBox(height: 10),
+                            // if (_leaveCredits.isNotEmpty)
+                            //   LeaveCard(leaveCredits: _leaveCredits),
+                            // SizedBox(height: 10),
                             _formField(
                               'Employee Number',
                               employeeNumberController,
@@ -341,7 +332,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             if (sectionOptions.isNotEmpty)
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
-                                value: sectionId,
+                                initialValue: sectionId,
                                 items:
                                     sectionOptions.map((option) {
                                       return DropdownMenuItem<String>(
@@ -368,7 +359,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               const CircularProgressIndicator(),
                             SizedBox(height: 10),
                             DropdownButtonFormField<String>(
-                              value:
+                              initialValue:
                                   genderController.text.isNotEmpty
                                       ? genderController.text
                                       : null,
@@ -407,7 +398,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             SizedBox(height: 10),
                             DropdownButtonFormField<String>(
-                              value:
+                              initialValue:
                                   employmentStatusController.text.isNotEmpty
                                       ? employmentStatusController.text
                                       : null,

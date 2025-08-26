@@ -4,6 +4,17 @@ import 'package:racconnect/utility/pocketbase_client.dart';
 class ProfileRepository {
   final pb = PocketBaseClient.instance;
 
+  Future<List<ProfileModel>> getAllProfiles() async {
+    try {
+      final response = await pb
+          .collection('profiles')
+          .getFullList(sort: '+lastName', expand: 'section');
+      return response.map((e) => ProfileModel.fromJson(e.toString())).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<ProfileModel> saveProfile({
     String? id,
     required String employeeNumber,
