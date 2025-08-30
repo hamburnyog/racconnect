@@ -3,12 +3,17 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:racconnect/data/models/attendance_model.dart';
+import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
 import 'package:racconnect/utility/constants.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
-  if (filename == null || filename.isEmpty || recordId == null || recordId.isEmpty) {
+  if (filename == null ||
+      filename.isEmpty ||
+      recordId == null ||
+      recordId.isEmpty) {
     return null;
   }
   return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
@@ -25,16 +30,32 @@ class _PersonnelPageState extends State<PersonnelPage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  List<AttendanceModel> _todayAttendance = [];
+  final _attendanceRepository = AttendanceRepository();
 
   @override
   void initState() {
     super.initState();
     context.read<AuthCubit>().getUsers();
+    _fetchTodayAttendance();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+  }
+
+  Future<void> _fetchTodayAttendance() async {
+    try {
+      final attendance = await _attendanceRepository.getAllAttendanceToday();
+      if (mounted) {
+        setState(() {
+          _todayAttendance = attendance;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
   }
 
   @override
@@ -53,6 +74,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: () async {
         context.read<AuthCubit>().getUsers();
+        _fetchTodayAttendance();
       },
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -137,22 +159,45 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   }
 
                   if (state is GetAllUsersSuccess) {
-                    users = state.users.toList();
+                    final loggedInUser = state.user;
+                    final loggedInUserRole = loggedInUser.role;
+                    final loggedInUserSectionCode =
+                        loggedInUser.profile?.sectionCode;
+
+                    users = state.users
+                        .where((user) => user.role != null && user.role!.isNotEmpty)
+                        .toList();
+
+                    if (loggedInUserRole == 'OIC' ||
+                        loggedInUserRole == 'Developer' ||
+                        loggedInUserRole == 'HR') {
+                      // Show all users
+                    } else if (loggedInUserRole == 'Unit Head') {
+                      users = users
+                          .where((user) =>
+                              user.profile?.sectionCode ==
+                              loggedInUserSectionCode)
+                          .toList();
+                    } else {
+                      users = [];
+                    }
+
                     if (_searchQuery.isNotEmpty) {
-                      users = users.where((user) {
-                        final profile = user.profile;
-                        if (profile == null) return false;
-                        final fullName =
-                            '${profile.firstName} ${profile.middleName} ${profile.lastName}'
-                                .toLowerCase();
-                        final employeeNumber =
-                            profile.employeeNumber?.toLowerCase() ?? '';
-                        final sectionCode =
-                            profile.sectionCode?.toLowerCase() ?? '';
-                        return fullName.contains(_searchQuery) ||
-                            employeeNumber.contains(_searchQuery) ||
-                            sectionCode.contains(_searchQuery);
-                      }).toList();
+                      users = users
+                          .where((user) {
+                            final profile = user.profile;
+                            if (profile == null) return false;
+                            final fullName =
+                                '${profile.firstName} ${profile.middleName} ${profile.lastName}'
+                                    .toLowerCase();
+                            final employeeNumber =
+                                profile.employeeNumber?.toLowerCase() ?? '';
+                            final sectionCode =
+                                profile.sectionCode?.toLowerCase() ?? '';
+                            return fullName.contains(_searchQuery) ||
+                                employeeNumber.contains(_searchQuery) ||
+                                sectionCode.contains(_searchQuery);
+                          }).toList();
                     }
 
                     if (users.isNotEmpty) {
@@ -170,12 +215,23 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               final user = users[index];
                               final profileModel = user.profile;
                               if (profileModel == null) {
-                                return const SizedBox.shrink(); // Or some placeholder
+                                return const SizedBox.shrink();
                               }
-                              final avatarUrl = getPocketBaseFileUrl(user.avatar, user.id);
-                              final middleInitial = profileModel.middleName != null && profileModel.middleName!.isNotEmpty
-                                  ? ' ${profileModel.middleName![0]}.'
-                                  : '';
+                              final avatarUrl = getPocketBaseFileUrl(
+                                user.avatar,
+                                user.id,
+                              );
+                              final middleInitial =
+                                  profileModel.middleName != null &&
+                                          profileModel.middleName!.isNotEmpty
+                                      ? ' ${profileModel.middleName![0]}.'
+                                      : '';
+
+                              final hasAttendance = _todayAttendance.any(
+                                (att) =>
+                                    att.employeeNumber ==
+                                    profileModel.employeeNumber,
+                              );
 
                               return Card(
                                 elevation: 3,
@@ -183,17 +239,24 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                   leading: CircleAvatar(
                                     backgroundColor:
                                         Theme.of(context).primaryColor,
-                                    backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                                    child: avatarUrl == null
-                                        ? const Icon(
-                                            Icons.person,
-                                            color: Colors.white,
-                                          )
-                                        : null,
+                                    backgroundImage:
+                                        avatarUrl != null
+                                            ? NetworkImage(avatarUrl)
+                                            : null,
+                                    child:
+                                        avatarUrl == null
+                                            ? const Icon(
+                                              Icons.person,
+                                              color: Colors.white,
+                                            )
+                                            : null,
                                   ),
                                   title: Text(
                                     '${profileModel.lastName}, ${profileModel.firstName}$middleInitial'
                                         .toUpperCase(),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Theme.of(context).primaryColor,
@@ -203,27 +266,26 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                     'Employee Number: ${profileModel.employeeNumber ?? 'N/A'}\nSection: ${profileModel.sectionCode ?? 'Not Assigned'}',
                                     style: TextStyle(fontSize: 10),
                                   ),
-                                  trailing: GestureDetector(
-                                    onTap: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        scrollControlDisabledMaxHeightRatio:
-                                            0.75,
-                                        showDragHandle: true,
-                                        useSafeArea: true,
-                                        builder: (BuildContext builder) {
-                                          return EmployeeViewPage(
-                                            user: user,
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: Icon(
-                                      Icons.visibility,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
+                                  onTap: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      scrollControlDisabledMaxHeightRatio: 0.75,
+                                      showDragHandle: true,
+                                      useSafeArea: true,
+                                      builder: (BuildContext builder) {
+                                        return EmployeeViewPage(user: user);
+                                      },
+                                    );
+                                  },
+                                  trailing:
+                                      hasAttendance
+                                          ? Icon(
+                                            Icons
+                                                .broadcast_on_personal_outlined,
+                                            color: Colors.green,
+                                          )
+                                          : null,
                                 ),
                               );
                             },

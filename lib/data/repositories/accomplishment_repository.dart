@@ -13,15 +13,18 @@ class AccomplishmentRepository {
     }
   }
 
-  Future<AccomplishmentModel?> getAccomplishmentByDate(DateTime date) async {
+  Future<AccomplishmentModel?> getAccomplishmentByDate(
+      DateTime date, String employeeNumber) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
+      final endOfDay = startOfDay
+          .add(const Duration(days: 1))
+          .subtract(const Duration(milliseconds: 1));
       final isoStart = startOfDay.toUtc().toIso8601String().split('.').first;
       final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
 
       final response = await pb.collection('accomplishments').getFullList(
-            filter: 'date >= "$isoStart" && date <= "$isoEnd"',
+            filter: 'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
           );
       if (response.isNotEmpty) {
         return AccomplishmentModel.fromMap(response.first.toJson());
@@ -36,11 +39,13 @@ class AccomplishmentRepository {
     required DateTime date,
     required String target,
     required String accomplishment,
+    required String employeeNumber,
   }) async {
     final data = {
       'date': date.toIso8601String(),
       'target': target,
       'accomplishment': accomplishment,
+      'employeeNumber': employeeNumber,
     };
 
     final record = await pb.collection('accomplishments').create(body: data);
@@ -52,11 +57,13 @@ class AccomplishmentRepository {
     required DateTime date,
     required String target,
     required String accomplishment,
+    required String employeeNumber,
   }) async {
     final data = {
       'date': date.toIso8601String(),
       'target': target,
       'accomplishment': accomplishment,
+      'employeeNumber': employeeNumber,
     };
 
     final record = await pb.collection('accomplishments').update(id, body: data);

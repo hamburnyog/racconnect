@@ -44,14 +44,19 @@ class _AttendanceFormState extends State<AttendanceForm> {
   }
 
   Future<void> _loadAccomplishmentForToday() async {
-    final accomplishment = await _accomplishmentRepository
-        .getAccomplishmentByDate(now);
-    if (accomplishment != null) {
-      setState(() {
-        accomplishmentToday = accomplishment;
-        targetController.text = accomplishment.target;
-        accomplishmentController.text = accomplishment.accomplishment;
-      });
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber;
+      if (employeeNumber == null) return;
+      final accomplishment = await _accomplishmentRepository
+          .getAccomplishmentByDate(now, employeeNumber);
+      if (accomplishment != null) {
+        setState(() {
+          accomplishmentToday = accomplishment;
+          targetController.text = accomplishment.target;
+          accomplishmentController.text = accomplishment.accomplishment;
+        });
+      }
     }
   }
 
@@ -86,6 +91,10 @@ class _AttendanceFormState extends State<AttendanceForm> {
                     if (!mounted) return;
                     Navigator.of(context).pop();
                     if (authState is AuthenticatedState) {
+                      final employeeNumber =
+                          authState.user.profile?.employeeNumber;
+                      if (employeeNumber == null) return;
+
                       if (attendanceToday.isEmpty) {
                         // Time In
                         final accomplishment = await _accomplishmentRepository
@@ -93,6 +102,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                               date: now,
                               target: targetController.text.trim(),
                               accomplishment: '',
+                              employeeNumber: employeeNumber,
                             );
                         if (!mounted) return;
                         attendanceCubit.addAttendance(
@@ -104,7 +114,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                       } else {
                         // Time Out
                         final accomplishment = await _accomplishmentRepository
-                            .getAccomplishmentByDate(now);
+                            .getAccomplishmentByDate(now, employeeNumber);
                         if (accomplishment != null) {
                           await _accomplishmentRepository.updateAccomplishment(
                             id: accomplishment.id!,
@@ -112,6 +122,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                             target: accomplishment.target,
                             accomplishment:
                                 accomplishmentController.text.trim(),
+                            employeeNumber: employeeNumber,
                           );
                         }
                         if (!mounted) return;
@@ -234,120 +245,115 @@ class _AttendanceFormState extends State<AttendanceForm> {
                                       color: Colors.yellow,
                                     ),
                                   ),
-                                  if (attendanceToday.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 12.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              padding: const EdgeInsets.all(12),
-                                              margin: const EdgeInsets.only(
-                                                right: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: const [
-                                                      Icon(
-                                                        Icons.login,
-                                                        color:
-                                                            Colors.deepPurple,
-                                                      ),
-                                                      SizedBox(width: 6),
-                                                      Text(
-                                                        'Time In',
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color:
-                                                              Colors.deepPurple,
-                                                        ),
-                                                      ),
-                                                    ],
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 12.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            margin: const EdgeInsets.only(
+                                              right: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(children: const [
+                                                  Icon(
+                                                    Icons.login,
+                                                    color: Colors.deepPurple,
                                                   ),
-                                                  const SizedBox(height: 6),
+                                                  SizedBox(width: 6),
                                                   Text(
-                                                    DateFormat(
-                                                      'hh:mm a',
-                                                    ).format(
-                                                      attendanceToday
-                                                          .first
-                                                          .timestamp,
-                                                    ),
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
+                                                    'Time In',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Colors.deepPurple,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
+                                                ]),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  attendanceToday.isNotEmpty
+                                                      ? DateFormat(
+                                                        'hh:mm a',
+                                                      ).format(
+                                                        attendanceToday
+                                                            .first
+                                                            .timestamp,
+                                                      )
+                                                      : '--:--',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          Expanded(
-                                            child: Container(
-                                              padding: const EdgeInsets.all(12),
-                                              margin: const EdgeInsets.only(
-                                                left: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: const [
-                                                      Icon(
-                                                        Icons.logout,
-                                                        color:
-                                                            Colors.deepPurple,
-                                                      ),
-                                                      SizedBox(width: 6),
-                                                      Text(
-                                                        'Time Out',
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color:
-                                                              Colors.deepPurple,
-                                                        ),
-                                                      ),
-                                                    ],
+                                        ),
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            margin: const EdgeInsets.only(
+                                              left: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(children: const [
+                                                  Icon(
+                                                    Icons.logout,
+                                                    color: Colors.deepPurple,
                                                   ),
-                                                  const SizedBox(height: 6),
+                                                  SizedBox(width: 6),
                                                   Text(
-                                                    attendanceToday.length > 1
-                                                        ? DateFormat(
-                                                          'hh:mm a',
-                                                        ).format(
-                                                          attendanceToday
-                                                              .last
-                                                              .timestamp,
-                                                        )
-                                                        : '--:--',
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
+                                                    'Time Out',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Colors.deepPurple,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
+                                                ]),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  attendanceToday.length > 1
+                                                      ? DateFormat(
+                                                        'hh:mm a',
+                                                      ).format(
+                                                        attendanceToday
+                                                            .last
+                                                            .timestamp,
+                                                      )
+                                                      : '--:--',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
+                                  ),
                                 ],
                               );
                             },

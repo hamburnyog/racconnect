@@ -247,6 +247,8 @@ class _MainScreenState extends State<MainScreen> {
                       sidebarItemMenu = sideBarItemsHr;
                     } else if (user.role == 'Records') {
                       sidebarItemMenu = sideBarItemsRecords;
+                    } else if (user.role == 'Unit Head') {
+                      sidebarItemMenu = sideBarItemsUnitHead;
                     }
                   }
                   return BottomNavigationBar(
@@ -277,6 +279,8 @@ class _MainScreenState extends State<MainScreen> {
                 sidebarItemMenu = sideBarItemsHr;
               } else if (user.role == 'Records') {
                 sidebarItemMenu = sideBarItemsRecords;
+              } else if (user.role == 'Unit Head') {
+                sidebarItemMenu = sideBarItemsUnitHead;
               }
             }
 

@@ -58,10 +58,14 @@ const sideBarItemsOic = [
     activeIcon: Icon(Icons.person_rounded),
     label: 'Personnel',
   ),
+];
+
+const sideBarItemsUnitHead = [
+  ...sideBarItemsUser,
   BottomNavigationBarItem(
-    icon: Icon(Icons.group_outlined),
-    activeIcon: Icon(Icons.group_rounded),
-    label: 'Sections',
+    icon: Icon(Icons.person_outline_rounded),
+    activeIcon: Icon(Icons.person_rounded),
+    label: 'Personnel',
   ),
 ];
 
@@ -103,6 +107,11 @@ const sideBarItemsUser = [
     icon: Icon(Icons.access_time),
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
   ),
   BottomNavigationBarItem(
     icon: Icon(Icons.person_pin_outlined),

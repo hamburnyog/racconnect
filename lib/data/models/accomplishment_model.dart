@@ -5,12 +5,14 @@ class AccomplishmentModel {
   final DateTime date;
   final String target;
   final String accomplishment;
+  final String employeeNumber;
 
   AccomplishmentModel({
     this.id,
     required this.date,
     required this.target,
     required this.accomplishment,
+    required this.employeeNumber,
   });
 
   AccomplishmentModel copyWith({
@@ -18,12 +20,14 @@ class AccomplishmentModel {
     DateTime? date,
     String? target,
     String? accomplishment,
+    String? employeeNumber,
   }) {
     return AccomplishmentModel(
       id: id ?? this.id,
       date: date ?? this.date,
       target: target ?? this.target,
       accomplishment: accomplishment ?? this.accomplishment,
+      employeeNumber: employeeNumber ?? this.employeeNumber,
     );
   }
 
@@ -33,6 +37,7 @@ class AccomplishmentModel {
       'date': date.toIso8601String(),
       'target': target,
       'accomplishment': accomplishment,
+      'employeeNumber': employeeNumber,
     };
   }
 
@@ -42,6 +47,7 @@ class AccomplishmentModel {
       date: DateTime.parse(map['date']),
       target: map['target'] ?? '',
       accomplishment: map['accomplishment'] ?? '',
+      employeeNumber: map['employeeNumber'] ?? '',
     );
   }
 
@@ -52,7 +58,7 @@ class AccomplishmentModel {
 
   @override
   String toString() {
-    return 'AccomplishmentModel(id: $id, date: $date, target: $target, accomplishment: $accomplishment)';
+    return 'AccomplishmentModel(id: $id, date: $date, target: $target, accomplishment: $accomplishment, employeeNumber: $employeeNumber)';
   }
 
   @override
@@ -63,7 +69,8 @@ class AccomplishmentModel {
         other.id == id &&
         other.date == date &&
         other.target == target &&
-        other.accomplishment == accomplishment;
+        other.accomplishment == accomplishment &&
+        other.employeeNumber == employeeNumber;
   }
 
   @override
@@ -71,6 +78,7 @@ class AccomplishmentModel {
     return id.hashCode ^
         date.hashCode ^
         target.hashCode ^
-        accomplishment.hashCode;
+        accomplishment.hashCode ^
+        employeeNumber.hashCode;
   }
 }

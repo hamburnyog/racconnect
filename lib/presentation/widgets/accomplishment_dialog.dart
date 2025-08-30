@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
+import 'package:racconnect/logic/cubit/auth_cubit.dart';
 
 class AccomplishmentDialog extends StatefulWidget {
   final DateTime day;
@@ -25,49 +27,67 @@ class _AccomplishmentDialogState extends State<AccomplishmentDialog> {
   }
 
   Future<void> _loadAccomplishment() async {
-    final accomplishment =
-        await _accomplishmentRepository.getAccomplishmentByDate(widget.day);
-    if (!mounted) return;
-    if (accomplishment != null) {
-      setState(() {
-        _accomplishment = accomplishment;
-        _targetController.text = accomplishment.target;
-        _accomplishmentController.text = accomplishment.accomplishment;
-      });
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber;
+      if (employeeNumber == null) return;
+      final accomplishment = await _accomplishmentRepository
+          .getAccomplishmentByDate(widget.day, employeeNumber);
+      if (!mounted) return;
+      if (accomplishment != null) {
+        setState(() {
+          _accomplishment = accomplishment;
+          _targetController.text = accomplishment.target;
+          _accomplishmentController.text = accomplishment.accomplishment;
+        });
+      }
     }
   }
 
   Future<void> _copyFromYesterday() async {
-    final yesterday = widget.day.subtract(const Duration(days: 1));
-    final accomplishment =
-        await _accomplishmentRepository.getAccomplishmentByDate(yesterday);
-    if (!mounted) return;
-    if (accomplishment != null) {
-      setState(() {
-        _targetController.text = accomplishment.target;
-        _accomplishmentController.text = accomplishment.accomplishment;
-      });
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber;
+      if (employeeNumber == null) return;
+      final yesterday = widget.day.subtract(const Duration(days: 1));
+      final accomplishment = await _accomplishmentRepository
+          .getAccomplishmentByDate(yesterday, employeeNumber);
+      if (!mounted) return;
+      if (accomplishment != null) {
+        setState(() {
+          _targetController.text = accomplishment.target;
+          _accomplishmentController.text = accomplishment.accomplishment;
+        });
+      }
     }
   }
 
   Future<void> _saveAccomplishment() async {
     final navigator = Navigator.of(context);
-    if (_accomplishment != null) {
-      await _accomplishmentRepository.updateAccomplishment(
-        id: _accomplishment!.id!,
-        date: widget.day,
-        target: _targetController.text,
-        accomplishment: _accomplishmentController.text,
-      );
-    } else {
-      await _accomplishmentRepository.addAccomplishment(
-        date: widget.day,
-        target: _targetController.text,
-        accomplishment: _accomplishmentController.text,
-      );
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber;
+      if (employeeNumber == null) return;
+
+      if (_accomplishment != null) {
+        await _accomplishmentRepository.updateAccomplishment(
+          id: _accomplishment!.id!,
+          date: widget.day,
+          target: _targetController.text,
+          accomplishment: _accomplishmentController.text,
+          employeeNumber: employeeNumber,
+        );
+      } else {
+        await _accomplishmentRepository.addAccomplishment(
+          date: widget.day,
+          target: _targetController.text,
+          accomplishment: _accomplishmentController.text,
+          employeeNumber: employeeNumber,
+        );
+      }
+      if (!mounted) return;
+      navigator.pop();
     }
-    if (!mounted) return;
-    navigator.pop();
   }
 
   @override
