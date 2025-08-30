@@ -400,140 +400,87 @@ Future<String?> generateExcel(
       int undertimeHours = 0;
       int undertimeMinutes = 0;
 
-      if (amIn.isNotEmpty && pmOut.isNotEmpty) {
+      if (dayLogs.length == 1) {
+        undertimeHours = 8;
+      } else if (amIn.isNotEmpty && pmOut.isNotEmpty) {
         final dateFormat = DateFormat('h:mm a');
-        final isMonday = monthDayName == 'Monday';
-        final isWFHHalfDay =
-            isWFH && dateFormat.parse(amIn).hour >= 12; // 12:00 PM or later
-
-        final earliestInTime = DateTime(
-          currentDate.year,
-          currentDate.month,
-          currentDate.day,
-          7,
-          0,
-        );
-        final expectedInTime =
-            isWFHHalfDay
-                ? DateTime(
-                  currentDate.year,
-                  currentDate.month,
-                  currentDate.day,
-                  12,
-                  0,
-                )
-                : DateTime(
-                  currentDate.year,
-                  currentDate.month,
-                  currentDate.day,
-                  isMonday ? 9 : 9,
-                  isMonday ? 0 : 30,
-                );
-        final minOutTime = DateTime(
-          currentDate.year,
-          currentDate.month,
-          currentDate.day,
-          16,
-          0,
-        );
-        final maxOutTime = DateTime(
-          currentDate.year,
-          currentDate.month,
-          currentDate.day,
-          isMonday ? 18 : 18,
-          isMonday ? 0 : 30,
-        );
 
         try {
           // Parse times with correct date
-          var amInTime = dateFormat
-              .parse(amIn)
-              .copyWith(
+          final amInTime = dateFormat.parse(amIn).copyWith(
                 year: currentDate.year,
                 month: currentDate.month,
                 day: currentDate.day,
               );
-          var pmOutTime = dateFormat
-              .parse(pmOut)
-              .copyWith(
+          final pmOutTime = dateFormat.parse(pmOut).copyWith(
                 year: currentDate.year,
                 month: currentDate.month,
                 day: currentDate.day,
               );
 
-          // Adjust for PM/AM times
-          if (!isWFHHalfDay && amInTime.hour >= 12) {
-            amInTime = amInTime.add(Duration(days: 1));
-          }
-          if (pmOutTime.hour < 12) {
-            pmOutTime = pmOutTime.add(Duration(days: 1));
-          }
-
-          // Cap time-in at 7:00 AM for full days
-          if (!isWFHHalfDay && amInTime.isBefore(earliestInTime)) {
-            amInTime = earliestInTime;
+          DateTime? amOutTime;
+          if (amOut.isNotEmpty) {
+            amOutTime = dateFormat.parse(amOut).copyWith(
+                  year: currentDate.year,
+                  month: currentDate.month,
+                  day: currentDate.day,
+                );
           }
 
-          // Calculate late
-          if (amInTime.isAfter(expectedInTime)) {
-            final difference = amInTime.difference(expectedInTime);
-            final totalMinutes = difference.inMinutes;
-            lateHours = totalMinutes ~/ 60;
-            lateMinutes = totalMinutes % 60;
+          DateTime? pmInTime;
+          if (pmIn.isNotEmpty) {
+            pmInTime = dateFormat.parse(pmIn).copyWith(
+                  year: currentDate.year,
+                  month: currentDate.month,
+                  day: currentDate.day,
+                );
           }
 
-          // Calculate expected out time
-          final expectedOutTime =
-              isWFHHalfDay
-                  ? amInTime.add(Duration(hours: 4))
-                  : amInTime.add(Duration(hours: 8));
-          final effectiveOutTime =
-              isWFHHalfDay
-                  ? expectedOutTime.isAfter(minOutTime)
-                      ? expectedOutTime
-                      : minOutTime
-                  : expectedOutTime.isAfter(minOutTime)
-                  ? expectedOutTime
-                  : minOutTime;
+          // Define time boundaries
+          final lunchStartTime = DateTime(
+              currentDate.year, currentDate.month, currentDate.day, 12, 0);
+          final lunchEndTime = DateTime(
+              currentDate.year, currentDate.month, currentDate.day, 13, 0);
 
-          // Cap logout time at maxOutTime
-          final effectivePmOutTime =
-              pmOutTime.isAfter(maxOutTime) ? maxOutTime : pmOutTime;
+          int dailyUndertimeMinutes = 0;
 
-          // Calculate undertime
-          if (effectivePmOutTime.isBefore(effectiveOutTime)) {
-            final difference = effectiveOutTime.difference(effectivePmOutTime);
-            final totalMinutes = difference.inMinutes;
-            undertimeHours = totalMinutes ~/ 60;
-            undertimeMinutes = totalMinutes % 60;
+          // Rule: Lunch break must be between 12 PM and 1 PM.
+          if (amOutTime != null && amOutTime.isBefore(lunchStartTime)) {
+            dailyUndertimeMinutes +=
+                lunchStartTime.difference(amOutTime).inMinutes;
+          }
+          if (pmInTime != null && pmInTime.isAfter(lunchEndTime)) {
+            dailyUndertimeMinutes += pmInTime.difference(lunchEndTime).inMinutes;
           }
 
-          // Calculate lunch overbreak (non-WFH only)
-          if (!isWFH && amOut.isNotEmpty && pmIn.isNotEmpty) {
-            try {
-              final amOutTime = dateFormat
-                  .parse(amOut)
-                  .copyWith(
-                    year: currentDate.year,
-                    month: currentDate.month,
-                    day: currentDate.day,
-                  );
-              final pmInTime = dateFormat
-                  .parse(pmIn)
-                  .copyWith(
-                    year: currentDate.year,
-                    month: currentDate.month,
-                    day: currentDate.day,
-                  );
-              final lunchDuration = pmInTime.difference(amOutTime).inMinutes;
-              if (lunchDuration > 60) {
-                final overbreakMinutes = lunchDuration - 60;
-                undertimeHours += overbreakMinutes ~/ 60;
-                undertimeMinutes += overbreakMinutes % 60;
-              }
-            } catch (e) {
-              // Skip overbreak if parsing fails
-            }
+          // Calculate rendered work hours, excluding the mandatory 1-hour lunch
+          int totalWorkMinutes = 0;
+          if (amOutTime != null && pmInTime != null) {
+            // Has lunch break, calculate work minutes based on that.
+            final effectiveAmOut =
+                amOutTime.isAfter(lunchStartTime) ? lunchStartTime : amOutTime;
+            final morningWork = effectiveAmOut.difference(amInTime).inMinutes;
+
+            final effectivePmIn =
+                pmInTime.isBefore(lunchEndTime) ? lunchEndTime : pmInTime;
+            final afternoonWork = pmOutTime.difference(effectivePmIn).inMinutes;
+
+            totalWorkMinutes = morningWork + afternoonWork;
+          } else {
+            // No lunch break recorded, assume 1 hour was taken.
+            // Calculate total duration and subtract 1 hour lunch
+            totalWorkMinutes = pmOutTime.difference(amInTime).inMinutes - 60;
+          }
+
+          // Total required work is 8 hours (480 minutes)
+          final requiredWorkMinutes = 8 * 60;
+          if (totalWorkMinutes < requiredWorkMinutes) {
+            dailyUndertimeMinutes += requiredWorkMinutes - totalWorkMinutes;
+          }
+
+          if (dailyUndertimeMinutes > 0) {
+            undertimeHours = dailyUndertimeMinutes ~/ 60;
+            undertimeMinutes = dailyUndertimeMinutes % 60;
           }
         } catch (e) {
           // Handle parsing errors by leaving late/undertime as 0
