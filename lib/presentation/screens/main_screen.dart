@@ -67,6 +67,47 @@ class _MainScreenState extends State<MainScreen> {
         );
   }
 
+  Future<void> _showLogoutConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sign out'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[Text('Are you sure you want to sign out?')],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                minimumSize: Size(100, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Sign out'),
+              onPressed: () {
+                context.read<AuthCubit>().signOut();
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -118,10 +159,7 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 actions: [
                   IconButton(
-                    onPressed: () {
-                      context.read<AuthCubit>().signOut();
-                      Navigator.pushReplacementNamed(context, '/');
-                    },
+                    onPressed: _showLogoutConfirmationDialog,
                     icon: const Icon(Icons.logout),
                   ),
                 ],
@@ -189,10 +227,7 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 actions: [
                   IconButton(
-                    onPressed: () {
-                      context.read<AuthCubit>().signOut();
-                      Navigator.pushReplacementNamed(context, '/');
-                    },
+                    onPressed: _showLogoutConfirmationDialog,
                     icon: const Icon(Icons.logout),
                   ),
                 ],

@@ -100,6 +100,7 @@ class AttendanceRepository {
     required String employeeNumber,
     required DateTime timestamp,
     required String remarks,
+    String? accomplishmentId,
   }) async {
     try {
       final ipAddress = await getIpAddress();
@@ -110,6 +111,7 @@ class AttendanceRepository {
         "type": 'WFH',
         "remarks": remarks,
         "ipAddress": ipAddress,
+        if (accomplishmentId != null) "accomplishmentId": accomplishmentId,
       };
 
       final response = await pb.collection('attendance').create(body: body);

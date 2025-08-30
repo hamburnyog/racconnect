@@ -8,12 +8,14 @@ class AttendanceModel {
   final String type;
   final String remarks;
   final String? ipAddress;
+  final String? accomplishmentId;
   AttendanceModel({
     required this.employeeNumber,
     required this.timestamp,
     required this.type,
     required this.remarks,
     this.ipAddress,
+    this.accomplishmentId,
   });
 
   AttendanceModel copyWith({
@@ -22,6 +24,7 @@ class AttendanceModel {
     String? type,
     String? remarks,
     ValueGetter<String?>? ipAddress,
+    ValueGetter<String?>? accomplishmentId,
   }) {
     return AttendanceModel(
       employeeNumber: employeeNumber ?? this.employeeNumber,
@@ -29,6 +32,7 @@ class AttendanceModel {
       type: type ?? this.type,
       remarks: remarks ?? this.remarks,
       ipAddress: ipAddress != null ? ipAddress() : this.ipAddress,
+      accomplishmentId: accomplishmentId != null ? accomplishmentId() : this.accomplishmentId,
     );
   }
 
@@ -39,6 +43,7 @@ class AttendanceModel {
       'type': type,
       'remarks': remarks,
       'ipAddress': ipAddress,
+      'accomplishmentId': accomplishmentId,
     };
   }
 
@@ -52,6 +57,7 @@ class AttendanceModel {
       type: map['type'] ?? '',
       remarks: map['remarks'] ?? '',
       ipAddress: map['ipAddress'] ?? '',
+      accomplishmentId: map['accomplishmentId'],
     );
   }
 
@@ -62,7 +68,7 @@ class AttendanceModel {
 
   @override
   String toString() {
-    return 'AttendanceModel(employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks, ipAddress: $ipAddress)';
+    return 'AttendanceModel(employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks, ipAddress: $ipAddress, accomplishmentId: $accomplishmentId)';
   }
 
   @override
@@ -74,7 +80,8 @@ class AttendanceModel {
         other.timestamp == timestamp &&
         other.type == type &&
         other.remarks == remarks &&
-        other.ipAddress == ipAddress;
+        other.ipAddress == ipAddress &&
+        other.accomplishmentId == accomplishmentId;
   }
 
   @override
@@ -83,6 +90,7 @@ class AttendanceModel {
         timestamp.hashCode ^
         type.hashCode ^
         remarks.hashCode ^
-        ipAddress.hashCode;
+        ipAddress.hashCode ^
+        accomplishmentId.hashCode;
   }
 }

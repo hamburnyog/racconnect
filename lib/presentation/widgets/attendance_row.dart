@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
-import 'package:racconnect/presentation/widgets/remarks_dialog.dart';
+import 'package:racconnect/presentation/widgets/accomplishment_dialog.dart';
 import 'package:racconnect/utility/attendance_helpers.dart';
 
 Widget buildAttendanceRow({
@@ -115,17 +115,12 @@ Widget buildAttendanceRow({
     padding: const EdgeInsets.symmetric(vertical: 1.0),
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap:
-          isWFH
-              ? () => showRemarksDialog(
+      onTap: !isWeekend
+          ? () => showDialog(
                 context: context,
-                scaffoldMessengerKey: scaffoldMessengerKey,
-                day: day,
-                timeInRemarks: data?['timeInRemarks'] ?? 'No targets specified',
-                timeOutRemarks:
-                    data?['timeOutRemarks'] ?? 'No accomplishments specified',
+                builder: (context) => AccomplishmentDialog(day: day),
               )
-              : null,
+          : null,
       child: AnimatedBuilder(
         animation: glowAnimation,
         builder: (context, child) {

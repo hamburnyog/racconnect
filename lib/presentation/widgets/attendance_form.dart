@@ -4,7 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:racconnect/data/models/attendance_model.dart';
+import 'package:racconnect/data/models/accomplishment_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 
 class AttendanceForm extends StatefulWidget {
@@ -16,10 +18,13 @@ class AttendanceForm extends StatefulWidget {
 }
 
 class _AttendanceFormState extends State<AttendanceForm> {
+  final _accomplishmentRepository = AccomplishmentRepository();
   TextEditingController accomplishmentController = TextEditingController();
+  TextEditingController targetController = TextEditingController();
   final now = DateTime.now();
   final formKey = GlobalKey<FormState>();
   List<AttendanceModel> attendanceToday = [];
+  AccomplishmentModel? accomplishmentToday;
 
   Future<void> loadAttendanceToday() async {
     var cubit = context.read<AttendanceCubit>();
@@ -35,6 +40,18 @@ class _AttendanceFormState extends State<AttendanceForm> {
           });
         }
       }
+    }
+  }
+
+  Future<void> _loadAccomplishmentForToday() async {
+    final accomplishment = await _accomplishmentRepository
+        .getAccomplishmentByDate(now);
+    if (accomplishment != null) {
+      setState(() {
+        accomplishmentToday = accomplishment;
+        targetController.text = accomplishment.target;
+        accomplishmentController.text = accomplishment.accomplishment;
+      });
     }
   }
 
@@ -63,15 +80,48 @@ class _AttendanceFormState extends State<AttendanceForm> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
+                  onPressed: () async {
                     final authState = context.read<AuthCubit>().state;
+                    final attendanceCubit = context.read<AttendanceCubit>();
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
                     if (authState is AuthenticatedState) {
-                      context.read<AttendanceCubit>().addAttendance(
-                            employeeNumber:
-                                authState.user.profile?.employeeNumber ?? '',
-                            remarks: accomplishmentController.text.trim(),
+                      if (attendanceToday.isEmpty) {
+                        // Time In
+                        final accomplishment = await _accomplishmentRepository
+                            .addAccomplishment(
+                              date: now,
+                              target: targetController.text.trim(),
+                              accomplishment: '',
+                            );
+                        if (!mounted) return;
+                        attendanceCubit.addAttendance(
+                          employeeNumber:
+                              authState.user.profile?.employeeNumber ?? '',
+                          remarks: targetController.text.trim(),
+                          accomplishmentId: accomplishment.id,
+                        );
+                      } else {
+                        // Time Out
+                        final accomplishment = await _accomplishmentRepository
+                            .getAccomplishmentByDate(now);
+                        if (accomplishment != null) {
+                          await _accomplishmentRepository.updateAccomplishment(
+                            id: accomplishment.id!,
+                            date: accomplishment.date,
+                            target: accomplishment.target,
+                            accomplishment:
+                                accomplishmentController.text.trim(),
                           );
+                        }
+                        if (!mounted) return;
+                        attendanceCubit.addAttendance(
+                          employeeNumber:
+                              authState.user.profile?.employeeNumber ?? '',
+                          remarks: accomplishmentController.text.trim(),
+                          accomplishmentId: accomplishment?.id,
+                        );
+                      }
                     }
                   },
                   child: const Text('Confirm'),
@@ -86,11 +136,13 @@ class _AttendanceFormState extends State<AttendanceForm> {
   void initState() {
     super.initState();
     loadAttendanceToday();
+    _loadAccomplishmentForToday();
   }
 
   @override
   void dispose() {
     accomplishmentController.dispose();
+    targetController.dispose();
     formKey.currentState?.dispose();
     attendanceToday.clear();
     super.dispose();
@@ -101,9 +153,11 @@ class _AttendanceFormState extends State<AttendanceForm> {
     return BlocListener<AttendanceCubit, AttendanceState>(
       listener: (context, state) {
         if (state is AttendanceAddSuccess) {
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
           loadAttendanceToday();
+          if (!context.mounted) return;
           Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(
                 attendanceToday.isEmpty
@@ -132,184 +186,257 @@ class _AttendanceFormState extends State<AttendanceForm> {
             key: formKey,
             child: Column(
               children: [
-                Stack(
-                  children: [
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 10,
-                      ),
-                      child: Row(
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
                         children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_home_rounded, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'WFH Attendance',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                           Text(
-                            'WFH Clock In',
-                            style: TextStyle(
-                              fontSize: 30,
+                            DateFormat('MMMM dd, y').format(now),
+                            style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 30,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Spacer(),
-                          Center(
-                            child: SvgPicture.asset(
-                              'assets/images/calendar.svg',
-                              height: 100,
-                            ),
+                          StreamBuilder(
+                            stream: Stream.periodic(const Duration(seconds: 1)),
+                            builder: (context, snapshot) {
+                              return Column(
+                                children: [
+                                  Text(
+                                    DateFormat(
+                                      'h:mm:ss a',
+                                    ).format(DateTime.now()),
+                                    style: TextStyle(
+                                      fontSize: 50,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.yellow,
+                                    ),
+                                  ),
+                                  if (attendanceToday.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              margin: const EdgeInsets.only(
+                                                right: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: const [
+                                                      Icon(
+                                                        Icons.login,
+                                                        color:
+                                                            Colors.deepPurple,
+                                                      ),
+                                                      SizedBox(width: 6),
+                                                      Text(
+                                                        'Time In',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              Colors.deepPurple,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    DateFormat(
+                                                      'hh:mm a',
+                                                    ).format(
+                                                      attendanceToday
+                                                          .first
+                                                          .timestamp,
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              margin: const EdgeInsets.only(
+                                                left: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: const [
+                                                      Icon(
+                                                        Icons.logout,
+                                                        color:
+                                                            Colors.deepPurple,
+                                                      ),
+                                                      SizedBox(width: 6),
+                                                      Text(
+                                                        'Time Out',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              Colors.deepPurple,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    attendanceToday.length > 1
+                                                        ? DateFormat(
+                                                          'hh:mm a',
+                                                        ).format(
+                                                          attendanceToday
+                                                              .last
+                                                              .timestamp,
+                                                        )
+                                                        : '--:--',
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    DateFormat('MMMM dd, y').format(now),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                StreamBuilder(
-                  stream: Stream.periodic(const Duration(seconds: 1)),
-                  builder: (context, snapshot) {
-                    return Column(
-                      children: [
-                        Text(
-                          DateFormat('h:mm:ss a').format(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: 50,
-                            fontWeight: FontWeight.bold,
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: SvgPicture.asset(
+                          'assets/images/creative.svg',
+                          height: 200,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white.withValues(alpha: 0.2),
+                            BlendMode.srcIn,
                           ),
                         ),
-                        if (attendanceToday.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    margin: const EdgeInsets.only(right: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: const [
-                                            Icon(
-                                              Icons.login,
-                                              color: Colors.green,
-                                            ),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              'Time In',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          DateFormat('hh:mm a').format(
-                                            attendanceToday.first.timestamp,
-                                          ),
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    margin: const EdgeInsets.only(left: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: const [
-                                            Icon(
-                                              Icons.logout,
-                                              color: Colors.red,
-                                            ),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              'Time Out',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          attendanceToday.length > 1
-                                              ? DateFormat('hh:mm a').format(
-                                                attendanceToday.last.timestamp,
-                                              )
-                                              : '--:--',
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-                SizedBox(height: 10),
-                TextFormField(
-                  maxLength: 1000,
-                  controller: accomplishmentController,
-                  maxLines: 5,
-                  minLines: 1,
-                  keyboardType: TextInputType.multiline,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'This field is required';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => addAttendance,
-                  decoration: InputDecoration(
-                    labelText:
-                        (attendanceToday.isEmpty)
-                            ? 'Target/s'
-                            : 'Accomplishment/s',
-                    hintText:
-                        (attendanceToday.isEmpty)
-                            ? 'Enter today\'s target/s'
-                            : 'Enter today\'s Accomplishment/s',
-                    border: OutlineInputBorder(),
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 30),
+                if (attendanceToday.isEmpty)
+                  TextFormField(
+                    maxLength: 1000,
+                    controller: targetController,
+                    maxLines: 5,
+                    minLines: 1,
+                    keyboardType: TextInputType.multiline,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'This field is required';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => addAttendance,
+                    decoration: InputDecoration(
+                      labelText: 'Target/s',
+                      hintText: 'Enter today\'s target/s',
+                      border: OutlineInputBorder(),
+                    ),
+                  )
+                else
+                  Column(
+                    children: [
+                      TextFormField(
+                        maxLength: 1000,
+                        controller: targetController,
+                        readOnly: targetController.text.isNotEmpty,
+                        maxLines: 5,
+                        minLines: 1,
+                        keyboardType: TextInputType.multiline,
+                        decoration: InputDecoration(
+                          labelText: 'Target/s',
+                          hintText: 'Enter today\'s target/s',
+                          border: OutlineInputBorder(),
+                          filled: targetController.text.isNotEmpty,
+                          fillColor: Colors.grey.shade200,
+                          suffixIcon:
+                              targetController.text.isNotEmpty
+                                  ? Padding(
+                                    padding: EdgeInsets.only(right: 26.0),
+                                    child: Icon(Icons.lock),
+                                  )
+                                  : null,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        maxLength: 1000,
+                        controller: accomplishmentController,
+                        maxLines: 5,
+                        minLines: 1,
+                        keyboardType: TextInputType.multiline,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'This field is required';
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => addAttendance,
+                        decoration: InputDecoration(
+                          labelText: 'Accomplishment/s',
+                          hintText: 'Enter today\'s Accomplishment/s',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
                 SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,

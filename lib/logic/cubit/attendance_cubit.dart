@@ -59,6 +59,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   Future<void> addAttendance({
     required String employeeNumber,
     required String remarks,
+    String? accomplishmentId,
   }) async {
     try {
       emit(AttendanceLoading());
@@ -66,6 +67,7 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         employeeNumber: employeeNumber,
         timestamp: DateTime.parse(DateTime.now().toIso8601String()),
         remarks: remarks,
+        accomplishmentId: accomplishmentId,
       );
       emit(AttendanceAddSuccess(attendanceModel));
     } catch (e) {
