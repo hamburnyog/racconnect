@@ -35,7 +35,7 @@ class AuthRepository {
         url,
       ) async {
         await launchUrl(url);
-      }, expand: 'profile.section');
+      }, expand: 'profile,profile.section');
 
       if (response.record.data.isNotEmpty) {
         final isVerified = response.record.getBoolValue('verified');

@@ -36,16 +36,24 @@ Future<String?> generateExcel(
   String fullName = '$firstName $middleInitial $lastName'.trim().toUpperCase();
 
   String position = profile.position;
-  String supervisor =
+  String supervisor;
+  String supervisorDesignation;
+
+  if (profile.sectionCode == 'OIC') {
+    supervisor = 'Immediate Supervisor';
+    supervisorDesignation = '';
+  } else {
+    supervisor =
       profile.section ==
               'y78rsxd4495cz25' // Hardcode for now
           ? 'HON. ROWENA M. MACALINTAL, ASEC'
           : 'JOHN S. CALIDGUID, RSW, MPA';
-  String supervisorDesignation =
+    supervisorDesignation =
       profile.section ==
               'y78rsxd4495cz25' // Hardcode for now
           ? 'Deputy Director for Operations and Services'
           : 'Officer-in-charge, SWO IV';
+  }
 
   // Headers
   String monthYearText =
@@ -580,6 +588,7 @@ Future<String?> generateExcel(
     supervisor,
     supervisorDesignation,
     cellList,
+    profile.sectionCode,
   );
 
   // Apply column widths

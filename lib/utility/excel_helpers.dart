@@ -371,6 +371,7 @@ void buildCertificationSection(
   String supervisor,
   String supervisorDesignation,
   Map<String, dynamic> cellList,
+  String? sectionCode,
 ) {
   // Certification
   var certificationStartNumber = startingRowNumber + 2;
@@ -491,11 +492,14 @@ void buildCertificationSection(
 
   attestationRowNumber += 4;
 
+  final supervisorSections = ['OIC', 'AFU', 'PDU', 'LU'];
+
   sheet.merge(
     CellIndex.indexByString('D$attestationRowNumber'),
     CellIndex.indexByString('G$attestationRowNumber'),
-    customValue: TextCellValue(''),
-    // customValue: TextCellValue(supervisorText),
+    customValue: TextCellValue(
+      supervisorSections.contains(sectionCode) ? supervisorText : '',
+    ),
   );
 
   cellList['D$attestationRowNumber'] = sheet.cell(
@@ -506,8 +510,9 @@ void buildCertificationSection(
   sheet.merge(
     CellIndex.indexByString('L$attestationRowNumber'),
     CellIndex.indexByString('O$attestationRowNumber'),
-    customValue: TextCellValue(''),
-    // customValue: TextCellValue(supervisorText),
+    customValue: TextCellValue(
+      supervisorSections.contains(sectionCode) ? supervisorText : '',
+    ),
   );
 
   cellList['L$attestationRowNumber'] = sheet.cell(
