@@ -188,7 +188,7 @@ class _AttendancePageState extends State<AttendancePage>
                             color: Colors.white,
                           ),
                           title: Text(
-                            isSmallScreen ? 'Attendance' : 'Attendance Records',
+                            'Attendance',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -197,18 +197,31 @@ class _AttendancePageState extends State<AttendancePage>
                           ),
                           subtitle: Text(
                             !isSmallScreen
-                                ? 'Click on any WFH row to view targets and accomplishments. Use the Export button to generate your DTR.'
+                                ? 'View your attendance here. Click on workday to add or view your daily accomplishment'
                                 : 'View your attendance here',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
                             ),
                           ),
-                          trailing: ExportButton(
-                            selectedYear: selectedYear,
-                            selectedMonth: selectedMonth,
-                            holidayMap: holidayMap,
-                            suspensionMap: suspensionMap,
+                          trailing: BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, authState) {
+                              // Only show export button for authenticated users with a role
+                              final hasRole =
+                                  authState is AuthenticatedState &&
+                                  (authState.user.role?.isNotEmpty ?? false);
+
+                              if (!hasRole) {
+                                return const SizedBox.shrink();
+                              }
+
+                              return ExportButton(
+                                selectedYear: selectedYear,
+                                selectedMonth: selectedMonth,
+                                holidayMap: holidayMap,
+                                suspensionMap: suspensionMap,
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -303,14 +316,31 @@ class _AttendancePageState extends State<AttendancePage>
                     ],
                   ),
                 ),
-                ExportAccomplishmentsButton(
-                  selectedYear: selectedYear,
-                  selectedMonth: selectedMonth,
-                ),
-                ImportButton(
-                  selectedYear: selectedYear,
-                  selectedMonth: selectedMonth,
-                  onRefresh: _loadInitialData,
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, authState) {
+                    // Only show export buttons for authenticated users with a role
+                    final hasRole =
+                        authState is AuthenticatedState &&
+                        (authState.user.role?.isNotEmpty ?? false);
+
+                    if (!hasRole) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Stack(
+                      children: [
+                        ExportAccomplishmentsButton(
+                          selectedYear: selectedYear,
+                          selectedMonth: selectedMonth,
+                        ),
+                        ImportButton(
+                          selectedYear: selectedYear,
+                          selectedMonth: selectedMonth,
+                          onRefresh: _loadInitialData,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             );

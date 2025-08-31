@@ -102,7 +102,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
                       ),
                     ],
                     SizedBox(width: 8),
-                    Text('Today\'s Attendance'),
+                    Text('Current WFH Details'),
                   ],
                 ),
               ),

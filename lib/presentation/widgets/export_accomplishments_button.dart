@@ -33,64 +33,169 @@ class _ExportAccomplishmentsButtonState
   bool _isExporting = false;
 
   Future<void> _exportToPDF() async {
+    final authState = context.read<AuthCubit>().state;
+
+    // Check if user is COS employee
+    final isCOS =
+        authState is AuthenticatedState &&
+        authState.user.profile?.employmentStatus == 'COS';
+
+    if (authState is AuthenticatedState) {
+      if (isCOS) {
+        // Show dialog for COS employees to choose export options
+        _showCOSExportOptions(authState);
+      } else {
+        // Regular export for non-COS employees
+        _performExport(authState, null, true);
+      }
+    }
+  }
+
+  Future<void> _showCOSExportOptions(AuthenticatedState authState) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Report Type'),
+          content: const Text(
+            'Choose the type of accomplishment report to generate:',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annex A (WFH)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showPeriodSelection(authState, true);
+              },
+            ),
+            TextButton(
+              child: const Text('Accomplishment Report'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showPeriodSelection(authState, false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showPeriodSelection(
+    AuthenticatedState authState,
+    bool isAnnexA,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Period'),
+          content: const Text('Choose the period for the report:'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('First Half (1-15)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'first', isAnnexA);
+              },
+            ),
+            TextButton(
+              child: const Text('Second Half (16-last day)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'second', isAnnexA);
+              },
+            ),
+            TextButton(
+              child: const Text('Whole Month'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'whole', isAnnexA);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _performExport(
+    AuthenticatedState authState,
+    String? period,
+    bool isAnnexA,
+  ) async {
     if (_isExporting) return;
 
     // Get user info and context before async gap to avoid BuildContext issues
-    final authState = context.read<AuthCubit>().state;
     final attendanceCubit = context.read<AttendanceCubit>();
     String userName = 'Unknown User';
     String userPosition = '';
     String userOffice = '';
 
-    if (authState is AuthenticatedState) {
-      // Try to get name from profile first
-      userName =
-          '${authState.user.profile?.firstName ?? ''} ${authState.user.profile?.lastName ?? ''}'
-              .trim();
-      if (userName.isEmpty) {
-        // Fallback to user name from UserModel
-        userName = authState.user.name;
-      }
-      if (userName.isEmpty) {
-        // Last resort fallback
-        userName = 'Unknown User';
-      }
-
-      // Get position and office (using sectionName as office)
-      userPosition = authState.user.profile?.position ?? '';
-      userOffice = authState.user.profile?.sectionName ?? '';
+    // Try to get name from profile first
+    userName =
+        '${authState.user.profile?.firstName ?? ''} ${authState.user.profile?.lastName ?? ''}'
+            .trim();
+    if (userName.isEmpty) {
+      // Fallback to user name from UserModel
+      userName = authState.user.name;
     }
+    if (userName.isEmpty) {
+      // Last resort fallback
+      userName = 'Unknown User';
+    }
+
+    // Get position and office (using sectionName as office)
+    userPosition = authState.user.profile?.position ?? '';
+    userOffice = authState.user.profile?.sectionName ?? '';
 
     setState(() {
       _isExporting = true;
     });
 
     try {
-      // Show loading indicator
+      // Show loading indicator only on mobile
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Exporting accomplishments to PDF...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (_isMobile) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Exporting accomplishments to PDF...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
 
       // Get employee number
-      if (authState is! AuthenticatedState) {
-        throw Exception('User not authenticated');
-      }
       final employeeNumber = authState.user.profile?.employeeNumber;
       if (employeeNumber == null || employeeNumber.isEmpty) {
         throw Exception('Employee number not found');
       }
 
-      // Fetch accomplishments for the selected month
-      final startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
-      final endDate = DateTime(
-        widget.selectedYear,
-        widget.selectedMonth + 1,
-        1,
-      ).subtract(const Duration(days: 1));
+      // Determine date range based on period
+      DateTime startDate;
+      DateTime endDate;
+
+      if (period == 'first') {
+        // First half of the month (1st to 15th)
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime(widget.selectedYear, widget.selectedMonth, 15);
+      } else if (period == 'second') {
+        // Second half of the month (16th to end of month)
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 16);
+        endDate = DateTime(
+          widget.selectedYear,
+          widget.selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+      } else {
+        // Whole month (default behavior)
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime(
+          widget.selectedYear,
+          widget.selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+      }
 
       final accomplishmentRepository = AccomplishmentRepository();
       final allAccomplishments = await accomplishmentRepository
@@ -100,47 +205,56 @@ class _ExportAccomplishmentsButtonState
             endDate,
           );
 
-      // Filter accomplishments to only include days with WFH time logs
-      // We need to check if there are attendance records with WFH type for each accomplishment date
-      final attendanceRepository = attendanceCubit.attendanceRepository;
-      final attendanceRecords = await attendanceRepository
-          .getEmployeeAttendanceForMonth(employeeNumber, startDate);
+      // Filter accomplishments based on report type
+      List<AccomplishmentModel> filteredAccomplishments;
 
-      // Filter to only WFH attendance records
-      final wfhAttendanceRecords =
-          attendanceRecords
-              .where((record) => record.type.toLowerCase().contains('wfh'))
-              .toList();
+      if (isAnnexA) {
+        // Annex A report - only include WFH accomplishments
+        final attendanceRepository = attendanceCubit.attendanceRepository;
+        final attendanceRecords = await attendanceRepository
+            .getEmployeeAttendanceForMonth(employeeNumber, startDate);
 
-      // Create a set of dates that have WFH attendance
-      final wfhDates = <DateTime>{};
-      for (var record in wfhAttendanceRecords) {
-        final date = DateTime(
-          record.timestamp.year,
-          record.timestamp.month,
-          record.timestamp.day,
-        );
-        wfhDates.add(date);
+        // Filter to only WFH attendance records
+        final wfhAttendanceRecords =
+            attendanceRecords
+                .where((record) => record.type.toLowerCase().contains('wfh'))
+                .toList();
+
+        // Create a set of dates that have WFH attendance
+        final wfhDates = <DateTime>{};
+        for (var record in wfhAttendanceRecords) {
+          final date = DateTime(
+            record.timestamp.year,
+            record.timestamp.month,
+            record.timestamp.day,
+          );
+          wfhDates.add(date);
+        }
+
+        // Filter accomplishments to only include those with WFH attendance
+        filteredAccomplishments =
+            allAccomplishments.where((accomplishment) {
+              final accomplishmentDate = DateTime(
+                accomplishment.date.year,
+                accomplishment.date.month,
+                accomplishment.date.day,
+              );
+              return wfhDates.contains(accomplishmentDate);
+            }).toList();
+      } else {
+        // Simple Accomplishment Report - include all accomplishments
+        filteredAccomplishments = allAccomplishments;
       }
 
-      // Filter accomplishments to only include those with WFH attendance
-      final wfhAccomplishments =
-          allAccomplishments.where((accomplishment) {
-            final accomplishmentDate = DateTime(
-              accomplishment.date.year,
-              accomplishment.date.month,
-              accomplishment.date.day,
-            );
-            return wfhDates.contains(accomplishmentDate);
-          }).toList();
-
-      // Generate PDF content with only WFH accomplishments
+      // Generate PDF content
       final pdfFile = await _generatePDF(
-        wfhAccomplishments,
+        filteredAccomplishments,
         startDate,
         userName,
         userPosition,
         userOffice,
+        period: period,
+        isAnnexA: isAnnexA,
       );
 
       if (!mounted) return;
@@ -158,56 +272,64 @@ class _ExportAccomplishmentsButtonState
 
         if (!mounted) return;
 
-        if (result.status == ShareResultStatus.success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                'PDF exported successfully! Thank you for sharing!',
+        if (_isMobile) {
+          if (result.status == ShareResultStatus.success) {
+            scaffoldMessenger.showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'PDF exported successfully! Thank you for sharing!',
+                ),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
               ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('PDF exported successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+            );
+          } else {
+            scaffoldMessenger.showSnackBar(
+              const SnackBar(
+                content: Text('PDF exported successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       } else {
         // Desktop: Open the file in the default PDF viewer
         final uri = Uri.file(pdfFile.path);
         if (await launchUrl(uri)) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('PDF saved and opened: ${pdfFile.path}'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 4),
-            ),
-          );
+          if (_isMobile) {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text('PDF saved and opened: ${pdfFile.path}'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
         } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('PDF saved to: ${pdfFile.path}'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 4),
-            ),
-          );
+          if (_isMobile) {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text('PDF saved to: ${pdfFile.path}'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error exporting PDF: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
+      if (_isMobile) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting PDF: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -222,8 +344,10 @@ class _ExportAccomplishmentsButtonState
     DateTime month,
     String userName,
     String userPosition,
-    String userOffice,
-  ) async {
+    String userOffice, {
+    String? period,
+    bool isAnnexA = true,
+  }) async {
     final pdf = pw.Document();
 
     // Load logo images
@@ -299,26 +423,7 @@ class _ExportAccomplishmentsButtonState
               pw.SizedBox(height: 20),
 
               // Title
-              pw.Text(
-                'ANNEX A',
-                style: pw.TextStyle(
-                  font: pw.Font.helvetica(),
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  decoration: pw.TextDecoration.underline,
-                ),
-                textAlign: pw.TextAlign.center,
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text(
-                'WORK FROM HOME ACCOMPLISHMENT REPORT',
-                style: pw.TextStyle(
-                  font: pw.Font.helvetica(),
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-                textAlign: pw.TextAlign.center,
-              ),
+              ..._buildTitleSection(isAnnexA, period),
 
               pw.SizedBox(height: 20),
 
@@ -338,7 +443,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 70,
                         child: pw.Text(
-                          'Name:',
+                          'Name',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -349,7 +454,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 180,
                         child: pw.Text(
-                          userName,
+                          ': $userName',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -359,7 +464,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 90,
                         child: pw.Text(
-                          'Period Covered:',
+                          'Period Covered',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -370,7 +475,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 160,
                         child: pw.Text(
-                          DateFormat('MMMM yyyy').format(month),
+                          ': ${_getPeriodCoveredText(month, period)}',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -384,7 +489,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 70,
                         child: pw.Text(
-                          'Position:',
+                          'Position',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -395,7 +500,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 180,
                         child: pw.Text(
-                          userPosition,
+                          ': $userPosition',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -405,7 +510,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 90,
                         child: pw.Text(
-                          'Office:',
+                          'Office',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -416,7 +521,7 @@ class _ExportAccomplishmentsButtonState
                       pw.Container(
                         width: 160,
                         child: pw.Text(
-                          userOffice,
+                          ': $userOffice',
                           style: pw.TextStyle(
                             font: pw.Font.helvetica(),
                             fontSize: 10,
@@ -622,6 +727,87 @@ class _ExportAccomplishmentsButtonState
 
     await file.writeAsBytes(await pdf.save());
     return file;
+  }
+
+  bool get _isMobile => Platform.isAndroid || Platform.isIOS;
+
+  List<pw.Widget> _buildTitleSection(bool isAnnexA, String? period) {
+    if (isAnnexA) {
+      String titleText = 'WORK FROM HOME ACCOMPLISHMENT REPORT';
+
+      return [
+        pw.Text(
+          'ANNEX A',
+          style: pw.TextStyle(
+            font: pw.Font.helvetica(),
+            fontSize: 16,
+            fontWeight: pw.FontWeight.bold,
+            decoration: pw.TextDecoration.underline,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          titleText,
+          style: pw.TextStyle(
+            font: pw.Font.helvetica(),
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
+      ];
+    } else {
+      String titleText = 'ACCOMPLISHMENT REPORT';
+      if (period != null && period != 'whole') {
+        titleText += ' (${_getPeriodLabel(period)})';
+      }
+
+      return [
+        pw.Text(
+          titleText,
+          style: pw.TextStyle(
+            font: pw.Font.helvetica(),
+            fontSize: 16,
+            fontWeight: pw.FontWeight.bold,
+            decoration: pw.TextDecoration.underline,
+          ),
+          textAlign: pw.TextAlign.center,
+        ),
+      ];
+    }
+  }
+
+  String _getPeriodLabel(String period) {
+    switch (period) {
+      case 'first':
+        return 'First Half';
+      case 'second':
+        return 'Second Half';
+      default:
+        return '';
+    }
+  }
+
+  String _getPeriodCoveredText(DateTime month, String? period) {
+    if (period == null || period == 'whole') {
+      return DateFormat('MMMM yyyy').format(month);
+    }
+
+    switch (period) {
+      case 'first':
+        return '${DateFormat('MMMM').format(month)} 1-15, ${DateFormat('y').format(month)}';
+      case 'second':
+        final lastDay =
+            DateTime(
+              month.year,
+              month.month + 1,
+              1,
+            ).subtract(const Duration(days: 1)).day;
+        return '${DateFormat('MMMM').format(month)} 16-$lastDay, ${DateFormat('y').format(month)}';
+      default:
+        return DateFormat('MMMM yyyy').format(month);
+    }
   }
 
   @override

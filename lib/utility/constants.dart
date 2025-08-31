@@ -90,11 +90,11 @@ const sideBarItemsHr = [
 
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
-  BottomNavigationBarItem(
-    icon: Icon(Icons.calendar_month_outlined),
-    activeIcon: Icon(Icons.calendar_month),
-    label: 'Special Orders',
-  ),
+  // BottomNavigationBarItem(
+  //   icon: Icon(Icons.calendar_month_outlined),
+  //   activeIcon: Icon(Icons.calendar_month),
+  //   label: 'Special Orders',
+  // ),
 ];
 
 const sideBarItemsUser = [
@@ -108,11 +108,11 @@ const sideBarItemsUser = [
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
   ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.sick_outlined),
-    activeIcon: Icon(Icons.sick_rounded),
-    label: 'Leaves',
-  ),
+  // BottomNavigationBarItem(
+  //   icon: Icon(Icons.sick_outlined),
+  //   activeIcon: Icon(Icons.sick_rounded),
+  //   label: 'Leaves',
+  // ),
   BottomNavigationBarItem(
     icon: Icon(Icons.person_pin_outlined),
     activeIcon: Icon(Icons.person_pin_rounded),
