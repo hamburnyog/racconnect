@@ -155,17 +155,15 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
             SizedBox(height: 30),
             TextFormField(
               controller: _targetController,
-              readOnly: true,
+              readOnly: false, // Allow editing of targets
               maxLines: 5,
               minLines: 1,
               decoration: InputDecoration(
                 labelText: 'Target',
                 border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey.shade200,
                 suffixIcon: Padding(
                   padding: EdgeInsets.only(right: 26.0),
-                  child: Icon(Icons.lock),
+                  child: Icon(Icons.edit, color: Colors.grey),
                 ),
               ),
             ),
