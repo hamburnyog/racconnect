@@ -186,6 +186,9 @@ class _ProfilePageState extends State<ProfilePage> {
               profile: () => state.profile,
             );
             authCubit.refreshUser(updatedUser);
+
+            // Also refresh the current user to ensure expanded data is loaded
+            authCubit.refreshCurrentUser();
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -30,7 +30,9 @@ class AttendanceRepository {
       final isoStart = startOfDay.toUtc().toIso8601String().split('.').first;
       final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
 
-      final response = await pb.collection('attendance').getFullList(
+      final response = await pb
+          .collection('attendance')
+          .getFullList(
             filter: 'timestamp >= "$isoStart" && timestamp <= "$isoEnd"',
             sort: '+timestamp',
           );

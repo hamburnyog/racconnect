@@ -50,6 +50,11 @@ class ProfileRepository {
       await pb.collection('users').update(userId, body: {'profile': profileId});
     }
 
-    return ProfileModel.fromJson(record.toString());
+    // Fetch the updated profile with expanded section data
+    final updatedRecord = await pb
+        .collection('profiles')
+        .getOne(record.id, expand: 'section');
+
+    return ProfileModel.fromJson(updatedRecord.toString());
   }
 }

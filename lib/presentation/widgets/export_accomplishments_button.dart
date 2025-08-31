@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
+import 'package:racconnect/data/models/profile_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
@@ -145,9 +146,9 @@ class _ExportAccomplishmentsButtonState
       userName = 'Unknown User';
     }
 
-    // Get position and office (using sectionName as office)
+    // Get position and office (using sectionName as office, fallback to sectionCode)
     userPosition = authState.user.profile?.position ?? '';
-    userOffice = authState.user.profile?.sectionName ?? '';
+    userOffice = _getOfficeInfo(authState.user.profile);
 
     setState(() {
       _isExporting = true;
@@ -276,9 +277,7 @@ class _ExportAccomplishmentsButtonState
           if (result.status == ShareResultStatus.success) {
             scaffoldMessenger.showSnackBar(
               const SnackBar(
-                content: Text(
-                  'PDF exported successfully! Thank you for sharing!',
-                ),
+                content: Text('PDF exported successfully!'),
                 backgroundColor: Colors.green,
                 duration: Duration(seconds: 2),
               ),
@@ -727,6 +726,27 @@ class _ExportAccomplishmentsButtonState
 
     await file.writeAsBytes(await pdf.save());
     return file;
+  }
+
+  /// Get office information with fallbacks
+  String _getOfficeInfo(ProfileModel? profile) {
+    // Try sectionName first
+    if (profile?.sectionName?.isNotEmpty ?? false) {
+      return profile!.sectionName!;
+    }
+
+    // Fallback to sectionCode
+    if (profile?.sectionCode?.isNotEmpty ?? false) {
+      return profile!.sectionCode!;
+    }
+
+    // Fallback to a generic office name if section exists but no name
+    if (profile?.section?.isNotEmpty ?? false) {
+      return 'N/A'; // Don't expose raw section IDs
+    }
+
+    // If all else fails, return N/A
+    return 'N/A';
   }
 
   bool get _isMobile => Platform.isAndroid || Platform.isIOS;

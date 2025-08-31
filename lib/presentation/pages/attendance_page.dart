@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -55,6 +57,17 @@ class _AttendancePageState extends State<AttendancePage>
     ).animate(_greenGlowController);
 
     _loadInitialData();
+  }
+
+  /// Check if the user has a role assigned
+  bool _hasUserRole(AuthState authState) {
+    if (authState is! AuthenticatedState) {
+      return false;
+    }
+
+    final role = authState.user.role;
+    // Check if role is not null and not empty
+    return role != null && role.isNotEmpty;
   }
 
   @override
@@ -207,9 +220,7 @@ class _AttendancePageState extends State<AttendancePage>
                           trailing: BlocBuilder<AuthCubit, AuthState>(
                             builder: (context, authState) {
                               // Only show export button for authenticated users with a role
-                              final hasRole =
-                                  authState is AuthenticatedState &&
-                                  (authState.user.role?.isNotEmpty ?? false);
+                              final hasRole = _hasUserRole(authState);
 
                               if (!hasRole) {
                                 return const SizedBox.shrink();
@@ -319,13 +330,21 @@ class _AttendancePageState extends State<AttendancePage>
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, authState) {
                     // Only show export buttons for authenticated users with a role
-                    final hasRole =
-                        authState is AuthenticatedState &&
-                        (authState.user.role?.isNotEmpty ?? false);
+                    final hasRole = _hasUserRole(authState);
 
                     if (!hasRole) {
                       return const SizedBox.shrink();
                     }
+
+                    // Check if user is Developer on desktop to show import button
+                    final isDeveloper =
+                        authState is AuthenticatedState &&
+                        authState.user.role == 'Developer';
+                    final isDesktop =
+                        Platform.isWindows ||
+                        Platform.isMacOS ||
+                        Platform.isLinux;
+                    final showImportButton = isDesktop && isDeveloper;
 
                     return Stack(
                       children: [
@@ -333,11 +352,12 @@ class _AttendancePageState extends State<AttendancePage>
                           selectedYear: selectedYear,
                           selectedMonth: selectedMonth,
                         ),
-                        ImportButton(
-                          selectedYear: selectedYear,
-                          selectedMonth: selectedMonth,
-                          onRefresh: _loadInitialData,
-                        ),
+                        if (showImportButton)
+                          ImportButton(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            onRefresh: _loadInitialData,
+                          ),
                       ],
                     );
                   },

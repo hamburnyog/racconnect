@@ -44,15 +44,15 @@ Future<String?> generateExcel(
     supervisorDesignation = '';
   } else {
     supervisor =
-      profile.section ==
-              'y78rsxd4495cz25' // Hardcode for now
-          ? 'HON. ROWENA M. MACALINTAL, ASEC'
-          : 'JOHN S. CALIDGUID, RSW, MPA';
+        profile.section ==
+                'y78rsxd4495cz25' // Hardcode for now
+            ? 'HON. ROWENA M. MACALINTAL, ASEC'
+            : 'JOHN S. CALIDGUID, RSW, MPA';
     supervisorDesignation =
-      profile.section ==
-              'y78rsxd4495cz25' // Hardcode for now
-          ? 'Deputy Director for Operations and Services'
-          : 'Officer-in-charge, SWO IV';
+        profile.section ==
+                'y78rsxd4495cz25' // Hardcode for now
+            ? 'Deputy Director for Operations and Services'
+            : 'Officer-in-charge, SWO IV';
   }
 
   // Headers
@@ -408,19 +408,27 @@ Future<String?> generateExcel(
       int undertimeHours = 0;
       int undertimeMinutes = 0;
 
-      if (dayLogs.length == 1) {
+      if (dayLogs.isEmpty) {
+        // No logs for the day - apply 8 hours undertime
+        undertimeHours = 8;
+      } else if (dayLogs.length == 1) {
+        // Only 1 time log for the day - apply 8 hours undertime
         undertimeHours = 8;
       } else if (amIn.isNotEmpty && pmOut.isNotEmpty) {
         final dateFormat = DateFormat('h:mm a');
 
         try {
           // Parse times with correct date
-          final amInTime = dateFormat.parse(amIn).copyWith(
+          final amInTime = dateFormat
+              .parse(amIn)
+              .copyWith(
                 year: currentDate.year,
                 month: currentDate.month,
                 day: currentDate.day,
               );
-          final pmOutTime = dateFormat.parse(pmOut).copyWith(
+          final pmOutTime = dateFormat
+              .parse(pmOut)
+              .copyWith(
                 year: currentDate.year,
                 month: currentDate.month,
                 day: currentDate.day,
@@ -428,7 +436,9 @@ Future<String?> generateExcel(
 
           DateTime? amOutTime;
           if (amOut.isNotEmpty) {
-            amOutTime = dateFormat.parse(amOut).copyWith(
+            amOutTime = dateFormat
+                .parse(amOut)
+                .copyWith(
                   year: currentDate.year,
                   month: currentDate.month,
                   day: currentDate.day,
@@ -437,7 +447,9 @@ Future<String?> generateExcel(
 
           DateTime? pmInTime;
           if (pmIn.isNotEmpty) {
-            pmInTime = dateFormat.parse(pmIn).copyWith(
+            pmInTime = dateFormat
+                .parse(pmIn)
+                .copyWith(
                   year: currentDate.year,
                   month: currentDate.month,
                   day: currentDate.day,
@@ -446,9 +458,19 @@ Future<String?> generateExcel(
 
           // Define time boundaries
           final lunchStartTime = DateTime(
-              currentDate.year, currentDate.month, currentDate.day, 12, 0);
+            currentDate.year,
+            currentDate.month,
+            currentDate.day,
+            12,
+            0,
+          );
           final lunchEndTime = DateTime(
-              currentDate.year, currentDate.month, currentDate.day, 13, 0);
+            currentDate.year,
+            currentDate.month,
+            currentDate.day,
+            13,
+            0,
+          );
 
           int dailyUndertimeMinutes = 0;
 
@@ -458,7 +480,8 @@ Future<String?> generateExcel(
                 lunchStartTime.difference(amOutTime).inMinutes;
           }
           if (pmInTime != null && pmInTime.isAfter(lunchEndTime)) {
-            dailyUndertimeMinutes += pmInTime.difference(lunchEndTime).inMinutes;
+            dailyUndertimeMinutes +=
+                pmInTime.difference(lunchEndTime).inMinutes;
           }
 
           // Calculate rendered work hours, excluding the mandatory 1-hour lunch
