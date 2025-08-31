@@ -24,7 +24,8 @@ class AccomplishmentRepository {
       final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
 
       final response = await pb.collection('accomplishments').getFullList(
-            filter: 'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
+            filter:
+                'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
           );
       if (response.isNotEmpty) {
         return AccomplishmentModel.fromMap(response.first.toJson());

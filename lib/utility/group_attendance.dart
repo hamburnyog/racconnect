@@ -135,6 +135,7 @@ Map<String, Map<String, String>> groupAttendance(
       'type': type,
       'timeInRemarks': timeInRemarks,
       'timeOutRemarks': timeOutRemarks,
+      'hasAccomplishments': entries.any((e) => e.accomplishmentId != null).toString(),
     };
   });
 

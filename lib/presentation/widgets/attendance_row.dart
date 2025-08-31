@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
-import 'package:racconnect/presentation/widgets/accomplishment_dialog.dart';
+import 'package:racconnect/presentation/widgets/accomplishment_bottom_sheet.dart';
 import 'package:racconnect/utility/attendance_helpers.dart';
 
 Widget buildAttendanceRow({
@@ -85,7 +85,7 @@ Widget buildAttendanceRow({
     );
   }
 
-  final isWFH = data?['type']?.toLowerCase().contains('wfh') ?? false;
+  final hasAccomplishments = (data?['hasAccomplishments'] ?? 'false') == 'true';
 
   String? displayTimeIn = data?['timeIn'];
   String? displayLunchOut = data?['lunchOut'];
@@ -116,9 +116,15 @@ Widget buildAttendanceRow({
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: !isWeekend
-          ? () => showDialog(
+          ? () => showModalBottomSheet(
                 context: context,
-                builder: (context) => AccomplishmentDialog(day: day),
+                isScrollControlled: true,
+                scrollControlDisabledMaxHeightRatio: 0.75,
+                showDragHandle: true,
+                useSafeArea: true,
+                builder: (BuildContext builder) {
+                  return AccomplishmentBottomSheet(day: day);
+                },
               )
           : null,
       child: AnimatedBuilder(
@@ -126,12 +132,12 @@ Widget buildAttendanceRow({
         builder: (context, child) {
           return Container(
             decoration:
-                isWFH
+                hasAccomplishments
                     ? BoxDecoration(
                       color: rowColor,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: glowAnimation.value ?? Colors.purple,
+                        color: glowAnimation.value ?? Colors.green,
                         width: 1.5,
                       ),
                     )

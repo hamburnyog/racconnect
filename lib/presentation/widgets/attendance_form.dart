@@ -266,22 +266,24 @@ class _AttendanceFormState extends State<AttendanceForm> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Row(children: const [
-                                                  Icon(
-                                                    Icons.login,
-                                                    color: Colors.deepPurple,
-                                                  ),
-                                                  SizedBox(width: 6),
-                                                  Text(
-                                                    'Time In',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          Colors.deepPurple,
+                                                Row(
+                                                  children: const [
+                                                    Icon(
+                                                      Icons.login,
+                                                      color: Colors.deepPurple,
                                                     ),
-                                                  ),
-                                                ]),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      'Time In',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Colors.deepPurple,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                                 const SizedBox(height: 6),
                                                 Text(
                                                   attendanceToday.isNotEmpty
@@ -316,22 +318,24 @@ class _AttendanceFormState extends State<AttendanceForm> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Row(children: const [
-                                                  Icon(
-                                                    Icons.logout,
-                                                    color: Colors.deepPurple,
-                                                  ),
-                                                  SizedBox(width: 6),
-                                                  Text(
-                                                    'Time Out',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          Colors.deepPurple,
+                                                Row(
+                                                  children: const [
+                                                    Icon(
+                                                      Icons.logout,
+                                                      color: Colors.deepPurple,
                                                     ),
-                                                  ),
-                                                ]),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      'Time Out',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Colors.deepPurple,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                                 const SizedBox(height: 6),
                                                 Text(
                                                   attendanceToday.length > 1
@@ -391,8 +395,8 @@ class _AttendanceFormState extends State<AttendanceForm> {
                     },
                     onFieldSubmitted: (_) => addAttendance,
                     decoration: InputDecoration(
-                      labelText: 'Target/s',
-                      hintText: 'Enter today\'s target/s',
+                      labelText: 'Target',
+                      hintText: 'Enter your tasks for the day',
                       border: OutlineInputBorder(),
                     ),
                   )
@@ -407,8 +411,8 @@ class _AttendanceFormState extends State<AttendanceForm> {
                         minLines: 1,
                         keyboardType: TextInputType.multiline,
                         decoration: InputDecoration(
-                          labelText: 'Target/s',
-                          hintText: 'Enter today\'s target/s',
+                          labelText: 'Target',
+                          hintText: 'Enter your tasks for the day',
                           border: OutlineInputBorder(),
                           filled: targetController.text.isNotEmpty,
                           fillColor: Colors.grey.shade200,
@@ -436,8 +440,8 @@ class _AttendanceFormState extends State<AttendanceForm> {
                         },
                         onFieldSubmitted: (_) => addAttendance,
                         decoration: InputDecoration(
-                          labelText: 'Accomplishment/s',
-                          hintText: 'Enter today\'s Accomplishment/s',
+                          labelText: 'Accomplishment',
+                          hintText: 'Enter your accomplished tasks for the day',
                           border: OutlineInputBorder(),
                         ),
                       ),
