@@ -11,11 +11,14 @@ Widget buildAttendanceRow({
   required Map<String, Map<String, String>> attendanceMap,
   required Map<DateTime, String> holidayMap,
   required Map<DateTime, SuspensionModel> suspensionMap,
+  required Set<String> accomplishmentDates,
   required bool isSmallScreen,
-  required Animation<Color?> glowAnimation,
+  required Animation<Color?> greenGlowAnimation,
+  required VoidCallback onRefreshAccomplishments,
 }) {
   final dateKey = DateFormat('yyyy-MM-dd').format(day);
   final data = attendanceMap[dateKey];
+  final hasAccomplishments = accomplishmentDates.contains(dateKey);
   final holidayName = holidayMap[DateTime(day.year, day.month, day.day)];
   final isWeekend =
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
@@ -85,8 +88,6 @@ Widget buildAttendanceRow({
     );
   }
 
-  final hasAccomplishments = (data?['hasAccomplishments'] ?? 'false') == 'true';
-
   String? displayTimeIn = data?['timeIn'];
   String? displayLunchOut = data?['lunchOut'];
   String? displayLunchIn = data?['lunchIn'];
@@ -115,20 +116,24 @@ Widget buildAttendanceRow({
     padding: const EdgeInsets.symmetric(vertical: 1.0),
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: !isWeekend
-          ? () => showModalBottomSheet(
+      onTap:
+          !isWeekend
+              ? () => showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 scrollControlDisabledMaxHeightRatio: 0.75,
                 showDragHandle: true,
                 useSafeArea: true,
                 builder: (BuildContext builder) {
-                  return AccomplishmentBottomSheet(day: day);
+                  return AccomplishmentBottomSheet(
+                    day: day,
+                    onAccomplishmentSaved: onRefreshAccomplishments,
+                  );
                 },
               )
-          : null,
+              : null,
       child: AnimatedBuilder(
-        animation: glowAnimation,
+        animation: greenGlowAnimation,
         builder: (context, child) {
           return Container(
             decoration:
@@ -137,8 +142,8 @@ Widget buildAttendanceRow({
                       color: rowColor,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: glowAnimation.value ?? Colors.green,
-                        width: 1.5,
+                        color: greenGlowAnimation.value ?? Colors.lightGreen,
+                        width: 2.0,
                       ),
                     )
                     : BoxDecoration(color: rowColor),

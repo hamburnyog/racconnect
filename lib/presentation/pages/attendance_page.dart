@@ -11,6 +11,7 @@ import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/utility/group_attendance.dart';
 import 'package:racconnect/presentation/widgets/attendance_row.dart';
+import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -20,18 +21,19 @@ class AttendancePage extends StatefulWidget {
 }
 
 class _AttendancePageState extends State<AttendancePage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int selectedYear = DateTime.now().year;
   int selectedMonth = DateTime.now().month;
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
   Map<DateTime, SuspensionModel> suspensionMap = {};
+  Set<String> accomplishmentDates = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
-  late AnimationController _glowController;
-  late Animation<Color?> _glowAnimation;
+  late AnimationController _greenGlowController;
+  late Animation<Color?> _greenGlowAnimation;
 
   List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
@@ -42,20 +44,21 @@ class _AttendancePageState extends State<AttendancePage>
   @override
   void initState() {
     super.initState();
-    _glowController = AnimationController(
+    _greenGlowController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
-    _glowAnimation = ColorTween(
-      begin: Colors.purple.withValues(alpha: 0.1),
-      end: Colors.purple.withValues(alpha: 0.4),
-    ).animate(_glowController);
+    _greenGlowAnimation = ColorTween(
+      begin: Colors.lightGreen.withValues(alpha: 0.2),
+      end: Colors.lightGreen.withValues(alpha: 0.8),
+    ).animate(_greenGlowController);
+
     _loadInitialData();
   }
 
   @override
   void dispose() {
-    _glowController.dispose();
+    _greenGlowController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -70,6 +73,17 @@ class _AttendancePageState extends State<AttendancePage>
       if (employeeNumber.isNotEmpty) {
         final cubit = context.read<AttendanceCubit>();
         await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
+
+        // Fetch accomplishments for the selected month
+        final startDate = DateTime(selectedYear, selectedMonth, 1);
+        final endDate = DateTime(
+          selectedYear,
+          selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+        final accomplishmentRepository = AccomplishmentRepository();
+        final accomplishments = await accomplishmentRepository
+            .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
 
         final state = cubit.state;
         if (state is GetEmployeeAttendanceSuccess) {
@@ -86,6 +100,12 @@ class _AttendancePageState extends State<AttendancePage>
 
           setState(() {
             attendanceMap = groupAttendance(filteredLogs, suspensionMap);
+
+            // Create a set of accomplishment dates for quick lookup
+            accomplishmentDates = {
+              for (var a in accomplishments)
+                DateFormat('yyyy-MM-dd').format(a.date),
+            };
           });
         }
       }
@@ -98,6 +118,33 @@ class _AttendancePageState extends State<AttendancePage>
       if (month != null) selectedMonth = month;
     });
     _loadInitialData();
+  }
+
+  Future<void> _refreshAccomplishments() async {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber ?? '';
+      if (employeeNumber.isNotEmpty) {
+        // Fetch accomplishments for the selected month
+        final startDate = DateTime(selectedYear, selectedMonth, 1);
+        final endDate = DateTime(
+          selectedYear,
+          selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+        final accomplishmentRepository = AccomplishmentRepository();
+        final accomplishments = await accomplishmentRepository
+            .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
+
+        setState(() {
+          // Update the accomplishment dates set
+          accomplishmentDates = {
+            for (var a in accomplishments)
+              DateFormat('yyyy-MM-dd').format(a.date),
+          };
+        });
+      }
+    }
   }
 
   @override
@@ -235,8 +282,13 @@ class _AttendancePageState extends State<AttendancePage>
                                           attendanceMap: attendanceMap,
                                           holidayMap: holidayMap,
                                           suspensionMap: suspensionMap,
+                                          accomplishmentDates:
+                                              accomplishmentDates,
                                           isSmallScreen: isSmallScreen,
-                                          glowAnimation: _glowAnimation,
+                                          greenGlowAnimation:
+                                              _greenGlowAnimation,
+                                          onRefreshAccomplishments:
+                                              _refreshAccomplishments,
                                         );
                                       },
                                     ),
