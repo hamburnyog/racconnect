@@ -253,7 +253,7 @@ class _MainScreenState extends State<MainScreen> {
                   }
                   return BottomNavigationBar(
                     items: sidebarItemMenu,
-                    fixedColor: Colors.black,
+                    fixedColor: Colors.deepPurple,
                     unselectedItemColor: Colors.grey,
                     currentIndex: _selectedIndex,
                     onTap: (int index) {

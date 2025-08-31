@@ -46,12 +46,12 @@ class _AttendancePageState extends State<AttendancePage>
   void initState() {
     super.initState();
     _greenGlowController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 3000),
       vsync: this,
     )..repeat(reverse: true);
     _greenGlowAnimation = ColorTween(
-      begin: Colors.lightGreen.withValues(alpha: 0.2),
-      end: Colors.lightGreen.withValues(alpha: 0.8),
+      begin: Colors.lightGreen.withValues(alpha: 0.1),
+      end: Colors.lightGreen.withValues(alpha: 0.3),
     ).animate(_greenGlowController);
 
     _loadInitialData();
@@ -303,14 +303,14 @@ class _AttendancePageState extends State<AttendancePage>
                     ],
                   ),
                 ),
+                ExportAccomplishmentsButton(
+                  selectedYear: selectedYear,
+                  selectedMonth: selectedMonth,
+                ),
                 ImportButton(
                   selectedYear: selectedYear,
                   selectedMonth: selectedMonth,
                   onRefresh: _loadInitialData,
-                ),
-                ExportAccomplishmentsButton(
-                  selectedYear: selectedYear,
-                  selectedMonth: selectedMonth,
                 ),
               ],
             );

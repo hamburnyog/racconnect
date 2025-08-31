@@ -41,10 +41,12 @@ class _ExportAccomplishmentsButtonState
     String userName = 'Unknown User';
     String userPosition = '';
     String userOffice = '';
-    
+
     if (authState is AuthenticatedState) {
       // Try to get name from profile first
-      userName = '${authState.user.profile?.firstName ?? ''} ${authState.user.profile?.lastName ?? ''}'.trim();
+      userName =
+          '${authState.user.profile?.firstName ?? ''} ${authState.user.profile?.lastName ?? ''}'
+              .trim();
       if (userName.isEmpty) {
         // Fallback to user name from UserModel
         userName = authState.user.name;
@@ -53,7 +55,7 @@ class _ExportAccomplishmentsButtonState
         // Last resort fallback
         userName = 'Unknown User';
       }
-      
+
       // Get position and office (using sectionName as office)
       userPosition = authState.user.profile?.position ?? '';
       userOffice = authState.user.profile?.sectionName ?? '';
@@ -84,60 +86,84 @@ class _ExportAccomplishmentsButtonState
 
       // Fetch accomplishments for the selected month
       final startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
-      final endDate = DateTime(widget.selectedYear, widget.selectedMonth + 1, 1)
-          .subtract(const Duration(days: 1));
-      
+      final endDate = DateTime(
+        widget.selectedYear,
+        widget.selectedMonth + 1,
+        1,
+      ).subtract(const Duration(days: 1));
+
       final accomplishmentRepository = AccomplishmentRepository();
       final allAccomplishments = await accomplishmentRepository
-          .getEmployeeAccomplishmentsForMonth(employeeNumber, startDate, endDate);
+          .getEmployeeAccomplishmentsForMonth(
+            employeeNumber,
+            startDate,
+            endDate,
+          );
 
       // Filter accomplishments to only include days with WFH time logs
       // We need to check if there are attendance records with WFH type for each accomplishment date
       final attendanceRepository = attendanceCubit.attendanceRepository;
-      final attendanceRecords = await attendanceRepository.getEmployeeAttendanceForMonth(
-        employeeNumber, 
-        startDate,
-      );
+      final attendanceRecords = await attendanceRepository
+          .getEmployeeAttendanceForMonth(employeeNumber, startDate);
 
       // Filter to only WFH attendance records
-      final wfhAttendanceRecords = attendanceRecords
-          .where((record) => record.type.toLowerCase().contains('wfh'))
-          .toList();
+      final wfhAttendanceRecords =
+          attendanceRecords
+              .where((record) => record.type.toLowerCase().contains('wfh'))
+              .toList();
 
       // Create a set of dates that have WFH attendance
       final wfhDates = <DateTime>{};
       for (var record in wfhAttendanceRecords) {
-        final date = DateTime(record.timestamp.year, record.timestamp.month, record.timestamp.day);
+        final date = DateTime(
+          record.timestamp.year,
+          record.timestamp.month,
+          record.timestamp.day,
+        );
         wfhDates.add(date);
       }
 
       // Filter accomplishments to only include those with WFH attendance
-      final wfhAccomplishments = allAccomplishments.where((accomplishment) {
-        final accomplishmentDate = DateTime(accomplishment.date.year, accomplishment.date.month, accomplishment.date.day);
-        return wfhDates.contains(accomplishmentDate);
-      }).toList();
+      final wfhAccomplishments =
+          allAccomplishments.where((accomplishment) {
+            final accomplishmentDate = DateTime(
+              accomplishment.date.year,
+              accomplishment.date.month,
+              accomplishment.date.day,
+            );
+            return wfhDates.contains(accomplishmentDate);
+          }).toList();
 
       // Generate PDF content with only WFH accomplishments
-      final pdfFile = await _generatePDF(wfhAccomplishments, startDate, userName, userPosition, userOffice);
-      
+      final pdfFile = await _generatePDF(
+        wfhAccomplishments,
+        startDate,
+        userName,
+        userPosition,
+        userOffice,
+      );
+
       if (!mounted) return;
-      
+
       // Check platform and handle accordingly
       if (Platform.isAndroid || Platform.isIOS) {
         // Mobile: Share the PDF file
         final params = ShareParams(
-          subject: 'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+          subject:
+              'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
           files: [XFile(pdfFile.path)],
         );
-        
+
         final result = await SharePlus.instance.share(params);
-        
+
         if (!mounted) return;
-        
+
         if (result.status == ShareResultStatus.success) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(
-              content: Text('PDF exported successfully! Thank you for sharing!'),
+              content: Text(
+                'PDF exported successfully! Thank you for sharing!',
+              ),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -174,7 +200,7 @@ class _ExportAccomplishmentsButtonState
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error exporting PDF: ${e.toString()}'),
@@ -191,13 +217,19 @@ class _ExportAccomplishmentsButtonState
     }
   }
 
-  Future<File> _generatePDF(List<AccomplishmentModel> accomplishments, DateTime month, String userName, String userPosition, String userOffice) async {
+  Future<File> _generatePDF(
+    List<AccomplishmentModel> accomplishments,
+    DateTime month,
+    String userName,
+    String userPosition,
+    String userOffice,
+  ) async {
     final pdf = pw.Document();
-    
+
     // Load logo images
     pw.MemoryImage? bpLogoImage;
     pw.MemoryImage? naccLogoImage;
-    
+
     try {
       final bpLogoData = await rootBundle.load('assets/images/logo_bp.png');
       bpLogoImage = pw.MemoryImage(bpLogoData.buffer.asUint8List());
@@ -205,7 +237,7 @@ class _ExportAccomplishmentsButtonState
       // Handle case where logo might not be available
       bpLogoImage = null;
     }
-    
+
     try {
       final naccLogoData = await rootBundle.load('assets/images/logo_nacc.png');
       naccLogoImage = pw.MemoryImage(naccLogoData.buffer.asUint8List());
@@ -213,7 +245,7 @@ class _ExportAccomplishmentsButtonState
       // Handle case where logo might not be available
       naccLogoImage = null;
     }
-    
+
     // Create the PDF with header and proper formatting
     pdf.addPage(
       pw.Page(
@@ -230,7 +262,7 @@ class _ExportAccomplishmentsButtonState
                     pw.Image(bpLogoImage, height: 50, width: 50)
                   else
                     pw.SizedBox(width: 50, height: 50),
-                  
+
                   // Center text
                   pw.Expanded(
                     child: pw.Column(
@@ -238,7 +270,7 @@ class _ExportAccomplishmentsButtonState
                         pw.Text(
                           'NATIONAL AUTHORITY FOR CHILD CARE',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontSize: 14,
                             fontWeight: pw.FontWeight.bold,
                           ),
@@ -247,15 +279,15 @@ class _ExportAccomplishmentsButtonState
                         pw.Text(
                           'REGIONAL ALTERNATIVE CHILD CARE OFFICE IV-A CALABARZON',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                           textAlign: pw.TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // NACC Logo
                   if (naccLogoImage != null)
                     pw.Image(naccLogoImage, height: 50, width: 50)
@@ -263,14 +295,14 @@ class _ExportAccomplishmentsButtonState
                     pw.SizedBox(width: 50, height: 50),
                 ],
               ),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Title
               pw.Text(
                 'ANNEX A',
                 style: pw.TextStyle(
-                  font: pw.Font.times(),
+                  font: pw.Font.helvetica(),
                   fontSize: 16,
                   fontWeight: pw.FontWeight.bold,
                   decoration: pw.TextDecoration.underline,
@@ -281,16 +313,16 @@ class _ExportAccomplishmentsButtonState
               pw.Text(
                 'WORK FROM HOME ACCOMPLISHMENT REPORT',
                 style: pw.TextStyle(
-                  font: pw.Font.times(),
+                  font: pw.Font.helvetica(),
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.center,
               ),
-              
+
               pw.SizedBox(height: 20),
-              
-              // User info in 2x2 table format
+
+              // User info in condensed 4x4 table format
               pw.Table(
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide.none,
@@ -304,22 +336,44 @@ class _ExportAccomplishmentsButtonState
                   pw.TableRow(
                     children: [
                       pw.Container(
-                        width: 250,
+                        width: 70,
                         child: pw.Text(
-                          'NAME: $userName',
+                          'Name:',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
                           ),
                         ),
                       ),
                       pw.Container(
-                        width: 250,
+                        width: 180,
                         child: pw.Text(
-                          'PERIOD COVERED: ${DateFormat('MMMM yyyy').format(month)}',
+                          userName,
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                      pw.Container(
+                        width: 90,
+                        child: pw.Text(
+                          'Period Covered:',
+                          style: pw.TextStyle(
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      pw.Container(
+                        width: 160,
+                        child: pw.Text(
+                          DateFormat('MMMM yyyy').format(month),
+                          style: pw.TextStyle(
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                       ),
@@ -328,22 +382,44 @@ class _ExportAccomplishmentsButtonState
                   pw.TableRow(
                     children: [
                       pw.Container(
-                        width: 250,
+                        width: 70,
                         child: pw.Text(
-                          'POSITION: $userPosition',
+                          'Position:',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
                           ),
                         ),
                       ),
                       pw.Container(
-                        width: 250,
+                        width: 180,
                         child: pw.Text(
-                          'OFFICE: $userOffice',
+                          userPosition,
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                      pw.Container(
+                        width: 90,
+                        child: pw.Text(
+                          'Office:',
+                          style: pw.TextStyle(
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      pw.Container(
+                        width: 160,
+                        child: pw.Text(
+                          userOffice,
+                          style: pw.TextStyle(
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                       ),
@@ -351,58 +427,66 @@ class _ExportAccomplishmentsButtonState
                   ),
                 ],
               ),
-              
+
               pw.SizedBox(height: 20),
-              
-              // Accomplishments table with remarks column
+
+              // Condensed accomplishments table with specified column widths
               pw.Table(
                 border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FixedColumnWidth(60), // Date column - narrow
+                  1: pw.FlexColumnWidth(2), // Activity/Deliverables - wide
+                  2: pw.FlexColumnWidth(
+                    2,
+                  ), // Accomplishment - wide (equal to deliverables)
+                  3: pw.FixedColumnWidth(60), // Remarks column - narrow
+                },
                 children: [
                   // Header row
                   pw.TableRow(
                     decoration: pw.BoxDecoration(color: PdfColors.grey300),
                     children: [
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(4),
                         child: pw.Text(
-                          'Date', 
+                          'Date',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontWeight: pw.FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(4),
                         child: pw.Text(
-                          'Target/s', 
+                          'Activity / Deliverables',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontWeight: pw.FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(4),
                         child: pw.Text(
-                          'Accomplishment/s', 
+                          'Accomplishment',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontWeight: pw.FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(4),
                         child: pw.Text(
-                          'Remarks', 
+                          'Remarks',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontWeight: pw.FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                         ),
                       ),
@@ -413,42 +497,44 @@ class _ExportAccomplishmentsButtonState
                     pw.TableRow(
                       children: [
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            DateFormat('MMM dd, yyyy').format(accomplishment.date),
+                            DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(accomplishment.date),
                             style: pw.TextStyle(
-                              font: pw.Font.times(),
-                              fontSize: 9,
+                              font: pw.Font.helvetica(),
+                              fontSize: 8,
                             ),
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
                             accomplishment.target,
                             style: pw.TextStyle(
-                              font: pw.Font.times(),
-                              fontSize: 9,
+                              font: pw.Font.helvetica(),
+                              fontSize: 8,
                             ),
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
                             accomplishment.accomplishment,
                             style: pw.TextStyle(
-                              font: pw.Font.times(),
-                              fontSize: 9,
+                              font: pw.Font.helvetica(),
+                              fontSize: 8,
                             ),
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
                             '', // Blank remarks column
                             style: pw.TextStyle(
-                              font: pw.Font.times(),
-                              fontSize: 9,
+                              font: pw.Font.helvetica(),
+                              fontSize: 8,
                             ),
                           ),
                         ),
@@ -456,9 +542,9 @@ class _ExportAccomplishmentsButtonState
                     ),
                 ],
               ),
-              
+
               pw.SizedBox(height: 30),
-              
+
               // Signature sections
               pw.Row(
                 children: [
@@ -469,22 +555,22 @@ class _ExportAccomplishmentsButtonState
                         pw.Text(
                           'Prepared by:',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                         pw.SizedBox(height: 30),
                         pw.Text(
                           '___________________________',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                         pw.Text(
                           '(Signature over Printed Name)',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontSize: 10,
                           ),
                         ),
@@ -498,22 +584,22 @@ class _ExportAccomplishmentsButtonState
                         pw.Text(
                           'Approved by:', // Changed from "Noted by" to "Approved by"
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                         pw.SizedBox(height: 30),
                         pw.Text(
                           '___________________________',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
-                            fontSize: 12,
+                            font: pw.Font.helvetica(),
+                            fontSize: 10,
                           ),
                         ),
                         pw.Text(
                           'Immediate Supervisor',
                           style: pw.TextStyle(
-                            font: pw.Font.times(),
+                            font: pw.Font.helvetica(),
                             fontSize: 10,
                           ),
                         ),
@@ -530,9 +616,10 @@ class _ExportAccomplishmentsButtonState
 
     // Save the PDF to a file
     final directory = await getApplicationDocumentsDirectory();
-    final fileName = 'accomplishments_${DateFormat('yyyy-MM').format(month)}.pdf';
+    final fileName =
+        'accomplishments_${DateFormat('yyyy-MM').format(month)}.pdf';
     final file = File('${directory.path}/$fileName');
-    
+
     await file.writeAsBytes(await pdf.save());
     return file;
   }
@@ -540,16 +627,17 @@ class _ExportAccomplishmentsButtonState
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: 70, // Position above the import button
+      bottom: 5, // Position at the bottom
       right: 5,
       child: FloatingActionButton(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.white,
         onPressed: _exportToPDF,
-        child: _isExporting
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-            : const Icon(Icons.picture_as_pdf, color: Colors.white),
+        child:
+            _isExporting
+                ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                )
+                : const Icon(Icons.picture_as_pdf, color: Colors.deepPurple),
       ),
     );
   }

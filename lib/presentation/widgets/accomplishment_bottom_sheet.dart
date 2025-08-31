@@ -11,7 +11,11 @@ class AccomplishmentBottomSheet extends StatefulWidget {
   final DateTime day;
   final VoidCallback? onAccomplishmentSaved;
 
-  const AccomplishmentBottomSheet({required this.day, this.onAccomplishmentSaved, super.key});
+  const AccomplishmentBottomSheet({
+    required this.day,
+    this.onAccomplishmentSaved,
+    super.key,
+  });
 
   @override
   State<AccomplishmentBottomSheet> createState() =>
@@ -24,6 +28,7 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
   final _accomplishmentController = TextEditingController();
   AccomplishmentModel? _accomplishment;
   bool _isAccomplishmentCopied = false;
+  bool _isTargetCopied = false;
 
   @override
   void initState() {
@@ -57,7 +62,6 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
       if (employeeNumber == null) return;
 
       if (_accomplishment != null) {
-        // Update existing accomplishment
         await _accomplishmentRepository.updateAccomplishment(
           id: _accomplishment!.id!,
           date: widget.day,
@@ -66,7 +70,6 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
           employeeNumber: employeeNumber,
         );
       } else {
-        // Create new accomplishment
         await _accomplishmentRepository.addAccomplishment(
           date: widget.day,
           target: _targetController.text,
@@ -76,8 +79,7 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
       }
       if (!mounted) return;
       navigator.pop();
-      
-      // Notify that an accomplishment was saved
+
       if (widget.onAccomplishmentSaved != null) {
         widget.onAccomplishmentSaved!();
       }
@@ -155,15 +157,33 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
             SizedBox(height: 30),
             TextFormField(
               controller: _targetController,
-              readOnly: false, // Allow editing of targets
+              readOnly: false,
               maxLines: 5,
               minLines: 1,
               decoration: InputDecoration(
                 labelText: 'Target',
                 border: OutlineInputBorder(),
                 suffixIcon: Padding(
-                  padding: EdgeInsets.only(right: 26.0),
-                  child: Icon(Icons.edit, color: Colors.grey),
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: IconButton(
+                    icon: Icon(_isTargetCopied ? Icons.check : Icons.copy),
+                    color: _isTargetCopied ? Colors.green : null,
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(text: _targetController.text),
+                      );
+                      setState(() {
+                        _isTargetCopied = true;
+                      });
+                      Future.delayed(Duration(seconds: 2), () {
+                        if (mounted) {
+                          setState(() {
+                            _isTargetCopied = false;
+                          });
+                        }
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
@@ -178,7 +198,9 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
                 suffixIcon: Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: IconButton(
-                    icon: Icon(_isAccomplishmentCopied ? Icons.check : Icons.copy),
+                    icon: Icon(
+                      _isAccomplishmentCopied ? Icons.check : Icons.copy,
+                    ),
                     color: _isAccomplishmentCopied ? Colors.green : null,
                     onPressed: () {
                       Clipboard.setData(
@@ -187,7 +209,6 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
                       setState(() {
                         _isAccomplishmentCopied = true;
                       });
-                      // Reset the icon after 2 seconds
                       Future.delayed(Duration(seconds: 2), () {
                         if (mounted) {
                           setState(() {

@@ -102,8 +102,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   ),
                   subtitle: Text(
                     !isSmallScreen
-                        ? 'Manage employee profiles here. Pull down to refresh.'
-                        : 'Manage employee profiles here',
+                        ? 'View personnel profiles here. Pull down to refresh.'
+                        : 'View personnel profiles here',
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   leading: Icon(Icons.people_alt_outlined, color: Colors.white),
@@ -164,27 +164,34 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     final loggedInUserSectionCode =
                         loggedInUser.profile?.sectionCode;
 
-                    users = state.users
-                        .where((user) => user.role != null && user.role!.isNotEmpty)
-                        .toList();
+                    users =
+                        state.users
+                            .where(
+                              (user) =>
+                                  user.role != null && user.role!.isNotEmpty,
+                            )
+                            .toList();
 
                     if (loggedInUserRole == 'OIC' ||
                         loggedInUserRole == 'Developer' ||
                         loggedInUserRole == 'HR') {
                       // Show all users
                     } else if (loggedInUserRole == 'Unit Head') {
-                      users = users
-                          .where((user) =>
-                              user.profile?.sectionCode ==
-                              loggedInUserSectionCode)
-                          .toList();
+                      users =
+                          users
+                              .where(
+                                (user) =>
+                                    user.profile?.sectionCode ==
+                                    loggedInUserSectionCode,
+                              )
+                              .toList();
                     } else {
                       users = [];
                     }
 
                     if (_searchQuery.isNotEmpty) {
-                      users = users
-                          .where((user) {
+                      users =
+                          users.where((user) {
                             final profile = user.profile;
                             if (profile == null) return false;
                             final fullName =

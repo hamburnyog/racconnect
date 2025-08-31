@@ -96,7 +96,6 @@ class _AttendanceFormState extends State<AttendanceForm> {
                       if (employeeNumber == null) return;
 
                       if (attendanceToday.isEmpty) {
-                        // Time In
                         final accomplishment = await _accomplishmentRepository
                             .addAccomplishment(
                               date: now,
@@ -112,14 +111,13 @@ class _AttendanceFormState extends State<AttendanceForm> {
                           accomplishmentId: accomplishment.id,
                         );
                       } else {
-                        // Time Out
                         final accomplishment = await _accomplishmentRepository
                             .getAccomplishmentByDate(now, employeeNumber);
                         if (accomplishment != null) {
                           await _accomplishmentRepository.updateAccomplishment(
                             id: accomplishment.id!,
                             date: accomplishment.date,
-                            target: targetController.text.trim(), // Update target as well
+                            target: targetController.text.trim(),
                             accomplishment:
                                 accomplishmentController.text.trim(),
                             employeeNumber: employeeNumber,
@@ -406,7 +404,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
                       TextFormField(
                         maxLength: 1000,
                         controller: targetController,
-                        readOnly: false, // Allow editing of targets
+                        readOnly: false,
                         maxLines: 5,
                         minLines: 1,
                         keyboardType: TextInputType.multiline,
@@ -414,12 +412,6 @@ class _AttendanceFormState extends State<AttendanceForm> {
                           labelText: 'Target',
                           hintText: 'Enter your tasks for the day',
                           border: OutlineInputBorder(),
-                          suffixIcon: targetController.text.isNotEmpty
-                              ? Padding(
-                                padding: EdgeInsets.only(right: 26.0),
-                                child: Icon(Icons.edit, color: Colors.grey),
-                              )
-                              : null,
                         ),
                       ),
                       SizedBox(height: 10),
