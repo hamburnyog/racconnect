@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:racconnect/presentation/widgets/logo_widget.dart';
 
 class DisconnectedScreen extends StatefulWidget {
   const DisconnectedScreen({super.key});
@@ -21,31 +21,9 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'RACCO',
-                      style: GoogleFonts.righteous(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 30,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'nnect',
-                          style: GoogleFonts.righteous(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30,
-                            color: Theme.of(context).disabledColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: LogoWithVersion(),
               ),
               Lottie.asset(
                 'assets/animations/dino.json',

@@ -3,27 +3,31 @@ import 'dart:convert';
 class AccomplishmentModel {
   final String? id;
   final DateTime date;
-  final String targets;
-  final String accomplishments;
+  final String target;
+  final String accomplishment;
+  final String employeeNumber;
 
   AccomplishmentModel({
     this.id,
     required this.date,
-    required this.targets,
-    required this.accomplishments,
+    required this.target,
+    required this.accomplishment,
+    required this.employeeNumber,
   });
 
   AccomplishmentModel copyWith({
     String? id,
     DateTime? date,
-    String? targets,
-    String? accomplishments,
+    String? target,
+    String? accomplishment,
+    String? employeeNumber,
   }) {
     return AccomplishmentModel(
       id: id ?? this.id,
       date: date ?? this.date,
-      targets: targets ?? this.targets,
-      accomplishments: accomplishments ?? this.accomplishments,
+      target: target ?? this.target,
+      accomplishment: accomplishment ?? this.accomplishment,
+      employeeNumber: employeeNumber ?? this.employeeNumber,
     );
   }
 
@@ -31,8 +35,9 @@ class AccomplishmentModel {
     return {
       'id': id,
       'date': date.toIso8601String(),
-      'targets': targets,
-      'accomplishments': accomplishments,
+      'target': target,
+      'accomplishment': accomplishment,
+      'employeeNumber': employeeNumber,
     };
   }
 
@@ -40,8 +45,9 @@ class AccomplishmentModel {
     return AccomplishmentModel(
       id: map['id'],
       date: DateTime.parse(map['date']),
-      targets: map['targets'] ?? '',
-      accomplishments: map['accomplishments'] ?? '',
+      target: map['target'] ?? '',
+      accomplishment: map['accomplishment'] ?? '',
+      employeeNumber: map['employeeNumber'] ?? '',
     );
   }
 
@@ -52,7 +58,7 @@ class AccomplishmentModel {
 
   @override
   String toString() {
-    return 'AccomplishmentModel(id: $id, date: $date, targets: $targets, accomplishments: $accomplishments)';
+    return 'AccomplishmentModel(id: $id, date: $date, target: $target, accomplishment: $accomplishment, employeeNumber: $employeeNumber)';
   }
 
   @override
@@ -62,15 +68,17 @@ class AccomplishmentModel {
     return other is AccomplishmentModel &&
         other.id == id &&
         other.date == date &&
-        other.targets == targets &&
-        other.accomplishments == accomplishments;
+        other.target == target &&
+        other.accomplishment == accomplishment &&
+        other.employeeNumber == employeeNumber;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
         date.hashCode ^
-        targets.hashCode ^
-        accomplishments.hashCode;
+        target.hashCode ^
+        accomplishment.hashCode ^
+        employeeNumber.hashCode;
   }
 }

@@ -77,6 +77,15 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthSignedIn(updatedUser));
   }
 
+  Future<void> refreshCurrentUser() async {
+    try {
+      final updatedUser = await authRepository.refreshCurrentUser();
+      emit(AuthSignedIn(updatedUser));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
       if (e.response['data'].isNotEmpty &&

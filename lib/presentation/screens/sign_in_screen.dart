@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:racconnect/presentation/widgets/logo_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 
@@ -16,20 +18,62 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   bool _obscureText = true;
+  bool _rememberEmail = false;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+  final passwordFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedEmail();
+  }
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    passwordFocusNode.dispose();
     formKey.currentState?.dispose();
     super.dispose();
   }
 
+  void _loadSavedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email');
+    final rememberEmail = prefs.getBool('remember_email') ?? false;
+
+    if (rememberEmail && savedEmail != null) {
+      setState(() {
+        _rememberEmail = true;
+        emailController.text = savedEmail;
+      });
+
+      // Automatically focus on password field after a short delay
+      // to ensure the UI has finished rendering
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          FocusScope.of(context).requestFocus(passwordFocusNode);
+        }
+      });
+    }
+  }
+
+  void _saveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberEmail) {
+      await prefs.setString('saved_email', email);
+      await prefs.setBool('remember_email', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.setBool('remember_email', false);
+    }
+  }
+
   void signInUser() {
     if (formKey.currentState!.validate()) {
+      _saveEmail(emailController.text.trim());
       context.read<AuthCubit>().signIn(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -54,7 +98,7 @@ class _SignInScreenState extends State<SignInScreen> {
               child: SingleChildScrollView(
                 child: Center(
                   child: FractionallySizedBox(
-                    widthFactor: isSmallScreen ? 1 : 0.85,
+                    widthFactor: isSmallScreen ? .9 : 0.6,
                     child: Form(
                       key: formKey,
                       child: Column(
@@ -69,33 +113,9 @@ class _SignInScreenState extends State<SignInScreen> {
                                     : null,
                             frameRate: FrameRate.max,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: RichText(
-                                text: TextSpan(
-                                  text: 'RACCO',
-                                  style: GoogleFonts.righteous(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 30,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'nnect',
-                                      style: GoogleFonts.righteous(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 30,
-                                        color: Theme.of(context).disabledColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: LogoWithVersion(),
                           ),
                           SizedBox(height: 30),
                           TextFormField(
@@ -119,6 +139,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             builder: (context, setState) {
                               return TextFormField(
                                 controller: passwordController,
+                                focusNode: passwordFocusNode,
                                 decoration: InputDecoration(
                                   hintText: 'Password',
                                   suffixIcon: IconButton(
@@ -155,6 +176,23 @@ class _SignInScreenState extends State<SignInScreen> {
                                 },
                               );
                             },
+                          ),
+                          SizedBox(height: 15),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberEmail,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberEmail = value ?? false;
+                                  });
+                                },
+                              ),
+                              Text(
+                                'Remember my email address',
+                                style: GoogleFonts.ubuntuMono(fontSize: 14),
+                              ),
+                            ],
                           ),
                           SizedBox(height: 15),
                           ElevatedButton(

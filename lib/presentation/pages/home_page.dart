@@ -8,6 +8,7 @@ import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 

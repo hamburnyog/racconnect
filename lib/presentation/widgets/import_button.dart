@@ -32,7 +32,7 @@ class ImportButton extends StatelessWidget {
     if (!_isDesktop || !isDeveloper) return const SizedBox.shrink();
 
     return Positioned(
-      bottom: 5,
+      bottom: 70, // Position below the export button
       right: 5,
       child: Builder(
         builder: (localContext) {

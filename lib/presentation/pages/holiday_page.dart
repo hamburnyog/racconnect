@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/holiday_model.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/presentation/widgets/holiday_form.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 
 class HolidayPage extends StatefulWidget {
   const HolidayPage({super.key});
@@ -103,30 +104,12 @@ class _HolidayPageState extends State<HolidayPage> {
                     Icons.calendar_month_outlined,
                     color: Colors.white,
                   ),
-                  trailing:
-                      !isSmallScreen
-                          ? ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: 150,
-                              maxHeight: 40,
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Theme.of(context).primaryColor,
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              onPressed: _showHolidayForm,
-                            ),
-                          )
-                          : IconButton(
-                            onPressed: _showHolidayForm,
-                            icon: Icon(Icons.add, color: Colors.white),
-                          ),
+                  trailing: MobileButton(
+                    isSmallScreen: isSmallScreen,
+                    onPressed: _showHolidayForm,
+                    icon: Icons.add,
+                    label: 'Add',
+                  ),
                 ),
               ),
               BlocBuilder<HolidayCubit, HolidayState>(

@@ -19,6 +19,31 @@ class AttendanceRepository {
     }
   }
 
+  Future<List<AttendanceModel>> getAllAttendanceToday() async {
+    try {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = startOfDay
+          .add(const Duration(days: 1))
+          .subtract(const Duration(milliseconds: 1));
+
+      final isoStart = startOfDay.toUtc().toIso8601String().split('.').first;
+      final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
+
+      final response = await pb
+          .collection('attendance')
+          .getFullList(
+            filter: 'timestamp >= "$isoStart" && timestamp <= "$isoEnd"',
+            sort: '+timestamp',
+          );
+      return response
+          .map((e) => AttendanceModel.fromJson(e.toString()))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<AttendanceModel>> getEmployeeAttendance(employeeNumber) async {
     try {
       final response = await pb
@@ -100,6 +125,7 @@ class AttendanceRepository {
     required String employeeNumber,
     required DateTime timestamp,
     required String remarks,
+    String? accomplishmentId,
   }) async {
     try {
       final ipAddress = await getIpAddress();
@@ -110,6 +136,7 @@ class AttendanceRepository {
         "type": 'WFH',
         "remarks": remarks,
         "ipAddress": ipAddress,
+        if (accomplishmentId != null) "accomplishmentId": accomplishmentId,
       };
 
       final response = await pb.collection('attendance').create(body: body);

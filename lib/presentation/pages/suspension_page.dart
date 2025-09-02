@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/suspension_form.dart';
 
 class SuspensionPage extends StatefulWidget {
@@ -100,30 +101,12 @@ class _SuspensionPageState extends State<SuspensionPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   leading: Icon(Icons.flood_outlined, color: Colors.white),
-                  trailing:
-                      !isSmallScreen
-                          ? ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: 150,
-                              maxHeight: 40,
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Theme.of(context).primaryColor,
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              onPressed: _showSuspensionForm,
-                            ),
-                          )
-                          : IconButton(
-                            onPressed: _showSuspensionForm,
-                            icon: Icon(Icons.add, color: Colors.white),
-                          ),
+                  trailing: MobileButton(
+                    isSmallScreen: isSmallScreen,
+                    onPressed: _showSuspensionForm,
+                    icon: Icons.add,
+                    label: 'Add',
+                  ),
                 ),
               ),
               BlocBuilder<SuspensionCubit, SuspensionState>(
