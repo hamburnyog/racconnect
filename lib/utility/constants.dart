@@ -113,11 +113,6 @@ const sideBarItemsUser = [
   //   activeIcon: Icon(Icons.sick_rounded),
   //   label: 'Leaves',
   // ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.person_pin_outlined),
-    activeIcon: Icon(Icons.person_pin_rounded),
-    label: 'Profile',
-  ),
 ];
 
 // Cell Styles

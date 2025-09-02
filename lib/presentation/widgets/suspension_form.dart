@@ -241,7 +241,7 @@ class _SuspensionFormState extends State<SuspensionForm> {
                       });
                     },
                   ),
-                  Text('Halfday Suspension? Check to include suspension time'),
+                  Text('Halfday Suspension?'),
                 ],
               ),
               if (isHalfday)

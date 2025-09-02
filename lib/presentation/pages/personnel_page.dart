@@ -8,6 +8,7 @@ import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
 import 'package:racconnect/utility/constants.dart';
+import 'package:racconnect/presentation/widgets/wfh_badge.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
   if (filename == null ||
@@ -32,6 +33,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
   String _searchQuery = '';
   List<AttendanceModel> _todayAttendance = [];
   final _attendanceRepository = AttendanceRepository();
+  bool _isWfhFilterActive = false;
 
   @override
   void initState() {
@@ -106,7 +108,14 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         : 'View personnel profiles here',
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
-                  leading: Icon(Icons.people_alt_outlined, color: Colors.white),
+                  leading: const Icon(Icons.people_alt_outlined, color: Colors.white),
+                  trailing: WfhBadge(
+                    onTap: () {
+                      setState(() {
+                        _isWfhFilterActive = !_isWfhFilterActive;
+                      });
+                    },
+                  ),
                 ),
               ),
               Padding(
@@ -189,6 +198,16 @@ class _PersonnelPageState extends State<PersonnelPage> {
                       users = [];
                     }
 
+                    if (_isWfhFilterActive) {
+                      final wfhEmployeeNumbers = _todayAttendance
+                          .where((att) => att.remarks == 'WFH')
+                          .map((att) => att.employeeNumber)
+                          .toSet();
+                      users = users
+                          .where((user) => wfhEmployeeNumbers.contains(user.profile?.employeeNumber))
+                          .toList();
+                    }
+
                     if (_searchQuery.isNotEmpty) {
                       users =
                           users.where((user) {
@@ -241,7 +260,11 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               );
 
                               return Card(
+                                clipBehavior: Clip.hardEdge,
                                 elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                                 child: ListTile(
                                   leading: CircleAvatar(
                                     backgroundColor:

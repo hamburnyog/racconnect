@@ -21,6 +21,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  bool _isProfilePageSelected = false;
   List<BottomNavigationBarItem> sidebarItemMenu = [];
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -135,24 +136,14 @@ class _MainScreenState extends State<MainScreen> {
                     }
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          getAvatarWidget(context, user),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              user?.email.split('@').first ?? 'User',
-                              style: GoogleFonts.aBeeZee(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
+                      child: AvatarHeader(
+                        avatar: getAvatarWidget(context, user),
+                        name: user?.name ?? 'User',
+                        onTap: () {
+                          setState(() {
+                            _isProfilePageSelected = true;
+                          });
+                        },
                       ),
                     );
                   },
@@ -221,7 +212,14 @@ class _MainScreenState extends State<MainScreen> {
                     }
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: getAvatarWidget(context, user),
+                      child: AvatarHover(
+                        avatar: getAvatarWidget(context, user),
+                        onTap: () {
+                          setState(() {
+                            _isProfilePageSelected = true;
+                          });
+                        },
+                      ),
                     );
                   },
                 ),
@@ -259,6 +257,7 @@ class _MainScreenState extends State<MainScreen> {
                     onTap: (int index) {
                       setState(() {
                         _selectedIndex = index;
+                        _isProfilePageSelected = false;
                       });
                     },
                   );
@@ -299,6 +298,7 @@ class _MainScreenState extends State<MainScreen> {
                             onDestinationSelected: (int index) {
                               setState(() {
                                 _selectedIndex = index;
+                                _isProfilePageSelected = false;
                               });
                             },
                             extended: isLargeScreen,
@@ -329,6 +329,9 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     child: Builder(
                       builder: (context) {
+                        if (_isProfilePageSelected) {
+                          return ProfilePage();
+                        }
                         if (sidebarItemMenu[_selectedIndex].label == 'Home') {
                           return HomePage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
@@ -340,9 +343,6 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Holidays') {
                           return HolidayPage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Profile') {
-                          return ProfilePage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Attendance') {
                           return AttendancePage();
@@ -361,6 +361,88 @@ class _MainScreenState extends State<MainScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+
+class AvatarHeader extends StatefulWidget {
+  final Widget avatar;
+  final String name;
+  final VoidCallback onTap;
+
+  const AvatarHeader({super.key, required this.avatar, required this.name, required this.onTap});
+
+  @override
+  State<AvatarHeader> createState() => _AvatarHeaderState();
+}
+
+class _AvatarHeaderState extends State<AvatarHeader> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isHovered ? 0.8 : 1.0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              widget.avatar,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  widget.name,
+                  style: GoogleFonts.aBeeZee(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AvatarHover extends StatefulWidget {
+  final Widget avatar;
+  final VoidCallback onTap;
+
+  const AvatarHover({super.key, required this.avatar, required this.onTap});
+
+  @override
+  State<AvatarHover> createState() => _AvatarHoverState();
+}
+
+class _AvatarHoverState extends State<AvatarHover> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isHovered ? 0.8 : 1.0,
+          child: widget.avatar,
         ),
       ),
     );
