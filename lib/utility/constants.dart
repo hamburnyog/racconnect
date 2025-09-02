@@ -108,11 +108,11 @@ const sideBarItemsUser = [
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
   ),
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.sick_outlined),
-  //   activeIcon: Icon(Icons.sick_rounded),
-  //   label: 'Leaves',
-  // ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
+  ),
 ];
 
 // Cell Styles

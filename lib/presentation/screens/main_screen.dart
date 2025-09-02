@@ -5,6 +5,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/attendance_page.dart';
 import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';
+import 'package:racconnect/presentation/pages/leave_page.dart';
 import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
@@ -271,6 +272,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Attendance') {
                           return AttendancePage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Leaves') {
+                          return LeavePage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Suspensions') {
                           return SuspensionPage();
