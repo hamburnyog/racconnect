@@ -218,20 +218,14 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.purple)),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).primaryColor,
             ),
           ),
           const Divider(),
@@ -253,10 +247,10 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
   String _calculateAge(DateTime birthDate) {
     final now = DateTime.now();
     int age = now.year - birthDate.year;
-    if (now.month < birthDate.month || 
+    if (now.month < birthDate.month ||
         (now.month == birthDate.month && now.day < birthDate.day)) {
       age--;
     }
-    return '$age years old';
+    return '$age';
   }
 }

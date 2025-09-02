@@ -32,6 +32,7 @@ class ClockInButton extends StatelessWidget {
     } else if (timeLogsToday >= 2) {
       icon = const Icon(Icons.check);
       label = 'WFH';
+
       foregroundColor = Colors.teal;
     } else {
       icon = const Icon(Icons.more_time);

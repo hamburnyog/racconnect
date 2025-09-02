@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 
-
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
@@ -143,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
     // Store context in a local variable to avoid using it across async gaps
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final authCubit = context.read<AuthCubit>();
-    
+
     try {
       final pb = PocketBaseClient.instance;
       final userId = authState.user.id!;
@@ -160,10 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       // Update the user with the new avatar
-      await pb.collection('users').update(
-        userId,
-        files: [multipartFile],
-      );
+      await pb.collection('users').update(userId, files: [multipartFile]);
 
       // Refresh user data
       await authCubit.refreshCurrentUser();
@@ -793,38 +789,44 @@ class _ProfilePageState extends State<ProfilePage> {
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: Theme.of(context)
-                                                    .primaryColor,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
                                                 width: 2,
                                               ),
                                             ),
                                             child: ClipOval(
-                                              child: _selectedAvatar != null
-                                                  ? Image.file(
-                                                      File(_selectedAvatar!.path),
-                                                      width: 100,
-                                                      height: 100,
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : (avatarUrl != null
-                                                      ? Image.network(
-                                                          avatarUrl,
-                                                          width: 100,
-                                                          height: 100,
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      : const Icon(
-                                                          Icons.person,
-                                                          size: 50,
-                                                          color: Colors.grey,
-                                                        )),
+                                              child:
+                                                  _selectedAvatar != null
+                                                      ? Image.file(
+                                                        File(
+                                                          _selectedAvatar!.path,
+                                                        ),
+                                                        width: 100,
+                                                        height: 100,
+                                                        fit: BoxFit.cover,
+                                                      )
+                                                      : (avatarUrl != null
+                                                          ? Image.network(
+                                                            avatarUrl,
+                                                            width: 100,
+                                                            height: 100,
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                          : const Icon(
+                                                            Icons.person,
+                                                            size: 50,
+                                                            color: Colors.grey,
+                                                          )),
                                             ),
                                           );
                                         },
                                       ),
                                       const SizedBox(height: 20),
                                       Wrap(
-                                        spacing: 10.0, // gap between adjacent chips
+                                        spacing:
+                                            10.0, // gap between adjacent chips
                                         runSpacing: 4.0, // gap between lines
                                         alignment: WrapAlignment.center,
                                         children: <Widget>[
@@ -835,18 +837,24 @@ class _ProfilePageState extends State<ProfilePage> {
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.white,
                                               foregroundColor:
-                                                  Theme.of(context).primaryColor,
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
                                             ),
                                           ),
                                           if (_selectedAvatar != null)
                                             ElevatedButton.icon(
                                               onPressed: _uploadAvatar,
                                               icon: const Icon(Icons.upload),
-                                              label: const Text('Upload Avatar'),
+                                              label: const Text(
+                                                'Upload Avatar',
+                                              ),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.white,
                                                 foregroundColor:
-                                                    Theme.of(context).primaryColor,
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
                                               ),
                                             ),
                                         ],
@@ -872,21 +880,25 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  children: const [
-                                    Icon(Icons.lock),
+                                  children: [
+                                    Icon(
+                                      Icons.lock,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
                                     SizedBox(width: 10),
                                     Text(
                                       'Change Password',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 5),
                                 const Text(
-                                  'Note: Updating your password will require you to relogin',
+                                  'Password change will require you to relogin',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,

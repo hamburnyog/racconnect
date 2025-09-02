@@ -32,7 +32,12 @@ class MobileButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              icon,
+              IconTheme(
+                data: IconThemeData(
+                  color: foregroundColor ?? Theme.of(context).primaryColor,
+                ),
+                child: icon,
+              ),
               const SizedBox(width: 4),
               Text(
                 label,
