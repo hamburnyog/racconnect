@@ -104,7 +104,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                   trailing: MobileButton(
                     isSmallScreen: isSmallScreen,
                     onPressed: _showSuspensionForm,
-                    icon: Icons.add,
+                    icon: const Icon(Icons.add),
                     label: 'Add',
                   ),
                 ),

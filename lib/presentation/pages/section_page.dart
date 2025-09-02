@@ -103,7 +103,7 @@ class _SectionPageState extends State<SectionPage> {
                   trailing: MobileButton(
                     isSmallScreen: isSmallScreen,
                     onPressed: _showSectionForm,
-                    icon: Icons.add,
+                    icon: const Icon(Icons.add),
                     label: 'Add',
                   ),
                 ),

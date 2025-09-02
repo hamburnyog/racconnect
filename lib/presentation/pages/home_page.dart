@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:table_calendar/table_calendar.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _lockClockIn = true;
+  int _timeLogsToday = 0;
 
   Map<String, List> mySelectedEvents = {};
 
@@ -30,6 +31,36 @@ class _HomePageState extends State<HomePage> {
     checkProfile();
     _selectedDay = _focusedDay;
     loadEvents();
+    _loadAttendanceData();
+  }
+
+  Future<void> _loadAttendanceData() async {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final employeeNumber = authState.user.profile?.employeeNumber ?? '';
+      if (employeeNumber.isNotEmpty) {
+        final cubit = context.read<AttendanceCubit>();
+        await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
+        final state = cubit.state;
+        if (state is GetEmployeeAttendanceSuccess) {
+          final today = DateTime.now();
+          final todaysLogs =
+              state.attendanceModels
+                  .where(
+                    (log) =>
+                        log.timestamp.year == today.year &&
+                        log.timestamp.month == today.month &&
+                        log.timestamp.day == today.day,
+                  )
+                  .toList();
+          if (mounted) {
+            setState(() {
+              _timeLogsToday = todaysLogs.length;
+            });
+          }
+        }
+      }
+    }
   }
 
   void _showAttendanceForm() {
@@ -42,7 +73,7 @@ class _HomePageState extends State<HomePage> {
       builder: (BuildContext builder) {
         return AttendanceForm();
       },
-    );
+    ).then((_) => _loadAttendanceData());
   }
 
   @override
@@ -60,13 +91,17 @@ class _HomePageState extends State<HomePage> {
       var employeeNumber = profile?.employeeNumber ?? '';
 
       if (employeeNumber.isNotEmpty) {
-        setState(() {
-          _lockClockIn = false;
-        });
+        if (mounted) {
+          setState(() {
+            _lockClockIn = false;
+          });
+        }
       } else {
-        setState(() {
-          _lockClockIn = true;
-        });
+        if (mounted) {
+          setState(() {
+            _lockClockIn = true;
+          });
+        }
       }
     }
   }
@@ -84,29 +119,35 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     if (eventState is GetAllEventSuccess) {
-      setState(() {
-        mySelectedEvents = Map<String, List>.from(eventState.events);
-      });
+      if (mounted) {
+        setState(() {
+          mySelectedEvents = Map<String, List>.from(eventState.events);
+        });
+      }
     }
 
     if (suspensionState is GetAllSuspensionSuccess) {
-      setState(() {
-        for (var suspension in suspensionState.suspensionModels) {
-          final dateKey = DateFormat('yyyy-MM-dd').format(suspension.datetime);
-          final time = DateFormat('hh:mm a').format(suspension.datetime);
-          final title =
-              suspension.isHalfday
-                  ? '${suspension.name} ($time)'
-                  : suspension.name;
-          final eventString = '$title,T=Suspension';
+      if (mounted) {
+        setState(() {
+          for (var suspension in suspensionState.suspensionModels) {
+            final dateKey = DateFormat(
+              'yyyy-MM-dd',
+            ).format(suspension.datetime);
+            final time = DateFormat('hh:mm a').format(suspension.datetime);
+            final title =
+                suspension.isHalfday
+                    ? '${suspension.name} ($time)'
+                    : suspension.name;
+            final eventString = '$title,T=Suspension';
 
-          if (mySelectedEvents.containsKey(dateKey)) {
-            mySelectedEvents[dateKey]!.add(eventString);
-          } else {
-            mySelectedEvents[dateKey] = [eventString];
+            if (mySelectedEvents.containsKey(dateKey)) {
+              mySelectedEvents[dateKey]!.add(eventString);
+            } else {
+              mySelectedEvents[dateKey] = [eventString];
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
@@ -146,13 +187,13 @@ class _HomePageState extends State<HomePage> {
                       });
                     },
                     child: ListTile(
-                      leading: Icon(Icons.home, color: Colors.white),
+                      leading: const Icon(Icons.home, color: Colors.white),
                       minTileHeight: 70,
                       title: Text(
                         (isSmallScreen)
                             ? DateFormat.yMMMMd().format(now)
                             : 'Today is ${DateFormat.yMMMMd().format(now)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -162,27 +203,30 @@ class _HomePageState extends State<HomePage> {
                         listOfDayEvents(_selectedDay!).isNotEmpty
                             ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
                             : (_selectedDay == null ||
-                                (_selectedDay!.year == now.year &&
-                                    _selectedDay!.month == now.month &&
-                                    _selectedDay!.day == now.day))
-                            ? 'No event for today'
-                            : 'No event for the selected day',
-                        style: TextStyle(color: Colors.white, fontSize: 10),
+                                    (_selectedDay!.year == now.year &&
+                                        _selectedDay!.month == now.month &&
+                                        _selectedDay!.day == now.day))
+                                ? 'No event for today'
+                                : 'No event for the selected day',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
                       ),
                       trailing: ClockInButton(
                         lockClockIn: _lockClockIn,
                         onPressed: _showAttendanceForm,
+                        timeLogsToday: _timeLogsToday,
                       ),
                     ),
                   ),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: BlocBuilder<EventCubit, EventState>(
                     builder: (context, state) {
                       if (state is EventLoading) {
-                        return Column(
+                        return const Column(
                           children: [
                             SizedBox(height: 30),
                             CircularProgressIndicator(),
@@ -269,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                           ],
                         );
                       }
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     },
                   ),
                 ),
@@ -310,7 +354,7 @@ class _HomePageState extends State<HomePage> {
                             return Center(
                               child: Text(
                                 text.toUpperCase(),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -320,7 +364,9 @@ class _HomePageState extends State<HomePage> {
                           return Center(
                             child: Text(
                               text.toUpperCase(),
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           );
                         },

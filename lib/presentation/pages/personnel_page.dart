@@ -200,7 +200,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                     if (_isWfhFilterActive) {
                       final wfhEmployeeNumbers = _todayAttendance
-                          .where((att) => att.remarks == 'WFH')
+                          .where((att) => att.type == 'WFH')
                           .map((att) => att.employeeNumber)
                           .toSet();
                       users = users

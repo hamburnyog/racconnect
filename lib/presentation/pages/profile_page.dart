@@ -458,7 +458,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 saveAccount();
                               }
                             },
-                            icon: Icons.save,
+                            icon: const Icon(Icons.save),
                             label: 'Save',
                           );
                         },

@@ -52,10 +52,8 @@ class _ExportButtonState extends State<ExportButton> {
       if (!isProfileComplete) return;
 
       if (isCOS) {
-        // Show dialog for COS employees to choose export options
         _showCOSExportOptions(profile!);
       } else {
-        // Regular export for non-COS employees
         await _performExport(profile!, employeeNumber, null);
       }
     }
@@ -65,7 +63,7 @@ class _ExportButtonState extends State<ExportButton> {
       child: MobileButton(
         isSmallScreen: isSmallScreen,
         onPressed: isProfileComplete && !_isExporting ? handleExport : null,
-        icon: _isExporting ? Icons.hourglass_bottom : Icons.download,
+        icon: Icon(_isExporting ? Icons.hourglass_bottom : Icons.download),
         label: _isExporting ? 'Exporting...' : 'Export',
       ),
     );
@@ -83,33 +81,21 @@ class _ExportButtonState extends State<ExportButton> {
               child: const Text('First Half (1-15)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'first',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'first');
               },
             ),
             TextButton(
               child: const Text('Second Half (16-last day)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'second',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'second');
               },
             ),
             TextButton(
               child: const Text('Whole Month'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'whole',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'whole');
               },
             ),
           ],

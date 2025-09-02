@@ -107,7 +107,7 @@ class _HolidayPageState extends State<HolidayPage> {
                   trailing: MobileButton(
                     isSmallScreen: isSmallScreen,
                     onPressed: _showHolidayForm,
-                    icon: Icons.add,
+                    icon: const Icon(Icons.add),
                     label: 'Add',
                   ),
                 ),

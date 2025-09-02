@@ -315,7 +315,6 @@ class _AvatarHeaderState extends State<AvatarHeader> {
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
-    // On larger screens, truncate name if longer than 10 characters
     String displayName = widget.name;
     if (!isSmallScreen && displayName.length > 10) {
       displayName = '${displayName.substring(0, 10)}...';
