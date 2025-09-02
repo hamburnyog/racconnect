@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
+
 
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
@@ -36,6 +40,10 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController confirmPasswordController;
   late TextEditingController
   oldPasswordController; // New controller for old password
+
+  // Avatar upload variables
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedAvatar;
 
   final _formKey = GlobalKey<FormState>();
   final _accountFormKey = GlobalKey<FormState>();
@@ -98,6 +106,88 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       debugPrint('Error fetching sections: $e');
+    }
+  }
+
+  Future<void> _pickAvatar() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 500,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedAvatar = pickedFile;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadAvatar() async {
+    if (_selectedAvatar == null) return;
+
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! AuthenticatedState) return;
+
+    // Store context in a local variable to avoid using it across async gaps
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final authCubit = context.read<AuthCubit>();
+    
+    try {
+      final pb = PocketBaseClient.instance;
+      final userId = authState.user.id!;
+
+      // Upload the avatar file
+      final file = File(_selectedAvatar!.path);
+      final fileName = path.basename(_selectedAvatar!.path);
+
+      // Update the user with the new avatar
+      final multipartFile = await http.MultipartFile.fromPath(
+        'avatar',
+        file.path,
+        filename: fileName,
+      );
+
+      // Update the user with the new avatar
+      await pb.collection('users').update(
+        userId,
+        files: [multipartFile],
+      );
+
+      // Refresh user data
+      await authCubit.refreshCurrentUser();
+
+      if (mounted) {
+        setState(() {
+          _selectedAvatar = null;
+        });
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Avatar updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Error uploading avatar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -682,6 +772,89 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const SizedBox(height: 20),
+                                Center(
+                                  child: Column(
+                                    children: [
+                                      BlocBuilder<AuthCubit, AuthState>(
+                                        builder: (context, state) {
+                                          String? avatarUrl;
+                                          if (state is AuthenticatedState) {
+                                            final user = state.user;
+                                            if (user.avatar != null &&
+                                                user.avatar!.isNotEmpty) {
+                                              avatarUrl =
+                                                  '$serverUrl/api/files/_pb_users_auth_/${user.id}/${user.avatar}';
+                                            }
+                                          }
+                                          return Container(
+                                            width: 100,
+                                            height: 100,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Theme.of(context)
+                                                    .primaryColor,
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: ClipOval(
+                                              child: _selectedAvatar != null
+                                                  ? Image.file(
+                                                      File(_selectedAvatar!.path),
+                                                      width: 100,
+                                                      height: 100,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : (avatarUrl != null
+                                                      ? Image.network(
+                                                          avatarUrl,
+                                                          width: 100,
+                                                          height: 100,
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : const Icon(
+                                                          Icons.person,
+                                                          size: 50,
+                                                          color: Colors.grey,
+                                                        )),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Wrap(
+                                        spacing: 10.0, // gap between adjacent chips
+                                        runSpacing: 4.0, // gap between lines
+                                        alignment: WrapAlignment.center,
+                                        children: <Widget>[
+                                          ElevatedButton.icon(
+                                            onPressed: _pickAvatar,
+                                            icon: const Icon(Icons.image),
+                                            label: const Text('Choose Image'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor:
+                                                  Theme.of(context).primaryColor,
+                                            ),
+                                          ),
+                                          if (_selectedAvatar != null)
+                                            ElevatedButton.icon(
+                                              onPressed: _uploadAvatar,
+                                              icon: const Icon(Icons.upload),
+                                              label: const Text('Upload Avatar'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.white,
+                                                foregroundColor:
+                                                    Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
                                 _formField(
                                   'Email Address',
                                   emailController,
@@ -698,12 +871,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                   },
                                 ),
                                 const SizedBox(height: 20),
-                                const Text(
-                                  'Change Password',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Row(
+                                  children: const [
+                                    Icon(Icons.lock),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Change Password',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 5),
                                 const Text(
