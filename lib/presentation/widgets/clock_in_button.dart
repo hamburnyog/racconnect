@@ -13,7 +13,7 @@ class ClockInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width > 600;
+    final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
     final tooltipMessage =
         lockClockIn
@@ -23,7 +23,7 @@ class ClockInButton extends StatelessWidget {
     return Tooltip(
       message: tooltipMessage,
       child: MobileButton(
-        isSmallScreen: !isWideScreen,
+        isSmallScreen: isSmallScreen,
         onPressed: lockClockIn ? null : onPressed,
         icon: Icons.more_time,
         label: 'WFH',

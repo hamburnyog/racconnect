@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
@@ -9,7 +10,7 @@ import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/generate_excel.dart';
 import 'package:share_plus/share_plus.dart';
 
-class ExportButton extends StatelessWidget {
+class ExportButton extends StatefulWidget {
   final int selectedYear;
   final int selectedMonth;
   final Map<DateTime, String> holidayMap;
@@ -24,14 +25,23 @@ class ExportButton extends StatelessWidget {
   });
 
   @override
+  State<ExportButton> createState() => _ExportButtonState();
+}
+
+class _ExportButtonState extends State<ExportButton> {
+  bool _isExporting = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width > 600;
+    final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
     final authState = context.read<AuthCubit>().state;
     final profile =
         authState is AuthenticatedState ? authState.user.profile : null;
     final employeeNumber = profile?.employeeNumber ?? '';
+    final employmentStatus = profile?.employmentStatus ?? '';
     final isProfileComplete = employeeNumber.isNotEmpty;
+    final isCOS = employmentStatus == 'COS';
 
     final tooltipMessage =
         isProfileComplete
@@ -41,38 +51,164 @@ class ExportButton extends StatelessWidget {
     Future<void> handleExport() async {
       if (!isProfileComplete) return;
 
-      final selectedDate = DateTime(selectedYear, selectedMonth);
+      if (isCOS) {
+        // Show dialog for COS employees to choose export options
+        _showCOSExportOptions(profile!);
+      } else {
+        // Regular export for non-COS employees
+        await _performExport(profile!, employeeNumber, null);
+      }
+    }
 
-      final monthlyLogs = await context
-          .read<AttendanceCubit>()
-          .attendanceRepository
+    return Tooltip(
+      message: tooltipMessage,
+      child: MobileButton(
+        isSmallScreen: isSmallScreen,
+        onPressed: isProfileComplete && !_isExporting ? handleExport : null,
+        icon: _isExporting ? Icons.hourglass_bottom : Icons.download,
+        label: _isExporting ? 'Exporting...' : 'Export',
+      ),
+    );
+  }
+
+  Future<void> _showCOSExportOptions(profile) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Period'),
+          content: const Text('Choose the period for the DTR:'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('First Half (1-15)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'first',
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('Second Half (16-last day)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'second',
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('Whole Month'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'whole',
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _performExport(
+    profile,
+    String employeeNumber,
+    String? period,
+  ) async {
+    if (_isExporting) return;
+
+    setState(() {
+      _isExporting = true;
+    });
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final attendanceCubit = context.read<AttendanceCubit>();
+
+    try {
+      final selectedDate = DateTime(widget.selectedYear, widget.selectedMonth);
+
+      // Show loading indicator
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Exporting DTR to Excel...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Determine date range based on period
+      DateTime? startDate;
+      DateTime? endDate;
+
+      if (period == 'first') {
+        // First half of the month (1st to 15th)
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime(widget.selectedYear, widget.selectedMonth, 15);
+      } else if (period == 'second') {
+        // Second half of the month (16th to end of month)
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 16);
+        endDate = DateTime(
+          widget.selectedYear,
+          widget.selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+      } else if (period == 'whole') {
+        // Whole month - set startDate and endDate to full month range
+        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime(
+          widget.selectedYear,
+          widget.selectedMonth + 1,
+          1,
+        ).subtract(const Duration(days: 1));
+      }
+      // For null period (non-COS users), startDate and endDate remain null
+
+      final monthlyLogs = await attendanceCubit.attendanceRepository
           .getEmployeeAttendanceForMonth(employeeNumber, selectedDate);
 
       final filePath = await generateExcel(
         selectedDate,
-        profile!,
+        profile,
         monthlyLogs,
-        holidayMap,
-        suspensionMap,
+        widget.holidayMap,
+        widget.suspensionMap,
+        startDate: startDate,
+        endDate: endDate,
       );
 
-      if (!context.mounted) return;
+      if (!mounted) {
+        setState(() {
+          _isExporting = false;
+        });
+        return;
+      }
 
       if (filePath != null && (Platform.isAndroid || Platform.isIOS)) {
         final file = XFile(filePath);
-        final box = context.findRenderObject() as RenderBox?;
 
         final result = await SharePlus.instance.share(
           ShareParams(
-            text: 'Generated DTR Excel file',
+            subject:
+                'DTR Excel file - ${DateFormat('MMMM yyyy').format(selectedDate)}',
             files: [file],
-            sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
           ),
         );
 
-        if (!context.mounted) return;
+        if (!mounted) {
+          setState(() {
+            _isExporting = false;
+          });
+          return;
+        }
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             backgroundColor:
                 result.status == ShareResultStatus.success
@@ -86,16 +222,22 @@ class ExportButton extends StatelessWidget {
           ),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Error exporting DTR: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExporting = false;
+        });
+      }
     }
-
-    return Tooltip(
-      message: tooltipMessage,
-      child: MobileButton(
-        isSmallScreen: !isWideScreen,
-        onPressed: isProfileComplete ? handleExport : null,
-        icon: Icons.download,
-        label: 'Export',
-      ),
-    );
   }
 }

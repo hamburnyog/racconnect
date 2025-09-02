@@ -32,6 +32,7 @@ dependencies:
   file_picker: ^10.2.0
   pdf: ^3.8.1
   image_picker: ^1.0.0
+  yaml: ^3.1.0
 
 dev_dependencies:
   flutter_test:
@@ -64,3 +65,4 @@ flutter:
     - assets/
     - assets/images/
     - assets/animations/
+    - pubspec.yaml

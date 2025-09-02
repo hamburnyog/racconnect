@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/presentation/widgets/logo_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -74,33 +75,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     : null,
                             frameRate: FrameRate.max,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: RichText(
-                                text: TextSpan(
-                                  text: 'RACCO',
-                                  style: GoogleFonts.righteous(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 30,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'nnect',
-                                      style: GoogleFonts.righteous(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 30,
-                                        color: Theme.of(context).disabledColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: LogoWithVersion(),
                           ),
                           SizedBox(height: 30),
                           TextFormField(

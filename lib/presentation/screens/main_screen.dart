@@ -9,6 +9,7 @@ import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
 import 'package:racconnect/presentation/pages/suspension_page.dart';
+import 'package:racconnect/presentation/widgets/logo_widget.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -52,19 +53,19 @@ class _MainScreenState extends State<MainScreen> {
 
     return avatarUrl != null && avatarUrl.isNotEmpty
         ? CircleAvatar(
-          radius: 20,
+          radius: 18,
           backgroundImage: NetworkImage(avatarUrl),
           onBackgroundImageError:
               (error, stackTrace) => CircleAvatar(
-                radius: 20,
+                radius: 18,
                 backgroundColor: Theme.of(context).primaryColor,
-                child: const Icon(Icons.person, color: Colors.white, size: 24),
+                child: const Icon(Icons.person, color: Colors.white, size: 20),
               ),
         )
         : CircleAvatar(
-          radius: 20,
+          radius: 18,
           backgroundColor: Theme.of(context).primaryColor,
-          child: const Icon(Icons.person, color: Colors.white, size: 24),
+          child: const Icon(Icons.person, color: Colors.white, size: 20),
         );
   }
 
@@ -125,7 +126,7 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.transparent,
         scrolledUnderElevation: 0.0,
         surfaceTintColor: Colors.transparent,
-        leadingWidth: 200,
+        leadingWidth: 150,
         leading: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             UserModel? user;
@@ -152,32 +153,7 @@ class _MainScreenState extends State<MainScreen> {
             icon: const Icon(Icons.logout),
           ),
         ],
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: RichText(
-              text: TextSpan(
-                text: 'RACCO',
-                style: GoogleFonts.righteous(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: Theme.of(context).primaryColor,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'nnect',
-                    style: GoogleFonts.righteous(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      color: Theme.of(context).disabledColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        title: const LogoWithVersion(),
       ),
       bottomNavigationBar:
           isSmallScreen
@@ -339,10 +315,12 @@ class _AvatarHeaderState extends State<AvatarHeader> {
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
-    // Truncate name if longer than 6 characters on small screens
+    // On larger screens, truncate name if longer than 10 characters
     String displayName = widget.name;
-    if (isSmallScreen && displayName.length > 6) {
-      displayName = '${displayName.substring(0, 6)}...';
+    if (!isSmallScreen && displayName.length > 10) {
+      displayName = '${displayName.substring(0, 10)}...';
+    } else if (isSmallScreen && displayName.length > 4) {
+      displayName = '${displayName.substring(0, 4)}...';
     }
 
     return MouseRegion(

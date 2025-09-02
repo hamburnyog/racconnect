@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
 
@@ -346,12 +347,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Password changed successfully! Please log in again with your new password.',
+                              'Password changed successfully! Please sign in again with your new password.',
                             ),
                             backgroundColor: Colors.green,
                           ),
                         );
-                        // Sign out the user since password change typically invalidates the session
                         Future.delayed(const Duration(seconds: 2), () {
                           if (mounted) {
                             context.read<AuthCubit>().signOut();
@@ -403,8 +403,6 @@ class _ProfilePageState extends State<ProfilePage> {
               profile: () => state.profile,
             );
             authCubit.refreshUser(updatedUser);
-
-            // Also refresh the current user to ensure expanded data is loaded
             authCubit.refreshCurrentUser();
           }
           ScaffoldMessenger.of(context).showSnackBar(
@@ -446,58 +444,25 @@ class _ProfilePageState extends State<ProfilePage> {
                             : 'Kindly keep your profile up to date',
                         style: TextStyle(color: Colors.white70, fontSize: 10),
                       ),
-                      trailing:
-                          isSmallScreen
-                              ? Builder(
-                                builder:
-                                    (context) => IconButton(
-                                      onPressed: () {
-                                        final tabController =
-                                            DefaultTabController.of(context);
-                                        if (tabController.index == 0) {
-                                          saveProfile();
-                                        } else {
-                                          saveAccount();
-                                        }
-                                      },
-                                      icon: const Icon(
-                                        Icons.save,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                              )
-                              : Builder(
-                                builder:
-                                    (context) => ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 150,
-                                        maxHeight: 40,
-                                      ),
-                                      child: ElevatedButton.icon(
-                                        icon: const Icon(Icons.save),
-                                        label: const Text('Save'),
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor:
-                                              Theme.of(context).primaryColor,
-                                          backgroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              25,
-                                            ),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          final tabController =
-                                              DefaultTabController.of(context);
-                                          if (tabController.index == 0) {
-                                            saveProfile();
-                                          } else {
-                                            saveAccount();
-                                          }
-                                        },
-                                      ),
-                                    ),
-                              ),
+                      trailing: Builder(
+                        builder: (context) {
+                          return MobileButton(
+                            isSmallScreen: isSmallScreen,
+                            onPressed: () {
+                              final tabController = DefaultTabController.of(
+                                context,
+                              );
+                              if (tabController.index == 0) {
+                                saveProfile();
+                              } else {
+                                saveAccount();
+                              }
+                            },
+                            icon: Icons.save,
+                            label: 'Save',
+                          );
+                        },
+                      ),
                     ),
                     TabBar(
                       labelColor: Colors.white,

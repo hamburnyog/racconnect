@@ -209,9 +209,7 @@ class _AttendancePageState extends State<AttendancePage>
                             ),
                           ),
                           subtitle: Text(
-                            !isSmallScreen
-                                ? 'View your attendance here. Click on workday to add or view your daily accomplishment'
-                                : 'View your attendance here',
+                            'Click on work to add your daily accomplishment',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
@@ -219,7 +217,6 @@ class _AttendancePageState extends State<AttendancePage>
                           ),
                           trailing: BlocBuilder<AuthCubit, AuthState>(
                             builder: (context, authState) {
-                              // Only show export button for authenticated users with a role
                               final hasRole = _hasUserRole(authState);
 
                               if (!hasRole) {
