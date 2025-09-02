@@ -278,10 +278,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           .collection('users')
                           .update(userId, body: updateData);
 
-                      // Refresh the user data
-                      await authCubit.refreshCurrentUser();
+                      // Check if password was changed
+                      final wasPasswordChanged = updateData.containsKey(
+                        'password',
+                      );
 
-                      // Clear password fields
+                      // Clear password fields immediately
                       if (mounted) {
                         oldPasswordController.clear();
                         newPasswordController.clear();
@@ -289,12 +291,24 @@ class _ProfilePageState extends State<ProfilePage> {
                       }
 
                       if (mounted) {
+                        String successMessage =
+                            wasPasswordChanged
+                                ? 'Password changed successfully! Please log in again with your new password.'
+                                : 'Account updated successfully!';
+
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Account updated successfully!'),
+                          SnackBar(
+                            content: Text(successMessage),
                             backgroundColor: Colors.green,
                           ),
                         );
+
+                        // If password was changed, immediately sign out the user
+                        if (wasPasswordChanged) {
+                          if (mounted) {
+                            context.read<AuthCubit>().signOut();
+                          }
+                        }
                       }
                     } else if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -305,15 +319,46 @@ class _ProfilePageState extends State<ProfilePage> {
                       );
                     }
                   } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Error updating account: ${e.toString()}',
+                    // Check if this is an authentication error (likely due to password change)
+                    String errorMessage = e.toString();
+                    bool isAuthError =
+                        errorMessage.contains('authentication') ||
+                        errorMessage.contains('Authorization') ||
+                        errorMessage.contains('401') ||
+                        errorMessage.contains('Unauthorized') ||
+                        errorMessage.contains('valid authentication token') ||
+                        errorMessage.contains('auth store') ||
+                        errorMessage.contains('token is outdated') ||
+                        errorMessage.contains('token');
+
+                    if (isAuthError) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Password changed successfully! Please log in again with your new password.',
+                            ),
+                            backgroundColor: Colors.green,
                           ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                        );
+                        // Sign out the user since password change typically invalidates the session
+                        Future.delayed(const Duration(seconds: 2), () {
+                          if (mounted) {
+                            context.read<AuthCubit>().signOut();
+                          }
+                        });
+                      }
+                    } else {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Error updating account: $errorMessage',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   }
                 },
@@ -376,12 +421,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     ListTile(
                       minTileHeight: 70,
-                      leading: Icon(
-                        Icons.person_pin_rounded,
-                        color: Colors.white,
-                      ),
+                      leading: Icon(Icons.person, color: Colors.white),
                       title: Text(
-                        'Profile',
+                        'My Account',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -690,7 +732,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 const SizedBox(height: 5),
                                 const Text(
-                                  'Note: Changing your password will require you to log in again using your new password.',
+                                  'Note: Updating your password will require you to relogin',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
@@ -726,16 +768,53 @@ class _ProfilePageState extends State<ProfilePage> {
                                   },
                                   obscureText: true,
                                 ),
-                                _formField(
-                                  'Confirm Password',
-                                  confirmPasswordController,
-                                  validator: (value) {
-                                    if (newPasswordController.text != value) {
-                                      return 'Passwords do not match';
-                                    }
-                                    return null;
-                                  },
-                                  obscureText: true,
+                                Stack(
+                                  children: [
+                                    _formField(
+                                      'Confirm Password',
+                                      confirmPasswordController,
+                                      validator: (value) {
+                                        if (newPasswordController.text !=
+                                            value) {
+                                          return 'Passwords do not match';
+                                        }
+                                        return null;
+                                      },
+                                      obscureText: true,
+                                    ),
+                                    Positioned(
+                                      right: 10,
+                                      top: 30,
+                                      child: ValueListenableBuilder<
+                                        TextEditingValue
+                                      >(
+                                        valueListenable:
+                                            confirmPasswordController,
+                                        builder: (context, value, child) {
+                                          if (value.text.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          final passwordsMatch =
+                                              newPasswordController.text ==
+                                              value.text;
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              right: 20.0,
+                                            ),
+                                            child: Icon(
+                                              passwordsMatch
+                                                  ? Icons.check
+                                                  : Icons.error,
+                                              color:
+                                                  passwordsMatch
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
