@@ -17,10 +17,18 @@ class WfhCubit extends Cubit<WfhState> {
     final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59).toUtc().toIso8601String();
 
     try {
-      final result = await _pb.collection('attendance').getList(
-            filter: 'timestamp >= "$startOfDay" && timestamp <= "$endOfDay" && remarks = "WFH"',
+      // Get all WFH attendance records for today
+      final result = await _pb.collection('attendance').getFullList(
+            filter: 'timestamp >= "$startOfDay" && timestamp <= "$endOfDay" && type = "WFH"',
           );
-      emit(WfhLoaded(result.totalItems));
+      
+      // Extract unique employee numbers to count employees, not logs
+      final uniqueEmployeeNumbers = <String>{};
+      for (var record in result) {
+        uniqueEmployeeNumbers.add(record.data['employeeNumber']);
+      }
+      
+      emit(WfhLoaded(uniqueEmployeeNumbers.length));
     } catch (e) {
       emit(WfhError(e.toString()));
     }
