@@ -117,119 +117,68 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar:
-          !isSmallScreen
-              ? AppBar(
-                elevation: 0,
-                centerTitle: true,
-                titleSpacing: 0,
-                toolbarHeight: 70,
-                backgroundColor: Colors.transparent,
-                scrolledUnderElevation: 0.0,
-                surfaceTintColor: Colors.transparent,
-                leadingWidth: 200,
-                leading: BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, state) {
-                    UserModel? user;
-                    if (state is AuthenticatedState) {
-                      user = state.user;
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: AvatarHeader(
-                        avatar: getAvatarWidget(context, user),
-                        name: user?.name ?? 'User',
-                        onTap: () {
-                          setState(() {
-                            _isProfilePageSelected = true;
-                          });
-                        },
-                      ),
-                    );
-                  },
+      appBar: AppBar(
+        elevation: 0,
+        centerTitle: true,
+        titleSpacing: 0,
+        toolbarHeight: 70,
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0.0,
+        surfaceTintColor: Colors.transparent,
+        leadingWidth: 200,
+        leading: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            UserModel? user;
+            if (state is AuthenticatedState) {
+              user = state.user;
+            }
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AvatarHeader(
+                avatar: getAvatarWidget(context, user),
+                name: user?.name ?? 'User',
+                onTap: () {
+                  setState(() {
+                    _isProfilePageSelected = true;
+                  });
+                },
+              ),
+            );
+          },
+        ),
+        actions: [
+          IconButton(
+            onPressed: _showLogoutConfirmationDialog,
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: RichText(
+              text: TextSpan(
+                text: 'RACCO',
+                style: GoogleFonts.righteous(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Theme.of(context).primaryColor,
                 ),
-                actions: [
-                  IconButton(
-                    onPressed: _showLogoutConfirmationDialog,
-                    icon: const Icon(Icons.logout),
-                  ),
-                ],
-                title: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'RACCO',
-                        style: GoogleFonts.righteous(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'nnect',
-                            style: GoogleFonts.righteous(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              color: Theme.of(context).disabledColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              )
-              : AppBar(
-                centerTitle: true,
-                surfaceTintColor: Colors.transparent,
-                title: RichText(
-                  text: TextSpan(
-                    text: 'RACCO',
+                children: [
+                  TextSpan(
+                    text: 'nnect',
                     style: GoogleFonts.righteous(
                       fontWeight: FontWeight.bold,
                       fontSize: 22,
-                      color: Theme.of(context).primaryColor,
+                      color: Theme.of(context).disabledColor,
                     ),
-                    children: [
-                      TextSpan(
-                        text: 'nnect',
-                        style: GoogleFonts.righteous(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                          color: Theme.of(context).disabledColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                leading: BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, state) {
-                    UserModel? user;
-                    if (state is AuthenticatedState) {
-                      user = state.user;
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: AvatarHover(
-                        avatar: getAvatarWidget(context, user),
-                        onTap: () {
-                          setState(() {
-                            _isProfilePageSelected = true;
-                          });
-                        },
-                      ),
-                    );
-                  },
-                ),
-                actions: [
-                  IconButton(
-                    onPressed: _showLogoutConfirmationDialog,
-                    icon: const Icon(Icons.logout),
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
       bottomNavigationBar:
           isSmallScreen
               ? BlocBuilder<AuthCubit, AuthState>(
@@ -367,13 +316,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-
 class AvatarHeader extends StatefulWidget {
   final Widget avatar;
   final String name;
   final VoidCallback onTap;
 
-  const AvatarHeader({super.key, required this.avatar, required this.name, required this.onTap});
+  const AvatarHeader({
+    super.key,
+    required this.avatar,
+    required this.name,
+    required this.onTap,
+  });
 
   @override
   State<AvatarHeader> createState() => _AvatarHeaderState();
@@ -384,6 +337,14 @@ class _AvatarHeaderState extends State<AvatarHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 700;
+
+    // Truncate name if longer than 6 characters on small screens
+    String displayName = widget.name;
+    if (isSmallScreen && displayName.length > 6) {
+      displayName = '${displayName.substring(0, 6)}...';
+    }
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
@@ -400,7 +361,7 @@ class _AvatarHeaderState extends State<AvatarHeader> {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  widget.name,
+                  displayName,
                   style: GoogleFonts.aBeeZee(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,

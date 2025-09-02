@@ -283,6 +283,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         'password',
                       );
 
+                      // Check if display name was changed
+                      final wasDisplayNameChanged = updateData.containsKey(
+                        'name',
+                      );
+
+                      // Refresh user data immediately if display name was changed
+                      if (wasDisplayNameChanged) {
+                        await authCubit.refreshCurrentUser();
+                      }
+
                       // Clear password fields immediately
                       if (mounted) {
                         oldPasswordController.clear();

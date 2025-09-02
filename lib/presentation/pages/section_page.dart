@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:racconnect/data/models/section_model.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/section_form.dart';
 
 class SectionPage extends StatefulWidget {
@@ -99,30 +100,12 @@ class _SectionPageState extends State<SectionPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   leading: Icon(Icons.group_rounded, color: Colors.white),
-                  trailing:
-                      !isSmallScreen
-                          ? ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: 150,
-                              maxHeight: 40,
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Theme.of(context).primaryColor,
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              onPressed: _showSectionForm,
-                            ),
-                          )
-                          : IconButton(
-                            onPressed: _showSectionForm,
-                            icon: Icon(Icons.add, color: Colors.white),
-                          ),
+                  trailing: MobileButton(
+                    isSmallScreen: isSmallScreen,
+                    onPressed: _showSectionForm,
+                    icon: Icons.add,
+                    label: 'Add',
+                  ),
                 ),
               ),
               BlocBuilder<SectionCubit, SectionState>(

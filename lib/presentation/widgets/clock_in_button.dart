@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 
 class ClockInButton extends StatelessWidget {
   final bool lockClockIn;
@@ -19,41 +20,14 @@ class ClockInButton extends StatelessWidget {
             ? 'Complete your profile to clock in.'
             : 'Click to clock in for WFH.';
 
-    if (isWideScreen) {
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 150, maxHeight: 40),
-        child: Tooltip(
-          message: tooltipMessage,
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.more_time),
-            label: const Text('WFH'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Theme.of(context).primaryColor,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            onPressed: lockClockIn ? null : onPressed,
-          ),
-        ),
-      );
-    } else {
-      return Tooltip(
-        message:
-            lockClockIn
-                ? 'Complete your profile to clock in.'
-                : 'Click to clock in for WFH.',
-        child: IconButton(
-          onPressed: lockClockIn ? null : onPressed,
-          icon: Icon(Icons.more_time),
-          style: ElevatedButton.styleFrom(
-            foregroundColor:
-                lockClockIn ? Theme.of(context).primaryColor : Colors.white,
-          ),
-          tooltip: '',
-        ),
-      );
-    }
+    return Tooltip(
+      message: tooltipMessage,
+      child: MobileButton(
+        isSmallScreen: !isWideScreen,
+        onPressed: lockClockIn ? null : onPressed,
+        icon: Icons.more_time,
+        label: 'WFH',
+      ),
+    );
   }
 }

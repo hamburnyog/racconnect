@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/generate_excel.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -87,35 +88,14 @@ class ExportButton extends StatelessWidget {
       }
     }
 
-    if (isWideScreen) {
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 150, maxHeight: 40),
-        child: Tooltip(
-          message: tooltipMessage,
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.download),
-            label: const Text('Export'),
-            onPressed: isProfileComplete ? handleExport : null,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Theme.of(context).primaryColor,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-          ),
-        ),
-      );
-    } else {
-      return Tooltip(
-        message: tooltipMessage,
-        child: IconButton(
-          onPressed: isProfileComplete ? handleExport : null,
-          icon: const Icon(Icons.file_download),
-          color: Colors.white,
-          tooltip: '',
-        ),
-      );
-    }
+    return Tooltip(
+      message: tooltipMessage,
+      child: MobileButton(
+        isSmallScreen: !isWideScreen,
+        onPressed: isProfileComplete ? handleExport : null,
+        icon: Icons.download,
+        label: 'Export',
+      ),
+    );
   }
 }
