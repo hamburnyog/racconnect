@@ -15,6 +15,7 @@ class ExportButton extends StatefulWidget {
   final int selectedMonth;
   final Map<DateTime, String> holidayMap;
   final Map<DateTime, SuspensionModel> suspensionMap;
+  final Map<DateTime, String> leaveMap; // Add leaveMap
 
   const ExportButton({
     super.key,
@@ -22,6 +23,7 @@ class ExportButton extends StatefulWidget {
     required this.selectedMonth,
     required this.holidayMap,
     required this.suspensionMap,
+    required this.leaveMap, // Add leaveMap parameter
   });
 
   @override
@@ -165,6 +167,7 @@ class _ExportButtonState extends State<ExportButton> {
         monthlyLogs,
         widget.holidayMap,
         widget.suspensionMap,
+        widget.leaveMap, // Add leaveMap
         startDate: startDate,
         endDate: endDate,
       );

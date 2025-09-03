@@ -11,6 +11,7 @@ Widget buildAttendanceRow({
   required Map<String, Map<String, String>> attendanceMap,
   required Map<DateTime, String> holidayMap,
   required Map<DateTime, SuspensionModel> suspensionMap,
+  required Map<DateTime, String> leaveMap, // Add leaveMap parameter
   required Set<String> accomplishmentDates,
   required bool isSmallScreen,
   required Animation<Color?> greenGlowAnimation,
@@ -20,21 +21,27 @@ Widget buildAttendanceRow({
   final data = attendanceMap[dateKey];
   final hasAccomplishments = accomplishmentDates.contains(dateKey);
   final holidayName = holidayMap[DateTime(day.year, day.month, day.day)];
+  final leaveName = leaveMap[DateTime(day.year, day.month, day.day)]; // Check for leave
   final isWeekend =
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
   final isToday = DateUtils.isSameDay(day, DateTime.now());
 
+  // Update row color to include purple for leaves
   final rowColor =
       holidayName != null
           ? Colors.green.shade50
+          : leaveName != null
+          ? Colors.purple.shade50
           : isWeekend
           ? Colors.grey.shade200
           : isToday
           ? Colors.yellow.withValues(alpha: 0.1)
           : null;
 
-  final label = holidayName ?? (isWeekend ? 'Weekend' : '');
-  final isNonWorkingDay = holidayName != null || isWeekend;
+  // Update label to include leave name
+  final label = holidayName ?? leaveName ?? (isWeekend ? 'Weekend' : '');
+  // Update isNonWorkingDay to include leaves
+  final isNonWorkingDay = holidayName != null || leaveName != null || isWeekend;
 
   final isSuspension = suspensionMap.containsKey(day);
   final suspensionModel = suspensionMap[day];

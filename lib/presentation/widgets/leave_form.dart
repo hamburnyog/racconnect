@@ -38,10 +38,10 @@ class _LeaveFormState extends State<LeaveForm> {
   void addLeaves() {
     if (formKey.currentState!.validate() && _selectedDates.isNotEmpty) {
       context.read<LeaveCubit>().addMultipleLeaves(
-            employeeNumber: widget.employeeNumber,
-            type: leaveTypeController.text.trim(),
-            dates: _selectedDates.toList(),
-          );
+        employeeNumber: widget.employeeNumber,
+        type: leaveTypeController.text.trim(),
+        dates: _selectedDates.toList(),
+      );
       Navigator.of(context).pop();
     } else if (_selectedDates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,10 +57,10 @@ class _LeaveFormState extends State<LeaveForm> {
     if (formKey.currentState!.validate() && _selectedDay != null) {
       final leaveId = widget.leaveModel?.id ?? '';
       context.read<LeaveCubit>().updateLeave(
-            id: leaveId,
-            type: leaveTypeController.text.trim(),
-            date: _selectedDay!,
-          );
+        id: leaveId,
+        type: leaveTypeController.text.trim(),
+        date: _selectedDay!,
+      );
       Navigator.of(context).pop();
     } else if (_selectedDay == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,7 +116,9 @@ class _LeaveFormState extends State<LeaveForm> {
                     child: Row(
                       children: [
                         Text(
-                          widget.leaveModel == null ? 'Add Leaves' : 'Edit Leave',
+                          widget.leaveModel == null
+                              ? 'Add Leaves'
+                              : 'Edit Leave',
                           style: TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -137,13 +139,17 @@ class _LeaveFormState extends State<LeaveForm> {
               ),
               SizedBox(height: 30),
               DropdownButtonFormField<String>(
-                initialValue: leaveTypeController.text.isEmpty ? null : leaveTypeController.text,
-                items: leaveTypes.map((String type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  );
-                }).toList(),
+                initialValue:
+                    leaveTypeController.text.isEmpty
+                        ? null
+                        : leaveTypeController.text,
+                items:
+                    leaveTypes.map((String type) {
+                      return DropdownMenuItem<String>(
+                        value: type,
+                        child: Text(type),
+                      );
+                    }).toList(),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please select a leave type';
@@ -168,10 +174,7 @@ class _LeaveFormState extends State<LeaveForm> {
                 // For adding multiple leaves
                 const Text(
                   'Select dates for your leave:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TableCalendar(
                   firstDay: DateTime.utc(2000, 1, 1),
@@ -183,7 +186,9 @@ class _LeaveFormState extends State<LeaveForm> {
                       return isSameDay(_selectedDay, day);
                     } else {
                       // For adding multiple leaves, highlight selected dates
-                      return _selectedDates.any((selectedDay) => isSameDay(selectedDay, day));
+                      return _selectedDates.any(
+                        (selectedDay) => isSameDay(selectedDay, day),
+                      );
                     }
                   },
                   onDaySelected: (selectedDay, focusedDay) {
@@ -191,9 +196,13 @@ class _LeaveFormState extends State<LeaveForm> {
                       // For adding multiple leaves
                       setState(() {
                         _focusedDay = focusedDay;
-                        if (_selectedDates.any((date) => isSameDay(date, selectedDay))) {
+                        if (_selectedDates.any(
+                          (date) => isSameDay(date, selectedDay),
+                        )) {
                           // If already selected, remove it
-                          _selectedDates.removeWhere((date) => isSameDay(date, selectedDay));
+                          _selectedDates.removeWhere(
+                            (date) => isSameDay(date, selectedDay),
+                          );
                         } else {
                           // If not selected, add it
                           _selectedDates.add(selectedDay);
@@ -260,10 +269,7 @@ class _LeaveFormState extends State<LeaveForm> {
                 // For editing a single leave, show a simple date picker
                 const Text(
                   'Select leave date:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextFormField(
                   readOnly: true,
@@ -271,12 +277,16 @@ class _LeaveFormState extends State<LeaveForm> {
                     labelText: 'Leave Date',
                     hintText: 'Select date',
                     border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today),
+                    suffixIcon: Padding(
+                      padding: EdgeInsets.only(right: 24.0),
+                      child: Icon(Icons.calendar_today),
+                    ),
                   ),
                   controller: TextEditingController(
-                    text: _selectedDay != null
-                        ? '${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}'
-                        : '',
+                    text:
+                        _selectedDay != null
+                            ? '${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}'
+                            : '',
                   ),
                   onTap: () async {
                     FocusScope.of(context).requestFocus(FocusNode());
@@ -313,7 +323,9 @@ class _LeaveFormState extends State<LeaveForm> {
                         Icon(Icons.save, color: Colors.white),
                         SizedBox(width: 10),
                         Text(
-                          widget.leaveModel == null ? 'Add Leaves' : 'Save Changes',
+                          widget.leaveModel == null
+                              ? 'Add Leaves'
+                              : 'Save Changes',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,

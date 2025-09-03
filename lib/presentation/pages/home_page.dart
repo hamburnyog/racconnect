@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
+import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
@@ -109,12 +110,26 @@ class _HomePageState extends State<HomePage> {
   Future<void> loadEvents() async {
     final eventCubit = context.read<EventCubit>();
     final suspensionCubit = context.read<SuspensionCubit>();
+    final leaveCubit = context.read<LeaveCubit>();
+    
+    // Get employee number for loading leaves
+    final authState = context.read<AuthCubit>().state;
+    String employeeNumber = '';
+    if (authState is AuthenticatedState) {
+      employeeNumber = authState.user.profile?.employeeNumber ?? '';
+    }
 
     await eventCubit.getAllEvents();
     final eventState = eventCubit.state;
 
     await suspensionCubit.getAllSuspensions();
     final suspensionState = suspensionCubit.state;
+    
+    // Load leaves if employee number is available
+    if (employeeNumber.isNotEmpty) {
+      await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
+    }
+    final leaveState = leaveCubit.state;
 
     if (!mounted) return;
 
@@ -144,6 +159,27 @@ class _HomePageState extends State<HomePage> {
               mySelectedEvents[dateKey]!.add(eventString);
             } else {
               mySelectedEvents[dateKey] = [eventString];
+            }
+          }
+        });
+      }
+    }
+    
+    // Add leaves to the calendar events
+    if (leaveState is GetAllLeaveSuccess && employeeNumber.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          for (var leave in leaveState.leaveModels) {
+            // Only show leaves for the current employee
+            if (leave.employeeNumber == employeeNumber) {
+              final dateKey = DateFormat('yyyy-MM-dd').format(leave.date);
+              final eventString = '${leave.type},T=Leave';
+              
+              if (mySelectedEvents.containsKey(dateKey)) {
+                mySelectedEvents[dateKey]!.add(eventString);
+              } else {
+                mySelectedEvents[dateKey] = [eventString];
+              }
             }
           }
         });
@@ -280,6 +316,8 @@ class _HomePageState extends State<HomePage> {
                                                   return Icons.cake;
                                                 case 'Suspension':
                                                   return Icons.flood;
+                                                case 'Leave':
+                                                  return Icons.sick;
                                                 default:
                                                   return Icons.event;
                                               }
@@ -292,6 +330,8 @@ class _HomePageState extends State<HomePage> {
                                                   return Colors.red;
                                                 case 'Suspension':
                                                   return Colors.orange;
+                                                case 'Leave':
+                                                  return Colors.grey;
                                                 default:
                                                   return Colors.grey;
                                               }
@@ -397,6 +437,8 @@ class _HomePageState extends State<HomePage> {
                                               return Colors.green;
                                             case 'Suspension':
                                               return Colors.orange;
+                                            case 'Leave':
+                                              return Colors.grey;
                                             default:
                                               return Colors.grey;
                                           }

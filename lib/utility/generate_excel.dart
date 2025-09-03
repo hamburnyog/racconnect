@@ -16,7 +16,8 @@ Future<String?> generateExcel(
   ProfileModel profile,
   List<AttendanceModel> monthlyAttendance,
   Map<DateTime, String> holidayMap,
-  Map<DateTime, SuspensionModel> suspensionMap, {
+  Map<DateTime, SuspensionModel> suspensionMap,
+  Map<DateTime, String> leaveMap, {
   DateTime? startDate,
   DateTime? endDate,
 }) async {
@@ -105,6 +106,14 @@ Future<String?> generateExcel(
       // Process this day with actual data
       final isHoliday = holidayMap.containsKey(currentDate);
       final holidayName = holidayMap[currentDate];
+      
+      // Check for leaves
+      final isLeave = leaveMap.containsKey(currentDate);
+      final leaveName = leaveMap[currentDate];
+      
+      // If it's a leave, treat it like a holiday but with "LEAVE" prefix
+      final effectiveHoliday = isHoliday || isLeave;
+      final effectiveHolidayName = isHoliday ? holidayName : (isLeave ? "LEAVE - $leaveName" : null);
 
       final dayLogs =
           monthlyAttendance.where((log) {
@@ -206,8 +215,8 @@ Future<String?> generateExcel(
                   ? borderedCellStyle
                   : topBottomBorderCellStyle;
         }
-      } else if (isHoliday) {
-        // Holiday format
+      } else if (effectiveHoliday) {
+        // Holiday/Leave format
         cellList['A$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('A$currrentRowNumber'),
         );
@@ -217,7 +226,7 @@ Future<String?> generateExcel(
         sheet.merge(
           CellIndex.indexByString('B$currrentRowNumber'),
           CellIndex.indexByString('E$currrentRowNumber'),
-          customValue: TextCellValue(holidayName!.toUpperCase()),
+          customValue: TextCellValue(effectiveHolidayName!.toUpperCase()),
         );
 
         for (var col in ['F', 'G']) {
@@ -237,7 +246,7 @@ Future<String?> generateExcel(
         sheet.merge(
           CellIndex.indexByString('J$currrentRowNumber'),
           CellIndex.indexByString('M$currrentRowNumber'),
-          customValue: TextCellValue(holidayName.toUpperCase()),
+          customValue: TextCellValue(effectiveHolidayName.toUpperCase()),
         );
 
         for (var col in ['B', 'C', 'D', 'E']) {

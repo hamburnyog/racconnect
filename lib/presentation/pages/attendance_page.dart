@@ -7,6 +7,7 @@ import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
+import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
 import 'package:racconnect/presentation/widgets/export_accomplishments_button.dart';
@@ -30,6 +31,7 @@ class _AttendancePageState extends State<AttendancePage>
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
   Map<DateTime, SuspensionModel> suspensionMap = {};
+  Map<DateTime, String> leaveMap = {}; // For storing leave information
   Set<String> accomplishmentDates = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
@@ -80,13 +82,25 @@ class _AttendancePageState extends State<AttendancePage>
   Future<void> _loadInitialData() async {
     context.read<HolidayCubit>().getAllHolidays();
     context.read<SuspensionCubit>().getAllSuspensions();
-
+    
+    // Load leaves
+    final leaveCubit = context.read<LeaveCubit>();
+    
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
+        // Load leaves for the current employee
+        await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
+        
+        // Check if widget is still mounted
+        if (!mounted) return;
+        
         final cubit = context.read<AttendanceCubit>();
         await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
+
+        // Check if widget is still mounted
+        if (!mounted) return;
 
         // Fetch accomplishments for the selected month
         final startDate = DateTime(selectedYear, selectedMonth, 1);
@@ -98,6 +112,9 @@ class _AttendancePageState extends State<AttendancePage>
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
             .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
+
+        // Check if widget is still mounted
+        if (!mounted) return;
 
         final state = cubit.state;
         if (state is GetEmployeeAttendanceSuccess) {
@@ -119,6 +136,17 @@ class _AttendancePageState extends State<AttendancePage>
             accomplishmentDates = {
               for (var a in accomplishments)
                 DateFormat('yyyy-MM-dd').format(a.date),
+            };
+          });
+        }
+        
+        // Handle leave state
+        final leaveState = leaveCubit.state;
+        if (leaveState is GetAllLeaveSuccess) {
+          setState(() {
+            leaveMap = {
+              for (var leave in leaveState.leaveModels)
+                DateTime(leave.date.year, leave.date.month, leave.date.day): leave.type,
             };
           });
         }
@@ -228,6 +256,7 @@ class _AttendancePageState extends State<AttendancePage>
                                 selectedMonth: selectedMonth,
                                 holidayMap: holidayMap,
                                 suspensionMap: suspensionMap,
+                                leaveMap: leaveMap,
                               );
                             },
                           ),
@@ -304,6 +333,7 @@ class _AttendancePageState extends State<AttendancePage>
                                           attendanceMap: attendanceMap,
                                           holidayMap: holidayMap,
                                           suspensionMap: suspensionMap,
+                                          leaveMap: leaveMap, // Add leaveMap
                                           accomplishmentDates:
                                               accomplishmentDates,
                                           isSmallScreen: isSmallScreen,
