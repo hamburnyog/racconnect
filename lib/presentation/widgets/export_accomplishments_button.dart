@@ -37,17 +37,14 @@ class _ExportAccomplishmentsButtonState
   Future<void> _exportToPDF() async {
     final authState = context.read<AuthCubit>().state;
 
-    // Check if user is COS employee
     final isCOS =
         authState is AuthenticatedState &&
         authState.user.profile?.employmentStatus == 'COS';
 
     if (authState is AuthenticatedState) {
       if (isCOS) {
-        // Show dialog for COS employees to choose export options
         _showCOSExportOptions(authState);
       } else {
-        // For non-COS employees, automatically generate Annex A for the whole month.
         _performExport(authState, 'whole', true, isCOS);
       }
     }
@@ -129,26 +126,21 @@ class _ExportAccomplishmentsButtonState
   ) async {
     if (_isExporting) return;
 
-    // Get user info and context before async gap to avoid BuildContext issues
     final attendanceCubit = context.read<AttendanceCubit>();
     String userName = 'Unknown User';
     String userPosition = '';
     String userOffice = '';
 
-    // Try to get name from profile first
     userName =
         '${authState.user.profile?.firstName ?? ''} ${_getMiddleInitialFromMiddleName(authState.user.profile?.middleName)} ${authState.user.profile?.lastName ?? ''}'
             .trim();
     if (userName.isEmpty) {
-      // Fallback to user name from UserModel
       userName = authState.user.name;
     }
     if (userName.isEmpty) {
-      // Last resort fallback
       userName = 'Unknown User';
     }
 
-    // Get position and office (using sectionName as office, fallback to sectionCode)
     userPosition = authState.user.profile?.position ?? '';
     userOffice = _getOfficeInfo(authState.user.profile);
 
@@ -157,7 +149,6 @@ class _ExportAccomplishmentsButtonState
     });
 
     try {
-      // Show loading indicator
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       scaffoldMessenger.showSnackBar(
         const SnackBar(
@@ -166,22 +157,18 @@ class _ExportAccomplishmentsButtonState
         ),
       );
 
-      // Get employee number
       final employeeNumber = authState.user.profile?.employeeNumber;
       if (employeeNumber == null || employeeNumber.isEmpty) {
         throw Exception('Employee number not found');
       }
 
-      // Determine date range based on period
       DateTime startDate;
       DateTime endDate;
 
       if (period == 'first') {
-        // First half of the month (1st to 15th)
         startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
         endDate = DateTime(widget.selectedYear, widget.selectedMonth, 15);
       } else if (period == 'second') {
-        // Second half of the month (16th to end of month)
         startDate = DateTime(widget.selectedYear, widget.selectedMonth, 16);
         endDate = DateTime(
           widget.selectedYear,
@@ -189,7 +176,6 @@ class _ExportAccomplishmentsButtonState
           1,
         ).subtract(const Duration(days: 1));
       } else {
-        // Whole month (default behavior)
         startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
         endDate = DateTime(
           widget.selectedYear,
@@ -206,22 +192,18 @@ class _ExportAccomplishmentsButtonState
             endDate,
           );
 
-      // Filter accomplishments based on report type
       List<AccomplishmentModel> filteredAccomplishments;
 
       if (isAnnexA) {
-        // Annex A report - only include WFH accomplishments
         final attendanceRepository = attendanceCubit.attendanceRepository;
         final attendanceRecords = await attendanceRepository
             .getEmployeeAttendanceForMonth(employeeNumber, startDate);
 
-        // Filter to only WFH attendance records
         final wfhAttendanceRecords =
             attendanceRecords
                 .where((record) => record.type.toLowerCase().contains('wfh'))
                 .toList();
 
-        // Create a set of dates that have WFH attendance
         final wfhDates = <DateTime>{};
         for (var record in wfhAttendanceRecords) {
           final date = DateTime(
@@ -232,7 +214,6 @@ class _ExportAccomplishmentsButtonState
           wfhDates.add(date);
         }
 
-        // Filter accomplishments to only include those with WFH attendance
         filteredAccomplishments =
             allAccomplishments.where((accomplishment) {
               final accomplishmentDate = DateTime(
@@ -243,11 +224,9 @@ class _ExportAccomplishmentsButtonState
               return wfhDates.contains(accomplishmentDate);
             }).toList();
       } else {
-        // Simple Accomplishment Report - include all accomplishments
         filteredAccomplishments = allAccomplishments;
       }
 
-      // Generate PDF content
       final pdfFile = await _generatePDF(
         filteredAccomplishments,
         startDate,
@@ -261,9 +240,7 @@ class _ExportAccomplishmentsButtonState
 
       if (!mounted) return;
 
-      // Check platform and handle accordingly
       if (Platform.isAndroid || Platform.isIOS) {
-        // Mobile: Share the PDF file
         final params = ShareParams(
           subject:
               'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
@@ -292,7 +269,6 @@ class _ExportAccomplishmentsButtonState
           );
         }
       } else {
-        // Desktop: Open the file in the default PDF viewer
         final uri = Uri.file(pdfFile.path);
         if (await launchUrl(uri)) {
           scaffoldMessenger.showSnackBar(
@@ -343,7 +319,6 @@ class _ExportAccomplishmentsButtonState
   }) async {
     final pdf = pw.Document();
 
-    // Load header and footer images
     pw.MemoryImage? headerImage;
     pw.MemoryImage? footerImage;
 
@@ -581,18 +556,16 @@ class _ExportAccomplishmentsButtonState
                 ],
               ),
               pw.SizedBox(height: 5),
-              // Custom table implementation with proper multi-page support and custom column widths
               pw.Table(
                 border: pw.TableBorder.all(),
                 tableWidth: pw.TableWidth.max,
                 columnWidths: {
-                  0: pw.FractionColumnWidth(0.15), // Date (10%)
-                  1: pw.FractionColumnWidth(0.35), // Deliverables (35%)
-                  2: pw.FractionColumnWidth(0.35), // Accomplishment (35%)
-                  3: pw.FractionColumnWidth(0.15), // Remarks (20%)
+                  0: pw.FractionColumnWidth(0.15),
+                  1: pw.FractionColumnWidth(0.35),
+                  2: pw.FractionColumnWidth(0.35),
+                  3: pw.FractionColumnWidth(0.15),
                 },
                 children: [
-                  // Header row with grey background
                   pw.TableRow(
                     decoration: const pw.BoxDecoration(
                       color: PdfColors.grey300,
@@ -642,7 +615,6 @@ class _ExportAccomplishmentsButtonState
                       ),
                     ],
                   ),
-                  // Data rows
                   ...tableData.map(
                     (row) => pw.TableRow(
                       children: [
@@ -692,7 +664,7 @@ class _ExportAccomplishmentsButtonState
                           horizontal: 4.0,
                         ),
                         child: pw.Text(
-                          'Prepared by: $userName${_getMiddleInitial(userName)}',
+                          'Prepared by: $userName',
                           style: pw.TextStyle(
                             fontSize: 10,
                             fontWeight: pw.FontWeight.bold,
@@ -740,7 +712,6 @@ class _ExportAccomplishmentsButtonState
     return file;
   }
 
-  /// Helper to get middle initial from middle name (null-safe)
   String _getMiddleInitialFromMiddleName(String? middleName) {
     if (middleName != null && middleName.trim().isNotEmpty) {
       return '${middleName.trim()[0]}.';
@@ -748,24 +719,19 @@ class _ExportAccomplishmentsButtonState
     return '';
   }
 
-  /// Get office information with fallbacks
   String _getOfficeInfo(ProfileModel? profile) {
-    // Try sectionName first
     if (profile?.sectionName?.isNotEmpty ?? false) {
       return profile!.sectionName!;
     }
 
-    // Fallback to sectionCode
     if (profile?.sectionCode?.isNotEmpty ?? false) {
       return profile!.sectionCode!;
     }
 
-    // Fallback to a generic office name if section exists but no name
     if (profile?.section?.isNotEmpty ?? false) {
-      return 'N/A'; // Don't expose raw section IDs
+      return 'N/A';
     }
 
-    // If all else fails, return N/A
     return 'N/A';
   }
 
@@ -790,26 +756,15 @@ class _ExportAccomplishmentsButtonState
     }
   }
 
-  String _getMiddleInitial(String fullName) {
-    // Extract middle initial from full name
-    final parts = fullName.split(' ');
-    if (parts.length >= 3) {
-      // Assuming format: First Middle Last
-      return ' ${parts[1][0]}.'; // Return middle initial with space and period
-    }
-    return ''; // No middle name found
-  }
-
   String _getUnitHeadName(ProfileModel? profile) {
-    // For now, default to John S. Calidguid, RSW, MPA
-    // In a future enhancement, this could lookup the actual unit head based on section
+    // Hardcoded for now
     return 'John S. Calidguid, RSW, MPA';
   }
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: 5, // Position at the bottom
+      bottom: 5,
       right: 5,
       child: FloatingActionButton(
         backgroundColor: Colors.white,

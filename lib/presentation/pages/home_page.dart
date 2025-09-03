@@ -331,7 +331,7 @@ class _HomePageState extends State<HomePage> {
                                                 case 'Suspension':
                                                   return Colors.orange;
                                                 case 'Leave':
-                                                  return Colors.grey;
+                                                  return Colors.purple;
                                                 default:
                                                   return Colors.grey;
                                               }
@@ -438,7 +438,7 @@ class _HomePageState extends State<HomePage> {
                                             case 'Suspension':
                                               return Colors.orange;
                                             case 'Leave':
-                                              return Colors.grey;
+                                              return Colors.purple;
                                             default:
                                               return Colors.grey;
                                           }

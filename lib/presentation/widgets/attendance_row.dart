@@ -11,7 +11,7 @@ Widget buildAttendanceRow({
   required Map<String, Map<String, String>> attendanceMap,
   required Map<DateTime, String> holidayMap,
   required Map<DateTime, SuspensionModel> suspensionMap,
-  required Map<DateTime, String> leaveMap, // Add leaveMap parameter
+  required Map<DateTime, String> leaveMap,
   required Set<String> accomplishmentDates,
   required bool isSmallScreen,
   required Animation<Color?> greenGlowAnimation,
@@ -21,13 +21,11 @@ Widget buildAttendanceRow({
   final data = attendanceMap[dateKey];
   final hasAccomplishments = accomplishmentDates.contains(dateKey);
   final holidayName = holidayMap[DateTime(day.year, day.month, day.day)];
-  final leaveName =
-      leaveMap[DateTime(day.year, day.month, day.day)]; // Check for leave
+  final leaveName = leaveMap[DateTime(day.year, day.month, day.day)];
   final isWeekend =
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
   final isToday = DateUtils.isSameDay(day, DateTime.now());
 
-  // Update row color to include purple for leaves
   final rowColor =
       holidayName != null
           ? Colors.green.shade50
@@ -39,11 +37,8 @@ Widget buildAttendanceRow({
           ? Colors.yellow.withValues(alpha: 0.1)
           : null;
 
-  // Update label to include leave name
   final label = holidayName ?? leaveName ?? (isWeekend ? 'Weekend' : '');
-  // Update isNonWorkingDay to include leaves
   final isNonWorkingDay = holidayName != null || leaveName != null || isWeekend;
-
   final isSuspension = suspensionMap.containsKey(day);
   final suspensionModel = suspensionMap[day];
 
@@ -105,15 +100,11 @@ Widget buildAttendanceRow({
   if (isSuspension && suspensionModel!.isHalfday) {
     if (displayTimeIn != null && displayTimeIn != '—') {
       displayLunchOut = DateFormat('h:mm a').format(suspensionModel.datetime);
-      // displayLunchIn = suspensionModel.name;
-      // displayTimeOut = null;
       displayLunchIn = '-';
       displayTimeOut = '-';
     } else {
       displayTimeIn = '—';
       displayLunchOut = DateFormat('h:mm a').format(suspensionModel.datetime);
-      // displayLunchIn = suspensionModel.name;
-      // displayTimeOut = null;
       displayLunchIn = '-';
       displayTimeOut = '-';
     }
@@ -181,17 +172,11 @@ Widget buildAttendanceRow({
                   ),
                 ),
                 Expanded(
-                  // flex:
-                  //     // (displayType == 'suspension' && displayTimeOut == null)
-                  //     //     ? 2
-                  //     //     : 1,
                   child: buildTimeCell(
                     displayLunchIn,
                     isSmallScreen: isSmallScreen,
                   ),
                 ),
-                // if (displayType != 'suspension' ||
-                //     displayType == 'suspension' && displayTimeOut != null)
                 Expanded(
                   child: buildTimeCell(
                     displayTimeOut,
