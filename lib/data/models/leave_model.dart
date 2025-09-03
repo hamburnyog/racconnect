@@ -43,11 +43,12 @@ class LeaveModel {
       id: map['id'],
       employeeNumber: map['employeeNumber'] ?? '',
       type: map['type'] ?? '',
-      date: map['date'] != null
-          ? (map['date'] is int
-              ? DateTime.fromMillisecondsSinceEpoch(map['date'])
-              : DateTime.parse(map['date']))
-          : DateTime.now(),
+      date:
+          map['date'] != null
+              ? (map['date'] is int
+                  ? DateTime.fromMillisecondsSinceEpoch(map['date'])
+                  : DateTime.parse(map['date']))
+              : DateTime.now(),
     );
   }
 

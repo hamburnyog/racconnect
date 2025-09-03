@@ -13,21 +13,33 @@ class WfhCubit extends Cubit<WfhState> {
   Future<void> getInitialWfhCount() async {
     emit(WfhLoading());
     final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day).toUtc().toIso8601String();
-    final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59).toUtc().toIso8601String();
+    final startOfDay =
+        DateTime(today.year, today.month, today.day).toUtc().toIso8601String();
+    final endOfDay =
+        DateTime(
+          today.year,
+          today.month,
+          today.day,
+          23,
+          59,
+          59,
+        ).toUtc().toIso8601String();
 
     try {
       // Get all WFH attendance records for today
-      final result = await _pb.collection('attendance').getFullList(
-            filter: 'timestamp >= "$startOfDay" && timestamp <= "$endOfDay" && type = "WFH"',
+      final result = await _pb
+          .collection('attendance')
+          .getFullList(
+            filter:
+                'timestamp >= "$startOfDay" && timestamp <= "$endOfDay" && type = "WFH"',
           );
-      
+
       // Extract unique employee numbers to count employees, not logs
       final uniqueEmployeeNumbers = <String>{};
       for (var record in result) {
         uniqueEmployeeNumbers.add(record.data['employeeNumber']);
       }
-      
+
       emit(WfhLoaded(uniqueEmployeeNumbers.length));
     } catch (e) {
       emit(WfhError(e.toString()));
@@ -36,7 +48,9 @@ class WfhCubit extends Cubit<WfhState> {
 
   void subscribeToWfhUpdates() {
     _pb.collection('attendance').subscribe('*', (e) {
-      if (e.action == 'create' || e.action == 'delete' || e.action == 'update') {
+      if (e.action == 'create' ||
+          e.action == 'delete' ||
+          e.action == 'update') {
         getInitialWfhCount();
       }
     });

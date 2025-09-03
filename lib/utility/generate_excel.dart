@@ -106,14 +106,15 @@ Future<String?> generateExcel(
       // Process this day with actual data
       final isHoliday = holidayMap.containsKey(currentDate);
       final holidayName = holidayMap[currentDate];
-      
+
       // Check for leaves
       final isLeave = leaveMap.containsKey(currentDate);
       final leaveName = leaveMap[currentDate];
-      
+
       // If it's a leave, treat it like a holiday but with "LEAVE" prefix
       final effectiveHoliday = isHoliday || isLeave;
-      final effectiveHolidayName = isHoliday ? holidayName : (isLeave ? "LEAVE - $leaveName" : null);
+      final effectiveHolidayName =
+          isHoliday ? holidayName : (isLeave ? "LEAVE - $leaveName" : null);
 
       final dayLogs =
           monthlyAttendance.where((log) {

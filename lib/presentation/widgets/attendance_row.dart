@@ -21,7 +21,8 @@ Widget buildAttendanceRow({
   final data = attendanceMap[dateKey];
   final hasAccomplishments = accomplishmentDates.contains(dateKey);
   final holidayName = holidayMap[DateTime(day.year, day.month, day.day)];
-  final leaveName = leaveMap[DateTime(day.year, day.month, day.day)]; // Check for leave
+  final leaveName =
+      leaveMap[DateTime(day.year, day.month, day.day)]; // Check for leave
   final isWeekend =
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
   final isToday = DateUtils.isSameDay(day, DateTime.now());

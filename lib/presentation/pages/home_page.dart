@@ -111,7 +111,7 @@ class _HomePageState extends State<HomePage> {
     final eventCubit = context.read<EventCubit>();
     final suspensionCubit = context.read<SuspensionCubit>();
     final leaveCubit = context.read<LeaveCubit>();
-    
+
     // Get employee number for loading leaves
     final authState = context.read<AuthCubit>().state;
     String employeeNumber = '';
@@ -124,7 +124,7 @@ class _HomePageState extends State<HomePage> {
 
     await suspensionCubit.getAllSuspensions();
     final suspensionState = suspensionCubit.state;
-    
+
     // Load leaves if employee number is available
     if (employeeNumber.isNotEmpty) {
       await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
@@ -164,7 +164,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     }
-    
+
     // Add leaves to the calendar events
     if (leaveState is GetAllLeaveSuccess && employeeNumber.isNotEmpty) {
       if (mounted) {
@@ -174,7 +174,7 @@ class _HomePageState extends State<HomePage> {
             if (leave.employeeNumber == employeeNumber) {
               final dateKey = DateFormat('yyyy-MM-dd').format(leave.date);
               final eventString = '${leave.type},T=Leave';
-              
+
               if (mySelectedEvents.containsKey(dateKey)) {
                 mySelectedEvents[dateKey]!.add(eventString);
               } else {
@@ -239,11 +239,11 @@ class _HomePageState extends State<HomePage> {
                         listOfDayEvents(_selectedDay!).isNotEmpty
                             ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
                             : (_selectedDay == null ||
-                                    (_selectedDay!.year == now.year &&
-                                        _selectedDay!.month == now.month &&
-                                        _selectedDay!.day == now.day))
-                                ? 'No event for today'
-                                : 'No event for the selected day',
+                                (_selectedDay!.year == now.year &&
+                                    _selectedDay!.month == now.month &&
+                                    _selectedDay!.day == now.day))
+                            ? 'No event for today'
+                            : 'No event for the selected day',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,

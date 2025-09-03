@@ -32,7 +32,8 @@ class AttendanceModel {
       type: type ?? this.type,
       remarks: remarks ?? this.remarks,
       ipAddress: ipAddress != null ? ipAddress() : this.ipAddress,
-      accomplishmentId: accomplishmentId != null ? accomplishmentId() : this.accomplishmentId,
+      accomplishmentId:
+          accomplishmentId != null ? accomplishmentId() : this.accomplishmentId,
     );
   }
 

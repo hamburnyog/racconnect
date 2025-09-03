@@ -108,7 +108,10 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         : 'View personnel profiles here',
                     style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
-                  leading: const Icon(Icons.people_alt_outlined, color: Colors.white),
+                  leading: const Icon(
+                    Icons.people_alt_outlined,
+                    color: Colors.white,
+                  ),
                   trailing: WfhBadge(
                     onTap: () {
                       setState(() {
@@ -199,13 +202,19 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     }
 
                     if (_isWfhFilterActive) {
-                      final wfhEmployeeNumbers = _todayAttendance
-                          .where((att) => att.type == 'WFH')
-                          .map((att) => att.employeeNumber)
-                          .toSet();
-                      users = users
-                          .where((user) => wfhEmployeeNumbers.contains(user.profile?.employeeNumber))
-                          .toList();
+                      final wfhEmployeeNumbers =
+                          _todayAttendance
+                              .where((att) => att.type == 'WFH')
+                              .map((att) => att.employeeNumber)
+                              .toSet();
+                      users =
+                          users
+                              .where(
+                                (user) => wfhEmployeeNumbers.contains(
+                                  user.profile?.employeeNumber,
+                                ),
+                              )
+                              .toList();
                     }
 
                     if (_searchQuery.isNotEmpty) {

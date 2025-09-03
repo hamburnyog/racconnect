@@ -82,20 +82,20 @@ class _AttendancePageState extends State<AttendancePage>
   Future<void> _loadInitialData() async {
     context.read<HolidayCubit>().getAllHolidays();
     context.read<SuspensionCubit>().getAllSuspensions();
-    
+
     // Load leaves
     final leaveCubit = context.read<LeaveCubit>();
-    
+
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
         // Load leaves for the current employee
         await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
-        
+
         // Check if widget is still mounted
         if (!mounted) return;
-        
+
         final cubit = context.read<AttendanceCubit>();
         await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
 
@@ -139,14 +139,15 @@ class _AttendancePageState extends State<AttendancePage>
             };
           });
         }
-        
+
         // Handle leave state
         final leaveState = leaveCubit.state;
         if (leaveState is GetAllLeaveSuccess) {
           setState(() {
             leaveMap = {
               for (var leave in leaveState.leaveModels)
-                DateTime(leave.date.year, leave.date.month, leave.date.day): leave.type,
+                DateTime(leave.date.year, leave.date.month, leave.date.day):
+                    leave.type,
             };
           });
         }

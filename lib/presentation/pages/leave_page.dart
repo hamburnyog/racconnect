@@ -40,7 +40,10 @@ class _LeavePageState extends State<LeavePage> {
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
-        return LeaveForm(leaveModel: leaveModel, employeeNumber: employeeNumber);
+        return LeaveForm(
+          leaveModel: leaveModel,
+          employeeNumber: employeeNumber,
+        );
       },
     );
   }
@@ -70,11 +73,13 @@ class _LeavePageState extends State<LeavePage> {
       builder: (context, authState) {
         if (authState is AuthenticatedState) {
           final employeeNumber = authState.user.profile?.employeeNumber ?? '';
-          
+
           // Load leaves for the current user
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (employeeNumber.isNotEmpty) {
-              context.read<LeaveCubit>().getAllLeaves(employeeNumber: employeeNumber);
+              context.read<LeaveCubit>().getAllLeaves(
+                employeeNumber: employeeNumber,
+              );
             }
           });
 
@@ -82,7 +87,9 @@ class _LeavePageState extends State<LeavePage> {
             triggerMode: RefreshIndicatorTriggerMode.anywhere,
             onRefresh: () async {
               if (employeeNumber.isNotEmpty) {
-                context.read<LeaveCubit>().getAllLeaves(employeeNumber: employeeNumber);
+                context.read<LeaveCubit>().getAllLeaves(
+                  employeeNumber: employeeNumber,
+                );
               }
             },
             child: ScrollConfiguration(
@@ -94,7 +101,10 @@ class _LeavePageState extends State<LeavePage> {
                 },
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 child: Column(
                   children: [
                     Card(
@@ -115,10 +125,7 @@ class _LeavePageState extends State<LeavePage> {
                               : 'View your leave dates here',
                           style: TextStyle(color: Colors.white70, fontSize: 10),
                         ),
-                        leading: Icon(
-                          Icons.sick_outlined,
-                          color: Colors.white,
-                        ),
+                        leading: Icon(Icons.sick_outlined, color: Colors.white),
                         trailing: MobileButton(
                           isSmallScreen: isSmallScreen,
                           onPressed: () => _showLeaveForm(employeeNumber),
@@ -155,7 +162,9 @@ class _LeavePageState extends State<LeavePage> {
                             state is LeaveUpdateSuccess ||
                             state is LeaveDeleteSuccess) {
                           if (employeeNumber.isNotEmpty) {
-                            context.read<LeaveCubit>().getAllLeaves(employeeNumber: employeeNumber);
+                            context.read<LeaveCubit>().getAllLeaves(
+                              employeeNumber: employeeNumber,
+                            );
                           }
                         }
 
@@ -194,15 +203,20 @@ class _LeavePageState extends State<LeavePage> {
                                                 ),
                                                 actions: <Widget>[
                                                   TextButton(
-                                                    onPressed: () => Navigator.of(
-                                                      context,
-                                                    ).pop(false),
+                                                    onPressed:
+                                                        () => Navigator.of(
+                                                          context,
+                                                        ).pop(false),
                                                     child: const Text("Cancel"),
                                                   ),
                                                   TextButton(
                                                     onPressed: () {
-                                                      _deleteLeave(leaveModel.id!);
-                                                      Navigator.of(context).pop(true);
+                                                      _deleteLeave(
+                                                        leaveModel.id!,
+                                                      );
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop(true);
                                                     },
                                                     child: const Text("Delete"),
                                                   ),
@@ -214,7 +228,9 @@ class _LeavePageState extends State<LeavePage> {
                                         background: Container(
                                           decoration: BoxDecoration(
                                             color: Colors.pink,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           alignment: Alignment.centerRight,
                                           margin: const EdgeInsets.symmetric(
@@ -233,7 +249,9 @@ class _LeavePageState extends State<LeavePage> {
                                           child: ListTile(
                                             leading: CircleAvatar(
                                               backgroundColor:
-                                                  Theme.of(context).primaryColor,
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
                                               child: Icon(
                                                 Icons.sick_outlined,
                                                 color: Colors.white,
@@ -243,20 +261,31 @@ class _LeavePageState extends State<LeavePage> {
                                               leaveModel.type,
                                               style: TextStyle(
                                                 fontSize: 16,
-                                                color: Theme.of(context).primaryColor,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
                                               ),
                                             ),
                                             subtitle: Text(
-                                              DateFormat('MMM d, yyyy').format(leaveModel.date),
+                                              DateFormat(
+                                                'MMM d, yyyy',
+                                              ).format(leaveModel.date),
                                               style: TextStyle(fontSize: 10),
                                             ),
                                             trailing: GestureDetector(
                                               onTap: () {
-                                                _showLeaveFormWithEdit(leaveModel, employeeNumber);
+                                                _showLeaveFormWithEdit(
+                                                  leaveModel,
+                                                  employeeNumber,
+                                                );
                                               },
                                               child: Icon(
                                                 Icons.edit_note,
-                                                color: Theme.of(context).primaryColor,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
                                               ),
                                             ),
                                           ),
@@ -274,7 +303,10 @@ class _LeavePageState extends State<LeavePage> {
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: [
                               SizedBox(height: 50),
-                              SvgPicture.asset('assets/images/dog.svg', height: 100),
+                              SvgPicture.asset(
+                                'assets/images/dog.svg',
+                                height: 100,
+                              ),
                               Center(
                                 child: Text(
                                   'No leave dates recorded yet. Add leave dates to get started.',

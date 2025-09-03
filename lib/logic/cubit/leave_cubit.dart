@@ -35,7 +35,7 @@ class LeaveCubit extends Cubit<LeaveState> {
   }) async {
     try {
       emit(LeaveLoading());
-      
+
       // Add each date as a separate leave record
       for (DateTime date in dates) {
         await leaveRepository.addLeave(
@@ -44,14 +44,18 @@ class LeaveCubit extends Cubit<LeaveState> {
           date: date,
         );
       }
-      
+
       // Refresh the list after adding all leaves
       await getAllLeaves(employeeNumber: employeeNumber);
-      emit(LeaveAddSuccess(LeaveModel(
-        employeeNumber: employeeNumber,
-        type: type,
-        date: dates.first,
-      )));
+      emit(
+        LeaveAddSuccess(
+          LeaveModel(
+            employeeNumber: employeeNumber,
+            type: type,
+            date: dates.first,
+          ),
+        ),
+      );
     } catch (e) {
       errorMessage(e);
     }

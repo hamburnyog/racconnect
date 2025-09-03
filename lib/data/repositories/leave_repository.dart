@@ -3,7 +3,7 @@ import 'package:racconnect/utility/pocketbase_client.dart';
 
 class LeaveRepository {
   final pb = PocketBaseClient.instance;
-  
+
   Future<List<LeaveModel>> getAllLeaves(String employeeNumber) async {
     try {
       final response = await pb
