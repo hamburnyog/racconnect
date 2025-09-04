@@ -16,7 +16,6 @@ class LeaveForm extends StatefulWidget {
 
 class _LeaveFormState extends State<LeaveForm> {
   TextEditingController leaveTypeController = TextEditingController();
-  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   final Set<DateTime> _selectedDates = <DateTime>{};
@@ -119,13 +118,13 @@ class _LeaveFormState extends State<LeaveForm> {
                           widget.leaveModel == null
                               ? 'Add Leaves'
                               : 'Edit Leave',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 30,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         Center(
                           child: SvgPicture.asset(
                             'assets/images/calendar.svg',
@@ -137,7 +136,7 @@ class _LeaveFormState extends State<LeaveForm> {
                   ),
                 ],
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               DropdownButtonFormField<String>(
                 initialValue:
                     leaveTypeController.text.isEmpty
@@ -169,7 +168,7 @@ class _LeaveFormState extends State<LeaveForm> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               if (widget.leaveModel == null) ...[
                 // For adding multiple leaves
                 const Text(
@@ -177,9 +176,12 @@ class _LeaveFormState extends State<LeaveForm> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TableCalendar(
-                  firstDay: DateTime.utc(2000, 1, 1),
-                  lastDay: DateTime.utc(2100, 12, 31),
+                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDay: DateTime.now().add(const Duration(days: 365)),
                   focusedDay: _focusedDay,
+                  calendarFormat: CalendarFormat.month,
+                  headerStyle: const HeaderStyle(formatButtonVisible: false),
+                  availableGestures: AvailableGestures.horizontalSwipe,
                   selectedDayPredicate: (day) {
                     if (widget.leaveModel != null) {
                       // For editing a single leave, highlight that date
@@ -216,12 +218,6 @@ class _LeaveFormState extends State<LeaveForm> {
                       });
                     }
                   },
-                  calendarFormat: _calendarFormat,
-                  onFormatChanged: (format) {
-                    setState(() {
-                      _calendarFormat = format;
-                    });
-                  },
                   onPageChanged: (focusedDay) {
                     _focusedDay = focusedDay;
                   },
@@ -250,13 +246,13 @@ class _LeaveFormState extends State<LeaveForm> {
                         ),
                         child: Text(
                           '${date.day}',
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                         ),
                       );
                     },
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (_selectedDates.isNotEmpty)
                   Text(
                     '${_selectedDates.length} date(s) selected',
@@ -304,7 +300,7 @@ class _LeaveFormState extends State<LeaveForm> {
                   },
                 ),
               ],
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -320,13 +316,13 @@ class _LeaveFormState extends State<LeaveForm> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.save, color: Colors.white),
-                        SizedBox(width: 10),
+                        const Icon(Icons.save, color: Colors.white),
+                        const SizedBox(width: 10),
                         Text(
                           widget.leaveModel == null
                               ? 'Add Leaves'
                               : 'Save Changes',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -337,7 +333,7 @@ class _LeaveFormState extends State<LeaveForm> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
             ],
           ),
         ),

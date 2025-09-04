@@ -16,6 +16,7 @@ import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/utility/group_attendance.dart';
 import 'package:racconnect/presentation/widgets/attendance_row.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
+import 'package:racconnect/logic/cubit/travel_cubit.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -32,6 +33,7 @@ class _AttendancePageState extends State<AttendancePage>
   Map<DateTime, String> holidayMap = {};
   Map<DateTime, SuspensionModel> suspensionMap = {};
   Map<DateTime, String> leaveMap = {}; // For storing leave information
+  Map<DateTime, String> travelMap = {}; // For storing travel order information
   Set<String> accomplishmentDates = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
@@ -151,6 +153,26 @@ class _AttendancePageState extends State<AttendancePage>
             };
           });
         }
+
+        // Handle travel state
+        final travelCubit = context.read<TravelCubit>();
+        await travelCubit.getAllTravels();
+        final travelState = travelCubit.state;
+        if (travelState is GetAllTravelSuccess) {
+          setState(() {
+            travelMap = {};
+            for (var travel in travelState.travelModels) {
+              // Only show travel orders for the current employee
+              if (travel.employeeNumbers.contains(employeeNumber)) {
+                // Add each date in the travel order
+                for (var date in travel.specificDates) {
+                  final dateKey = DateTime(date.year, date.month, date.day);
+                  travelMap[dateKey] = travel.soNumber;
+                }
+              }
+            }
+          });
+        }
       }
     }
   }
@@ -258,6 +280,7 @@ class _AttendancePageState extends State<AttendancePage>
                                 holidayMap: holidayMap,
                                 suspensionMap: suspensionMap,
                                 leaveMap: leaveMap,
+                                travelMap: travelMap,
                               );
                             },
                           ),
@@ -335,6 +358,7 @@ class _AttendancePageState extends State<AttendancePage>
                                           holidayMap: holidayMap,
                                           suspensionMap: suspensionMap,
                                           leaveMap: leaveMap, // Add leaveMap
+                                          travelMap: travelMap, // Add travelMap
                                           accomplishmentDates:
                                               accomplishmentDates,
                                           isSmallScreen: isSmallScreen,

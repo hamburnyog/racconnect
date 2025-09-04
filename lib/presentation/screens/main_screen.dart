@@ -10,6 +10,7 @@ import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
 import 'package:racconnect/presentation/pages/suspension_page.dart';
+import 'package:racconnect/presentation/pages/travel_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -169,7 +170,8 @@ class _MainScreenState extends State<MainScreen> {
                       sidebarItemMenu = sideBarItemsOic;
                     } else if (user.role == 'HR') {
                       sidebarItemMenu = sideBarItemsHr;
-                    } else if (user.role == 'Records') {
+                    } else if (user.role == 'Records' ||
+                        user.role == 'Record') {
                       sidebarItemMenu = sideBarItemsRecords;
                     } else if (user.role == 'Unit Head') {
                       sidebarItemMenu = sideBarItemsUnitHead;
@@ -202,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
                 sidebarItemMenu = sideBarItemsOic;
               } else if (user.role == 'HR') {
                 sidebarItemMenu = sideBarItemsHr;
-              } else if (user.role == 'Records') {
+              } else if (user.role == 'Records' || user.role == 'Record') {
                 sidebarItemMenu = sideBarItemsRecords;
               } else if (user.role == 'Unit Head') {
                 sidebarItemMenu = sideBarItemsUnitHead;
@@ -278,6 +280,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Suspensions') {
                           return SuspensionPage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Special Orders') {
+                          return TravelPage();
                         } else {
                           return Text(
                             sidebarItemMenu[_selectedIndex].label.toString(),

@@ -6,6 +6,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
+import 'package:racconnect/logic/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -111,6 +112,7 @@ class _HomePageState extends State<HomePage> {
     final eventCubit = context.read<EventCubit>();
     final suspensionCubit = context.read<SuspensionCubit>();
     final leaveCubit = context.read<LeaveCubit>();
+    final travelCubit = context.read<TravelCubit>();
 
     // Get employee number for loading leaves
     final authState = context.read<AuthCubit>().state;
@@ -130,6 +132,12 @@ class _HomePageState extends State<HomePage> {
       await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
     }
     final leaveState = leaveCubit.state;
+
+    // Load travel orders if employee number is available
+    if (employeeNumber.isNotEmpty) {
+      await travelCubit.getAllTravels();
+    }
+    final travelState = travelCubit.state;
 
     if (!mounted) return;
 
@@ -179,6 +187,30 @@ class _HomePageState extends State<HomePage> {
                 mySelectedEvents[dateKey]!.add(eventString);
               } else {
                 mySelectedEvents[dateKey] = [eventString];
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Add travel orders to the calendar events
+    if (travelState is GetAllTravelSuccess && employeeNumber.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          for (var travel in travelState.travelModels) {
+            // Only show travel orders for the current employee
+            if (travel.employeeNumbers.contains(employeeNumber)) {
+              // Add each date in the travel order
+              for (var date in travel.specificDates) {
+                final dateKey = DateFormat('yyyy-MM-dd').format(date);
+                final eventString = '${travel.soNumber},T=Travel';
+
+                if (mySelectedEvents.containsKey(dateKey)) {
+                  mySelectedEvents[dateKey]!.add(eventString);
+                } else {
+                  mySelectedEvents[dateKey] = [eventString];
+                }
               }
             }
           }
@@ -318,6 +350,8 @@ class _HomePageState extends State<HomePage> {
                                                   return Icons.flood;
                                                 case 'Leave':
                                                   return Icons.sick;
+                                                case 'Travel':
+                                                  return Icons.airplane_ticket;
                                                 default:
                                                   return Icons.event;
                                               }
@@ -332,6 +366,8 @@ class _HomePageState extends State<HomePage> {
                                                   return Colors.orange;
                                                 case 'Leave':
                                                   return Colors.purple;
+                                                case 'Travel':
+                                                  return Colors.teal;
                                                 default:
                                                   return Colors.grey;
                                               }
@@ -439,6 +475,8 @@ class _HomePageState extends State<HomePage> {
                                               return Colors.orange;
                                             case 'Leave':
                                               return Colors.purple;
+                                            case 'Travel':
+                                              return Colors.teal;
                                             default:
                                               return Colors.grey;
                                           }

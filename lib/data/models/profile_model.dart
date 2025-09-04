@@ -14,6 +14,7 @@ class ProfileModel {
   final String? section;
   final String? sectionName;
   final String? sectionCode; // New field
+  final String? role;
   final double? sl;
   final double? vl;
   final double? spl;
@@ -32,6 +33,7 @@ class ProfileModel {
     this.section,
     this.sectionName,
     this.sectionCode, // Added to constructor
+    this.role,
     this.sl,
     this.vl,
     this.spl,
@@ -51,6 +53,7 @@ class ProfileModel {
     ValueGetter<String?>? section,
     ValueGetter<String?>? sectionName,
     ValueGetter<String?>? sectionCode, // Added to copyWith
+    ValueGetter<String?>? role,
     ValueGetter<double?>? sl,
     ValueGetter<double?>? vl,
     ValueGetter<double?>? spl,
@@ -71,6 +74,7 @@ class ProfileModel {
       sectionName: sectionName != null ? sectionName() : this.sectionName,
       sectionCode:
           sectionCode != null ? sectionCode() : this.sectionCode, // Added
+      role: role != null ? role() : this.role,
       sl: sl != null ? sl() : this.sl,
       vl: vl != null ? vl() : this.vl,
       spl: spl != null ? spl() : this.spl,
@@ -92,6 +96,7 @@ class ProfileModel {
       'section': section,
       'sectionName': sectionName,
       'sectionCode': sectionCode, // Added to toMap
+      'role': role,
       'sl': sl,
       'vl': vl,
       'spl': spl,
@@ -116,6 +121,7 @@ class ProfileModel {
       section: map['section'],
       sectionName: map['expand']?['section']?['name'],
       sectionCode: map['expand']?['section']?['code'], // Added to fromMap
+      role: map['expand']?['user']?['role'],
       sl: map['sl']?.toDouble(),
       vl: map['vl']?.toDouble(),
       spl: map['spl']?.toDouble(),
@@ -130,7 +136,7 @@ class ProfileModel {
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sectionCode: $sectionCode, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
+    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sectionCode: $sectionCode, role: $role, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
   }
 
   @override
@@ -150,6 +156,7 @@ class ProfileModel {
         other.section == section &&
         other.sectionName == sectionName &&
         other.sectionCode == sectionCode && // Added to equality check
+        other.role == role &&
         other.sl == sl &&
         other.vl == vl &&
         other.spl == spl &&
@@ -170,6 +177,7 @@ class ProfileModel {
         section.hashCode ^
         sectionName.hashCode ^
         sectionCode.hashCode ^ // Added to hashCode
+        role.hashCode ^
         sl.hashCode ^
         vl.hashCode ^
         spl.hashCode ^

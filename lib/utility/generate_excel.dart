@@ -17,7 +17,8 @@ Future<String?> generateExcel(
   List<AttendanceModel> monthlyAttendance,
   Map<DateTime, String> holidayMap,
   Map<DateTime, SuspensionModel> suspensionMap,
-  Map<DateTime, String> leaveMap, {
+  Map<DateTime, String> leaveMap,
+  Map<DateTime, String> travelMap, {
   DateTime? startDate,
   DateTime? endDate,
 }) async {
@@ -111,10 +112,18 @@ Future<String?> generateExcel(
       final isLeave = leaveMap.containsKey(currentDate);
       final leaveName = leaveMap[currentDate];
 
-      // If it's a leave, treat it like a holiday but with "LEAVE" prefix
-      final effectiveHoliday = isHoliday || isLeave;
+      // Check for travel orders
+      final isTravel = travelMap.containsKey(currentDate);
+      final travelName = travelMap[currentDate];
+
+      // If it's a leave or travel order, treat it like a holiday but with appropriate prefix
+      final effectiveHoliday = isHoliday || isLeave || isTravel;
       final effectiveHolidayName =
-          isHoliday ? holidayName : (isLeave ? "LEAVE - $leaveName" : null);
+          isHoliday
+              ? holidayName
+              : (isLeave
+                  ? "LEAVE - $leaveName"
+                  : (isTravel ? "TRAVEL - $travelName" : null));
 
       final dayLogs =
           monthlyAttendance.where((log) {

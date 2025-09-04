@@ -49,6 +49,11 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.flood),
     label: 'Suspensions',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.airplane_ticket_outlined),
+    activeIcon: Icon(Icons.airplane_ticket),
+    label: 'Special Orders',
+  ),
 ];
 
 const sideBarItemsOic = [
@@ -90,11 +95,11 @@ const sideBarItemsHr = [
 
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.calendar_month_outlined),
-  //   activeIcon: Icon(Icons.calendar_month),
-  //   label: 'Special Orders',
-  // ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.airplane_ticket_outlined),
+    activeIcon: Icon(Icons.airplane_ticket),
+    label: 'Special Orders',
+  ),
 ];
 
 const sideBarItemsUser = [
