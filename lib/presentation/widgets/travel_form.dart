@@ -138,26 +138,6 @@ class _TravelFormState extends State<TravelForm> {
 
   void addTravel() {
     if (formKey.currentState!.validate()) {
-      if (selectedEmployees.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select at least one employee'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      if (_selectedDates.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select at least one date'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
       context.read<TravelCubit>().addTravel(
         soNumber: soNumberController.text,
         description:
@@ -174,26 +154,6 @@ class _TravelFormState extends State<TravelForm> {
 
   void saveTravel() {
     if (formKey.currentState!.validate()) {
-      if (selectedEmployees.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select at least one employee'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      if (_selectedDates.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select at least one date'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
       context.read<TravelCubit>().updateTravel(
         id: widget.travelModel!.id!,
         soNumber: soNumberController.text,
@@ -256,8 +216,8 @@ class _TravelFormState extends State<TravelForm> {
                       children: [
                         Text(
                           widget.travelModel == null
-                              ? 'New Travel Order'
-                              : 'Edit Travel Order',
+                              ? 'New Travel'
+                              : 'Edit Travel',
                           style: const TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -283,7 +243,7 @@ class _TravelFormState extends State<TravelForm> {
                 keyboardType: TextInputType.text,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'SO Number is required';
+                    return 'Special Order Number is required';
                   }
                   return null;
                 },
@@ -291,97 +251,144 @@ class _TravelFormState extends State<TravelForm> {
                     (_) =>
                         widget.travelModel == null ? addTravel() : saveTravel(),
                 decoration: const InputDecoration(
-                  labelText: 'SO Number',
-                  hintText: 'Enter the SO number',
+                  labelText: 'Special Order Number',
+                  hintText: 'Enter the Special Order number',
                   border: OutlineInputBorder(),
                 ),
               ),
-              if (_selectedDates.isNotEmpty)
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children:
-                      _selectedDates.map((date) {
-                        return Chip(
-                          label: Text(DateFormat('MMM d, yyyy').format(date)),
-                          backgroundColor: Theme.of(context).primaryColor,
-                          labelStyle: const TextStyle(color: Colors.white),
-                          deleteIconColor: Colors.white,
-                          onDeleted: () {
-                            setState(() {
-                              _selectedDates.remove(date);
-                            });
-                          },
-                        );
-                      }).toList(),
-                ),
-              TableCalendar(
-                firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                lastDay: DateTime.now().add(const Duration(days: 365)),
-                focusedDay: _focusedDay,
-                calendarFormat: CalendarFormat.month,
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
-                ),
-                availableGestures: AvailableGestures.horizontalSwipe,
-                onHeaderTapped: (focusedDay) {
-                  setState(() {
-                    _focusedDay = DateTime.now();
-                  });
+              const SizedBox(height: 20),
+              FormField<Set<DateTime>>(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select at least one date';
+                  }
+                  return null;
                 },
-                selectedDayPredicate: (day) {
-                  return _selectedDates.any(
-                    (selectedDay) => isSameDay(selectedDay, day),
+                initialValue: _selectedDates,
+                builder: (FormFieldState<Set<DateTime>> state) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_selectedDates.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                alignment: WrapAlignment.start,
+                                children:
+                                    _selectedDates.map((date) {
+                                      return Chip(
+                                        label: Text(
+                                          DateFormat(
+                                            'MMM d, yyyy',
+                                          ).format(date),
+                                        ),
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        labelStyle: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        deleteIconColor: Colors.white,
+                                        onDeleted: () {
+                                          setState(() {
+                                            _selectedDates.remove(date);
+                                            state.didChange(_selectedDates);
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      TableCalendar(
+                        firstDay: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
+                        lastDay: DateTime.now().add(const Duration(days: 365)),
+                        focusedDay: _focusedDay,
+                        calendarFormat: CalendarFormat.month,
+                        headerStyle: const HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                        ),
+                        availableGestures: AvailableGestures.horizontalSwipe,
+                        onHeaderTapped: (focusedDay) {
+                          setState(() {
+                            _focusedDay = DateTime.now();
+                          });
+                        },
+                        selectedDayPredicate: (day) {
+                          return _selectedDates.any(
+                            (selectedDay) => isSameDay(selectedDay, day),
+                          );
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _focusedDay = focusedDay;
+                            if (_selectedDates.any(
+                              (date) => isSameDay(date, selectedDay),
+                            )) {
+                              _selectedDates.removeWhere(
+                                (date) => isSameDay(date, selectedDay),
+                              );
+                            } else {
+                              _selectedDates.add(selectedDay);
+                            }
+                            state.didChange(_selectedDates);
+                          });
+                        },
+                        onPageChanged: (focusedDay) {
+                          _focusedDay = focusedDay;
+                        },
+                        calendarBuilders: CalendarBuilders(
+                          selectedBuilder: (context, date, _) {
+                            return Container(
+                              margin: const EdgeInsets.all(4.0),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            );
+                          },
+                          todayBuilder: (context, date, _) {
+                            return Container(
+                              margin: const EdgeInsets.all(4.0),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      if (state.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            state.errorText!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _focusedDay = focusedDay;
-                    if (_selectedDates.any(
-                      (date) => isSameDay(date, selectedDay),
-                    )) {
-                      _selectedDates.removeWhere(
-                        (date) => isSameDay(date, selectedDay),
-                      );
-                    } else {
-                      _selectedDates.add(selectedDay);
-                    }
-                  });
-                },
-                onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
-                },
-                calendarBuilders: CalendarBuilders(
-                  selectedBuilder: (context, date, _) {
-                    return Container(
-                      margin: const EdgeInsets.all(4.0),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '${date.day}',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    );
-                  },
-                  todayBuilder: (context, date, _) {
-                    return Container(
-                      margin: const EdgeInsets.all(4.0),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '${date.day}',
-                        style: const TextStyle(color: Colors.black),
-                      ),
-                    );
-                  },
-                ),
               ),
               const SizedBox(height: 20),
               FormField<List<ProfileModel>>(
@@ -396,29 +403,37 @@ class _TravelFormState extends State<TravelForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (selectedEmployees.isNotEmpty)
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 4.0,
-                          children:
-                              selectedEmployees.map((employee) {
-                                return Chip(
-                                  label: Text(
-                                    '${employee.lastName}, ${employee.firstName.isNotEmpty ? employee.firstName[0] : ''}.'
-                                        .toUpperCase(),
-                                  ),
-                                  backgroundColor:
-                                      Theme.of(context).primaryColor,
-                                  labelStyle: const TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                  deleteIconColor: Colors.white,
-                                  onDeleted: () {
-                                    setState(() {
-                                      selectedEmployees.remove(employee);
-                                    });
-                                  },
-                                );
-                              }).toList(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                alignment: WrapAlignment.start,
+                                children:
+                                    selectedEmployees.map((employee) {
+                                      return Chip(
+                                        label: Text(
+                                          '${employee.lastName}, ${employee.firstName.isNotEmpty ? employee.firstName[0] : ''}.'
+                                              .toUpperCase(),
+                                        ),
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        labelStyle: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        deleteIconColor: Colors.white,
+                                        onDeleted: () {
+                                          setState(() {
+                                            selectedEmployees.remove(employee);
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                              ),
+                            ),
+                          ],
                         ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -521,7 +536,7 @@ class _TravelFormState extends State<TravelForm> {
                         const SizedBox(width: 10),
                         Text(
                           widget.travelModel == null
-                              ? 'Add Travel Order'
+                              ? 'Add Travel'
                               : 'Save Changes',
                           style: const TextStyle(
                             fontSize: 16,

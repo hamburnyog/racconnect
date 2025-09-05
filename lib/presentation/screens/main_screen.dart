@@ -281,7 +281,7 @@ class _MainScreenState extends State<MainScreen> {
                             'Suspensions') {
                           return SuspensionPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Special Orders') {
+                            'Travels') {
                           return TravelPage();
                         } else {
                           return Text(

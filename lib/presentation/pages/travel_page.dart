@@ -88,7 +88,7 @@ class _TravelPageState extends State<TravelPage> {
                 child: ListTile(
                   minTileHeight: 70,
                   title: const Text(
-                    'Travel Orders',
+                    'Travel',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -221,7 +221,7 @@ class _TravelPageState extends State<TravelPage> {
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
                                         child: const Icon(
-                                          Icons.airplane_ticket,
+                                          Icons.directions_car,
                                           color: Colors.white,
                                         ),
                                       ),

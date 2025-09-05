@@ -351,7 +351,7 @@ class _HomePageState extends State<HomePage> {
                                                 case 'Leave':
                                                   return Icons.sick;
                                                 case 'Travel':
-                                                  return Icons.airplane_ticket;
+                                                  return Icons.directions_car;
                                                 default:
                                                   return Icons.event;
                                               }

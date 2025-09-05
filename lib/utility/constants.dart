@@ -51,8 +51,8 @@ const sideBarItemsDev = [
   ),
   BottomNavigationBarItem(
     icon: Icon(Icons.airplane_ticket_outlined),
-    activeIcon: Icon(Icons.airplane_ticket),
-    label: 'Special Orders',
+    activeIcon: Icon(Icons.directions_car),
+    label: 'Travels',
   ),
 ];
 
@@ -97,8 +97,8 @@ const sideBarItemsRecords = [
   ...sideBarItemsUser,
   BottomNavigationBarItem(
     icon: Icon(Icons.airplane_ticket_outlined),
-    activeIcon: Icon(Icons.airplane_ticket),
-    label: 'Special Orders',
+    activeIcon: Icon(Icons.directions_car),
+    label: 'Travels',
   ),
 ];
 
