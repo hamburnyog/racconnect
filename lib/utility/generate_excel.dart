@@ -44,43 +44,30 @@ Future<String?> generateExcel(
   String supervisor;
   String supervisorDesignation;
 
-  if (profile.sectionCode == 'OIC') {
-    supervisor = 'Immediate Supervisor';
-    supervisorDesignation = '';
-  } else {
-    supervisor =
-        profile.section ==
-                'y78rsxd4495cz25' // Hardcode for now
-            ? 'HON. ROWENA M. MACALINTAL, ASEC'
-            : 'JOHN S. CALIDGUID, RSW, MPA';
-    supervisorDesignation =
-        profile.section ==
-                'y78rsxd4495cz25' // Hardcode for now
-            ? 'Deputy Director for Operations and Services'
-            : 'Officer-in-charge, SWO IV';
-  }
+  supervisor =
+      profile.sectionCode == 'OIC'
+          ? 'HON. ROWENA M. MACALINTAL, ASEC'
+          : 'JOHN S. CALIDGUID, RSW, MPA';
+  supervisorDesignation =
+      profile.sectionCode == 'OIC'
+          ? 'Deputy Executive Director for Operations and Services'
+          : 'Officer-in-charge, SWO IV';
 
-  // Headers
   String monthYearText =
       'FOR THE MONTH OF ${monthName.toUpperCase()} ${currentYear.toString()}';
 
-  // Build header section
   buildHeaderSection(sheet, fullName, monthYearText);
 
-  // Days - always show all days of the month
   var monthDayNames = getDayNamesInMonth(currentYear, currentMonth);
   var lastDay = DateTime(currentYear, currentMonth + 1, 0).day;
   var startingRowNumber = 13;
 
-  // Determine which days should have data (if date range is specified)
   Set<DateTime> daysWithData = {};
   if (startDate != null && endDate != null) {
-    // Only include days within the specified range
     for (int day = startDate.day; day <= endDate.day; day++) {
       daysWithData.add(DateTime(startDate.year, startDate.month, day));
     }
   } else {
-    // Include all days of the month
     for (int day = 1; day <= lastDay; day++) {
       daysWithData.add(DateTime(currentYear, currentMonth, day));
     }
@@ -92,7 +79,6 @@ Future<String?> generateExcel(
   int totalLateUndertimeHours = 0;
   int totalLateUndertimeMinutes = 0;
 
-  // Process all days of the month
   for (int day = 1; day <= lastDay; day++) {
     var currrentRowNumber = startingRowNumber.toString();
     final currentDate = DateTime(currentYear, currentMonth, day);
@@ -100,23 +86,18 @@ Future<String?> generateExcel(
         monthDayNames[day - 1] == 'Saturday' ||
         monthDayNames[day - 1] == 'Sunday';
 
-    // Check if this day should have data
     final shouldHaveData = daysWithData.contains(currentDate);
 
     if (shouldHaveData) {
-      // Process this day with actual data
       final isHoliday = holidayMap.containsKey(currentDate);
       final holidayName = holidayMap[currentDate];
 
-      // Check for leaves
       final isLeave = leaveMap.containsKey(currentDate);
       final leaveName = leaveMap[currentDate];
 
-      // Check for travel orders
       final isTravel = travelMap.containsKey(currentDate);
       final travelName = travelMap[currentDate];
 
-      // If it's a leave or travel order, treat it like a holiday but with appropriate prefix
       final effectiveHoliday = isHoliday || isLeave || isTravel;
       final effectiveHolidayName =
           isHoliday
@@ -238,7 +219,6 @@ Future<String?> generateExcel(
           cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
       } else if (effectiveHoliday) {
-        // Holiday/Leave format
         cellList['A$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('A$currrentRowNumber'),
         );
@@ -295,7 +275,6 @@ Future<String?> generateExcel(
           cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
       } else if (isSuspension) {
-        // NEW SUSPENSION BLOCK
         cellList['A$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('A$currrentRowNumber'),
         );
@@ -303,8 +282,6 @@ Future<String?> generateExcel(
         cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
 
         if (suspensionModel!.isHalfday && amIn.isNotEmpty) {
-          // Half-day suspension with time-in
-          // Display amIn and amOut (which is suspension time)
           cellList['B$currrentRowNumber'] = sheet.cell(
             CellIndex.indexByString('B$currrentRowNumber'),
           );
