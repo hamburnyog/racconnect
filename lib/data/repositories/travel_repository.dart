@@ -28,14 +28,12 @@ class TravelRepository {
 
   Future<TravelModel> addTravel({
     required String soNumber,
-    String? description,
     required List<String> employeeNumbers,
     required List<DateTime> specificDates,
   }) async {
     try {
       final body = <String, dynamic>{
         "soNumber": soNumber,
-        "description": description,
         "employeeNumbers": employeeNumbers,
         "specificDates":
             specificDates.map((date) => date.toIso8601String()).toList(),
@@ -52,14 +50,12 @@ class TravelRepository {
   Future<TravelModel> updateTravel({
     required String id,
     required String soNumber,
-    String? description,
     required List<String> employeeNumbers,
     required List<DateTime> specificDates,
   }) async {
     try {
       final body = <String, dynamic>{
         "soNumber": soNumber,
-        "description": description,
         "employeeNumbers": employeeNumbers,
         "specificDates":
             specificDates.map((date) => date.toIso8601String()).toList(),

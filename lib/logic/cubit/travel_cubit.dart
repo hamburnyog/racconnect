@@ -11,7 +11,6 @@ class TravelCubit extends Cubit<TravelState> {
 
   Future<void> addTravel({
     required String soNumber,
-    String? description,
     required List<String> employeeNumbers,
     required List<DateTime> specificDates,
   }) async {
@@ -19,7 +18,6 @@ class TravelCubit extends Cubit<TravelState> {
       emit(TravelLoading());
       final travelModel = await travelRepository.addTravel(
         soNumber: soNumber,
-        description: description,
         employeeNumbers: employeeNumbers,
         specificDates: specificDates,
       );
@@ -32,7 +30,6 @@ class TravelCubit extends Cubit<TravelState> {
   Future<void> updateTravel({
     required String id,
     required String soNumber,
-    String? description,
     required List<String> employeeNumbers,
     required List<DateTime> specificDates,
   }) async {
@@ -41,7 +38,6 @@ class TravelCubit extends Cubit<TravelState> {
       final travelModel = await travelRepository.updateTravel(
         id: id,
         soNumber: soNumber,
-        description: description,
         employeeNumbers: employeeNumbers,
         specificDates: specificDates,
       );

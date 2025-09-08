@@ -5,14 +5,12 @@ import 'package:flutter/widgets.dart';
 class TravelModel {
   final String? id;
   final String soNumber;
-  final String? description;
   final List<String> employeeNumbers;
   final List<DateTime> specificDates;
 
   TravelModel({
     this.id,
     required this.soNumber,
-    this.description,
     required this.employeeNumbers,
     required this.specificDates,
   });
@@ -20,14 +18,12 @@ class TravelModel {
   TravelModel copyWith({
     ValueGetter<String?>? id,
     String? soNumber,
-    String? description,
     List<String>? employeeNumbers,
     List<DateTime>? specificDates,
   }) {
     return TravelModel(
       id: id != null ? id() : this.id,
       soNumber: soNumber ?? this.soNumber,
-      description: description ?? this.description,
       employeeNumbers: employeeNumbers ?? this.employeeNumbers,
       specificDates: specificDates ?? this.specificDates,
     );
@@ -37,7 +33,6 @@ class TravelModel {
     return {
       'id': id,
       'soNumber': soNumber,
-      'description': description,
       'employeeNumbers': employeeNumbers,
       'specificDates':
           specificDates.map((date) => date.toIso8601String()).toList(),
@@ -48,7 +43,6 @@ class TravelModel {
     return TravelModel(
       id: map['id'],
       soNumber: map['soNumber'] ?? '',
-      description: map['description'],
       employeeNumbers: List<String>.from(map['employeeNumbers'] ?? []),
       specificDates: List<DateTime>.from(
         (map['specificDates'] ?? []).map((date) {
@@ -71,7 +65,7 @@ class TravelModel {
 
   @override
   String toString() {
-    return 'TravelModel(id: $id, soNumber: $soNumber, description: $description, employeeNumbers: $employeeNumbers, specificDates: $specificDates)';
+    return 'TravelModel(id: $id, soNumber: $soNumber, employeeNumbers: $employeeNumbers, specificDates: $specificDates)';
   }
 
   @override
@@ -81,7 +75,6 @@ class TravelModel {
     return other is TravelModel &&
         other.id == id &&
         other.soNumber == soNumber &&
-        other.description == description &&
         other.employeeNumbers == employeeNumbers &&
         other.specificDates == specificDates;
   }
@@ -90,7 +83,6 @@ class TravelModel {
   int get hashCode {
     return id.hashCode ^
         soNumber.hashCode ^
-        description.hashCode ^
         employeeNumbers.hashCode ^
         specificDates.hashCode;
   }

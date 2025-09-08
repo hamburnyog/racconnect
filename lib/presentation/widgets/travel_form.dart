@@ -30,7 +30,6 @@ class TravelForm extends StatefulWidget {
 
 class _TravelFormState extends State<TravelForm> {
   final TextEditingController soNumberController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
@@ -47,7 +46,6 @@ class _TravelFormState extends State<TravelForm> {
     super.initState();
     if (widget.travelModel != null) {
       soNumberController.text = widget.travelModel!.soNumber;
-      descriptionController.text = widget.travelModel!.description ?? '';
       _selectedDates.addAll(widget.travelModel!.specificDates);
       // Selected employees will be loaded after profiles are fetched
     }
@@ -140,10 +138,6 @@ class _TravelFormState extends State<TravelForm> {
     if (formKey.currentState!.validate()) {
       context.read<TravelCubit>().addTravel(
         soNumber: soNumberController.text,
-        description:
-            descriptionController.text.isNotEmpty
-                ? descriptionController.text
-                : null,
         employeeNumbers:
             selectedEmployees.map((e) => e.employeeNumber!).toList(),
         specificDates: _selectedDates.toList(),
@@ -157,10 +151,6 @@ class _TravelFormState extends State<TravelForm> {
       context.read<TravelCubit>().updateTravel(
         id: widget.travelModel!.id!,
         soNumber: soNumberController.text,
-        description:
-            descriptionController.text.isNotEmpty
-                ? descriptionController.text
-                : null,
         employeeNumbers:
             selectedEmployees.map((e) => e.employeeNumber!).toList(),
         specificDates: _selectedDates.toList(),
@@ -172,7 +162,6 @@ class _TravelFormState extends State<TravelForm> {
   @override
   void dispose() {
     soNumberController.dispose();
-    descriptionController.dispose();
     searchController.dispose();
     formKey.currentState?.dispose();
     super.dispose();
