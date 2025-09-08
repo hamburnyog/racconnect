@@ -122,7 +122,7 @@ Future<String?> generateExcel(
           isHoliday
               ? holidayName
               : (isLeave
-                  ? "LEAVE - $leaveName"
+                  ? "FILED - $leaveName"
                   : (isTravel ? "TRAVEL - $travelName" : null));
 
       final dayLogs =
@@ -194,14 +194,20 @@ Future<String?> generateExcel(
           customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
         );
 
-        for (var col in ['B', 'C', 'D', 'E', 'F', 'G']) {
-          cellList['$col$currrentRowNumber'] = sheet.cell(
+        for (var col in ['B', 'C', 'D', 'E']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
           );
           cellList['$col$currrentRowNumber'].cellStyle =
-              ['B', 'F', 'G'].contains(col)
-                  ? borderedCellStyle
-                  : topBottomBorderCellStyle;
+              greyedTopBottomBorderCellStyle;
+        }
+
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
 
         cellList2['I$currrentRowNumber'] = sheet.cell(
@@ -216,14 +222,20 @@ Future<String?> generateExcel(
           customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
         );
 
-        for (var col in ['J', 'K', 'L', 'M', 'N', 'O']) {
-          cellList['$col$currrentRowNumber'] = sheet.cell(
+        for (var col in ['J', 'K', 'L', 'M']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
           );
           cellList['$col$currrentRowNumber'].cellStyle =
-              ['J', 'N', 'O'].contains(col)
-                  ? borderedCellStyle
-                  : topBottomBorderCellStyle;
+              greyedTopBottomBorderCellStyle;
+        }
+
+        for (var col in ['N', 'O']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
       } else if (effectiveHoliday) {
         // Holiday/Leave format
@@ -238,6 +250,14 @@ Future<String?> generateExcel(
           CellIndex.indexByString('E$currrentRowNumber'),
           customValue: TextCellValue(effectiveHolidayName!.toUpperCase()),
         );
+
+        for (var col in ['B', 'C', 'D', 'E']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].cellStyle =
+              greyedTopBottomBorderCellStyle;
+        }
 
         for (var col in ['F', 'G']) {
           cellList['$col$currrentRowNumber'] = sheet.cell(
@@ -259,20 +279,12 @@ Future<String?> generateExcel(
           customValue: TextCellValue(effectiveHolidayName.toUpperCase()),
         );
 
-        for (var col in ['B', 'C', 'D', 'E']) {
-          cellList['$col$currrentRowNumber'] ??= sheet.cell(
-            CellIndex.indexByString('$col$currrentRowNumber'),
-          );
-          cellList['$col$currrentRowNumber'].cellStyle =
-              topBottomBorderCellStyle;
-        }
-
         for (var col in ['J', 'K', 'L', 'M']) {
           cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
           );
           cellList['$col$currrentRowNumber'].cellStyle =
-              topBottomBorderCellStyle;
+              greyedTopBottomBorderCellStyle;
         }
 
         for (var col in ['N', 'O']) {
@@ -317,7 +329,7 @@ Future<String?> generateExcel(
               CellIndex.indexByString('$col$currrentRowNumber'),
             );
             cellList['$col$currrentRowNumber'].cellStyle =
-                topBottomBorderCellStyle;
+                greyedTopBottomBorderCellStyle;
           }
 
           // Set late/undertime to null for half-day suspension
@@ -341,7 +353,7 @@ Future<String?> generateExcel(
               CellIndex.indexByString('$col$currrentRowNumber'),
             );
             cellList['$col$currrentRowNumber'].cellStyle =
-                topBottomBorderCellStyle;
+                greyedTopBottomBorderCellStyle;
           }
 
           // Set late/undertime to null for full-day suspension
@@ -384,7 +396,7 @@ Future<String?> generateExcel(
               CellIndex.indexByString('$col$currrentRowNumber'),
             );
             cellList['$col$currrentRowNumber'].cellStyle =
-                topBottomBorderCellStyle;
+                greyedTopBottomBorderCellStyle;
           }
 
           for (var col in ['N', 'O']) {
@@ -405,7 +417,7 @@ Future<String?> generateExcel(
               CellIndex.indexByString('$col$currrentRowNumber'),
             );
             cellList['$col$currrentRowNumber'].cellStyle =
-                topBottomBorderCellStyle;
+                greyedTopBottomBorderCellStyle;
           }
 
           for (var col in ['N', 'O']) {
@@ -746,14 +758,20 @@ Future<String?> generateExcel(
           customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
         );
 
-        for (var col in ['B', 'C', 'D', 'E', 'F', 'G']) {
-          cellList['$col$currrentRowNumber'] = sheet.cell(
+        for (var col in ['B', 'C', 'D', 'E']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
           );
           cellList['$col$currrentRowNumber'].cellStyle =
-              ['B', 'F', 'G'].contains(col)
-                  ? borderedCellStyle
-                  : topBottomBorderCellStyle;
+              greyedTopBottomBorderCellStyle;
+        }
+
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
 
         cellList2['I$currrentRowNumber'] = sheet.cell(
@@ -768,14 +786,20 @@ Future<String?> generateExcel(
           customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
         );
 
-        for (var col in ['J', 'K', 'L', 'M', 'N', 'O']) {
-          cellList['$col$currrentRowNumber'] = sheet.cell(
+        for (var col in ['J', 'K', 'L', 'M']) {
+          cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
           );
           cellList['$col$currrentRowNumber'].cellStyle =
-              ['J', 'N', 'O'].contains(col)
-                  ? borderedCellStyle
-                  : topBottomBorderCellStyle;
+              greyedTopBottomBorderCellStyle;
+        }
+
+        for (var col in ['N', 'O']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
         }
       }
     }

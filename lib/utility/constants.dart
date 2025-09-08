@@ -248,3 +248,27 @@ CellStyle leftBoldUnderlinedAlignedStyle = CellStyle(
   horizontalAlign: HorizontalAlign.Left,
   bottomBorder: Border(borderStyle: BorderStyle.Thin),
 );
+
+CellStyle greyedCellStyle = CellStyle(
+  fontSize: 10,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Center,
+  topBorder: Border(borderStyle: BorderStyle.Thin),
+  leftBorder: Border(borderStyle: BorderStyle.Thin),
+  bottomBorder: Border(borderStyle: BorderStyle.Thin),
+  rightBorder: Border(borderStyle: BorderStyle.Thin),
+  backgroundColorHex: ExcelColor.blue100, // Light blue background
+  bold: true,
+);
+
+CellStyle greyedTopBottomBorderCellStyle = CellStyle(
+  fontSize: 10,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Center,
+  bottomBorder: Border(borderStyle: BorderStyle.Thin),
+  topBorder: Border(borderStyle: BorderStyle.Thin),
+  backgroundColorHex: ExcelColor.blue100, // Light blue background
+  bold: true,
+);
