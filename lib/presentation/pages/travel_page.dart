@@ -35,7 +35,7 @@ class _TravelPageState extends State<TravelPage> {
       builder: (BuildContext builder) {
         return const TravelForm();
       },
-    ).then((_) => _loadTravels());
+    );
   }
 
   void _showTravelFormWithEdit(TravelModel travelModel) {
@@ -48,12 +48,11 @@ class _TravelPageState extends State<TravelPage> {
       builder: (BuildContext builder) {
         return TravelForm(travelModel: travelModel);
       },
-    ).then((_) => _loadTravels());
+    );
   }
 
   void _deleteTravel(String id) {
     context.read<TravelCubit>().deleteTravel(id: id);
-    _loadTravels();
   }
 
   List<String> _getEmployeeNames(List<String> employeeNumbers) {
@@ -273,19 +272,42 @@ class _TravelPageState extends State<TravelPage> {
                     ),
                   ),
                 ),
-                BlocBuilder<TravelCubit, TravelState>(
-                  builder: (context, state) {
+                BlocConsumer<TravelCubit, TravelState>(
+                  listener: (context, state) {
                     if (state is TravelError) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.error),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is TravelAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Travel added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadTravels();
+                    } else if (state is TravelUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Travel updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadTravels();
+                    } else if (state is TravelDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Travel deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadTravels();
                     }
-
+                  },
+                  builder: (context, state) {
                     if (state is GetAllTravelSuccess) {
                       final travels = state.travelModels.toList();
 
@@ -304,7 +326,7 @@ class _TravelPageState extends State<TravelPage> {
                                 final travelModel = travels[index];
                                 return ClipRect(
                                   child: Dismissible(
-                                    key: Key(travelModel.id!),
+                                    key: ValueKey(travelModel.id),
                                     direction: DismissDirection.endToStart,
                                     onDismissed: (direction) async {},
                                     confirmDismiss: (

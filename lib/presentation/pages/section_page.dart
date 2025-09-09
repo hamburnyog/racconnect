@@ -30,7 +30,7 @@ class _SectionPageState extends State<SectionPage> {
       builder: (BuildContext builder) {
         return SectionForm();
       },
-    ).then((_) => _loadSections());
+    );
   }
 
   void _showSectionFormWithEdit(SectionModel sectionModel) {
@@ -42,12 +42,11 @@ class _SectionPageState extends State<SectionPage> {
       builder: (BuildContext builder) {
         return SectionForm(sectionModel: sectionModel);
       },
-    ).then((_) => _loadSections());
+    );
   }
 
   void _deleteSection(String id) {
     context.read<SectionCubit>().deleteSection(id: id);
-    _loadSections();
   }
 
   @override
@@ -120,19 +119,42 @@ class _SectionPageState extends State<SectionPage> {
                     ),
                   ),
                 ),
-                BlocBuilder<SectionCubit, SectionState>(
-                  builder: (context, state) {
+                BlocConsumer<SectionCubit, SectionState>(
+                  listener: (context, state) {
                     if (state is SectionError) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.error),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is SectionAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
+                    } else if (state is SectionUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
+                    } else if (state is SectionDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
                     }
-
+                  },
+                  builder: (context, state) {
                     if (state is GetAllSectionSuccess) {
                       final sections = state.sectionModels.toList();
 
@@ -151,7 +173,7 @@ class _SectionPageState extends State<SectionPage> {
                                 final sectionModel = sections[index];
                                 return ClipRect(
                                   child: Dismissible(
-                                    key: UniqueKey(),
+                                    key: ValueKey(sectionModel.id),
                                     direction: DismissDirection.endToStart,
                                     onDismissed: (direction) async {},
                                     confirmDismiss: (

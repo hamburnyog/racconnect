@@ -31,7 +31,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
       builder: (BuildContext builder) {
         return SuspensionForm();
       },
-    ).then((_) => _loadSuspensions());
+    );
   }
 
   void _showSuspensionFormWithEdit(SuspensionModel suspensionModel) {
@@ -43,12 +43,11 @@ class _SuspensionPageState extends State<SuspensionPage> {
       builder: (BuildContext builder) {
         return SuspensionForm(suspensionModel: suspensionModel);
       },
-    ).then((_) => _loadSuspensions());
+    );
   }
 
   void _deleteSuspension(String id) {
     context.read<SuspensionCubit>().deleteSuspension(id: id);
-    _loadSuspensions();
   }
 
   @override
@@ -121,19 +120,42 @@ class _SuspensionPageState extends State<SuspensionPage> {
                     ),
                   ),
                 ),
-                BlocBuilder<SuspensionCubit, SuspensionState>(
-                  builder: (context, state) {
+                BlocConsumer<SuspensionCubit, SuspensionState>(
+                  listener: (context, state) {
                     if (state is SuspensionError) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.error),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is SuspensionAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Suspension added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSuspensions();
+                    } else if (state is SuspensionUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Suspension updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSuspensions();
+                    } else if (state is SuspensionDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Suspension deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSuspensions();
                     }
-
+                  },
+                  builder: (context, state) {
                     if (state is GetAllSuspensionSuccess) {
                       final suspensions = state.suspensionModels.toList();
 
@@ -152,7 +174,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                 final suspensionModel = suspensions[index];
                                 return ClipRect(
                                   child: Dismissible(
-                                    key: UniqueKey(),
+                                    key: ValueKey(suspensionModel.id),
                                     direction: DismissDirection.endToStart,
                                     onDismissed: (direction) async {},
                                     confirmDismiss: (

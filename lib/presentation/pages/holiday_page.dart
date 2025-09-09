@@ -31,7 +31,7 @@ class _HolidayPageState extends State<HolidayPage> {
       builder: (BuildContext builder) {
         return HolidayForm();
       },
-    ).then((_) => _loadHolidays());
+    );
   }
 
   void _showHolidayFormWithEdit(HolidayModel holidayModel) {
@@ -43,12 +43,11 @@ class _HolidayPageState extends State<HolidayPage> {
       builder: (BuildContext builder) {
         return HolidayForm(holidayModel: holidayModel);
       },
-    ).then((_) => _loadHolidays());
+    );
   }
 
   void _deleteHoliday(String id) {
     context.read<HolidayCubit>().deleteHoliday(id: id);
-    _loadHolidays();
   }
 
   @override
@@ -124,19 +123,42 @@ class _HolidayPageState extends State<HolidayPage> {
                     ),
                   ),
                 ),
-                BlocBuilder<HolidayCubit, HolidayState>(
-                  builder: (context, state) {
+                BlocConsumer<HolidayCubit, HolidayState>(
+                  listener: (context, state) {
                     if (state is HolidayError) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.error),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is HolidayAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
+                    } else if (state is HolidayUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
+                    } else if (state is HolidayDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
                     }
-
+                  },
+                  builder: (context, state) {
                     if (state is GetAllHolidaySuccess) {
                       final holidays = state.holidayModels.toList();
 
@@ -155,7 +177,7 @@ class _HolidayPageState extends State<HolidayPage> {
                                 final holidayModel = holidays[index];
                                 return ClipRect(
                                   child: Dismissible(
-                                    key: UniqueKey(),
+                                    key: ValueKey(holidayModel.id),
                                     direction: DismissDirection.endToStart,
                                     onDismissed: (direction) async {},
                                     confirmDismiss: (
