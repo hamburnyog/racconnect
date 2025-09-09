@@ -67,8 +67,8 @@ class _LeavePageState extends State<LeavePage> {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
         await context.read<LeaveCubit>().getAllLeaves(
-              employeeNumber: employeeNumber,
-            );
+          employeeNumber: employeeNumber,
+        );
       }
     }
     if (mounted) {
@@ -130,9 +130,15 @@ class _LeavePageState extends State<LeavePage> {
                             !isSmallScreen
                                 ? 'View your leave dates here. Pull down to refresh, or swipe left on a record to delete.'
                                 : 'View your leave dates here',
-                            style: TextStyle(color: Colors.white70, fontSize: 10),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
                           ),
-                          leading: Icon(Icons.sick_outlined, color: Colors.white),
+                          leading: Icon(
+                            Icons.sick_outlined,
+                            color: Colors.white,
+                          ),
                           trailing: MobileButton(
                             isSmallScreen: isSmallScreen,
                             onPressed: () => _showLeaveForm(employeeNumber),
@@ -174,7 +180,8 @@ class _LeavePageState extends State<LeavePage> {
                                       return ClipRect(
                                         child: Dismissible(
                                           key: UniqueKey(),
-                                          direction: DismissDirection.endToStart,
+                                          direction:
+                                              DismissDirection.endToStart,
                                           onDismissed: (direction) async {},
                                           confirmDismiss: (
                                             DismissDirection direction,
@@ -193,7 +200,9 @@ class _LeavePageState extends State<LeavePage> {
                                                           () => Navigator.of(
                                                             context,
                                                           ).pop(false),
-                                                      child: const Text("Cancel"),
+                                                      child: const Text(
+                                                        "Cancel",
+                                                      ),
                                                     ),
                                                     TextButton(
                                                       onPressed: () {
@@ -204,7 +213,9 @@ class _LeavePageState extends State<LeavePage> {
                                                           context,
                                                         ).pop(true);
                                                       },
-                                                      child: const Text("Delete"),
+                                                      child: const Text(
+                                                        "Delete",
+                                                      ),
                                                     ),
                                                   ],
                                                 );
@@ -214,9 +225,8 @@ class _LeavePageState extends State<LeavePage> {
                                           background: Container(
                                             decoration: BoxDecoration(
                                               color: Colors.pink,
-                                              borderRadius: BorderRadius.circular(
-                                                8,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             alignment: Alignment.centerRight,
                                             margin: const EdgeInsets.symmetric(

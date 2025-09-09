@@ -52,7 +52,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
     setState(() {
       _isLoading = true;
     });
-        await context.read<AuthCubit>().getUsers();
+    await context.read<AuthCubit>().getUsers();
     await _fetchTodayAttendance();
     if (mounted) {
       setState(() {
@@ -312,7 +312,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                       showModalBottomSheet(
                                         context: context,
                                         isScrollControlled: true,
-                                        scrollControlDisabledMaxHeightRatio: 0.75,
+                                        scrollControlDisabledMaxHeightRatio:
+                                            0.75,
                                         showDragHandle: true,
                                         useSafeArea: true,
                                         builder: (BuildContext builder) {

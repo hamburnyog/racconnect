@@ -176,12 +176,15 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                               ),
                                               TextButton(
                                                 onPressed: () {
-                                                  if (suspensionModel.id != null) {
+                                                  if (suspensionModel.id !=
+                                                      null) {
                                                     _deleteSuspension(
                                                       suspensionModel.id!,
                                                     );
                                                   }
-                                                  Navigator.of(context).pop(true);
+                                                  Navigator.of(
+                                                    context,
+                                                  ).pop(true);
                                                 },
                                                 child: const Text("Delete"),
                                               ),
@@ -222,7 +225,8 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                           suspensionModel.name,
                                           style: TextStyle(
                                             fontSize: 16,
-                                            color: Theme.of(context).primaryColor,
+                                            color:
+                                                Theme.of(context).primaryColor,
                                           ),
                                         ),
                                         subtitle: Text(
@@ -237,7 +241,8 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                           },
                                           child: Icon(
                                             Icons.edit_note,
-                                            color: Theme.of(context).primaryColor,
+                                            color:
+                                                Theme.of(context).primaryColor,
                                           ),
                                         ),
                                       ),
@@ -255,7 +260,10 @@ class _SuspensionPageState extends State<SuspensionPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           SizedBox(height: 50),
-                          SvgPicture.asset('assets/images/dog.svg', height: 100),
+                          SvgPicture.asset(
+                            'assets/images/dog.svg',
+                            height: 100,
+                          ),
                           Center(
                             child: Text(
                               'Nothing is here yet. Add a record to get started.',

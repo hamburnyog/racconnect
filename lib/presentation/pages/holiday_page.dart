@@ -180,9 +180,13 @@ class _HolidayPageState extends State<HolidayPage> {
                                               TextButton(
                                                 onPressed: () {
                                                   if (holidayModel.id != null) {
-                                                    _deleteHoliday(holidayModel.id!);
+                                                    _deleteHoliday(
+                                                      holidayModel.id!,
+                                                    );
                                                   }
-                                                  Navigator.of(context).pop(true);
+                                                  Navigator.of(
+                                                    context,
+                                                  ).pop(true);
                                                 },
                                                 child: const Text("Delete"),
                                               ),
@@ -223,7 +227,8 @@ class _HolidayPageState extends State<HolidayPage> {
                                           holidayModel.name,
                                           style: TextStyle(
                                             fontSize: 16,
-                                            color: Theme.of(context).primaryColor,
+                                            color:
+                                                Theme.of(context).primaryColor,
                                           ),
                                         ),
                                         subtitle: Text(
@@ -240,7 +245,8 @@ class _HolidayPageState extends State<HolidayPage> {
                                           },
                                           child: Icon(
                                             Icons.edit_note,
-                                            color: Theme.of(context).primaryColor,
+                                            color:
+                                                Theme.of(context).primaryColor,
                                           ),
                                         ),
                                       ),
@@ -258,7 +264,10 @@ class _HolidayPageState extends State<HolidayPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           SizedBox(height: 50),
-                          SvgPicture.asset('assets/images/dog.svg', height: 100),
+                          SvgPicture.asset(
+                            'assets/images/dog.svg',
+                            height: 100,
+                          ),
                           Center(
                             child: Text(
                               'Nothing is here yet. Add a record to get started.',

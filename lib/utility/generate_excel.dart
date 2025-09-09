@@ -547,9 +547,10 @@ Future<String?> generateExcel(
               // Calculate rendered work hours, excluding the mandatory 1-hour lunch
               if (amOutTime != null && pmInTime != null) {
                 // Has lunch break, calculate work minutes based on that.
-                final effectiveAmOut = amOutTime.isAfter(lunchStartTime)
-                    ? lunchStartTime
-                    : amOutTime;
+                final effectiveAmOut =
+                    amOutTime.isAfter(lunchStartTime)
+                        ? lunchStartTime
+                        : amOutTime;
                 final morningWork =
                     effectiveAmOut.difference(amInTime).inMinutes;
 

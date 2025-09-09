@@ -256,7 +256,10 @@ class _TravelPageState extends State<TravelPage> {
                       !isSmallScreen
                           ? 'Manage travel orders here. Pull down to refresh, or swipe left on a record to delete.'
                           : 'Manage travel orders here',
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
                     ),
                     leading: const Icon(
                       Icons.airplane_ticket,
@@ -325,8 +328,12 @@ class _TravelPageState extends State<TravelPage> {
                                               ),
                                               TextButton(
                                                 onPressed: () {
-                                                  _deleteTravel(travelModel.id!);
-                                                  Navigator.of(context).pop(true);
+                                                  _deleteTravel(
+                                                    travelModel.id!,
+                                                  );
+                                                  Navigator.of(
+                                                    context,
+                                                  ).pop(true);
                                                 },
                                                 child: const Text("Delete"),
                                               ),
@@ -407,7 +414,8 @@ class _TravelPageState extends State<TravelPage> {
                                                       .isNotEmpty)
                                                     Text(
                                                       _formatTravelDates(
-                                                        travelModel.specificDates,
+                                                        travelModel
+                                                            .specificDates,
                                                       ),
                                                       style: const TextStyle(
                                                         fontSize: 10,
@@ -447,7 +455,10 @@ class _TravelPageState extends State<TravelPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           const SizedBox(height: 50),
-                          SvgPicture.asset('assets/images/dog.svg', height: 100),
+                          SvgPicture.asset(
+                            'assets/images/dog.svg',
+                            height: 100,
+                          ),
                           const Center(
                             child: Text(
                               'Nothing is here yet. Add a travel order to get started.',
