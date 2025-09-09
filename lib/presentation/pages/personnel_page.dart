@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
@@ -101,34 +101,37 @@ class _PersonnelPageState extends State<PersonnelPage> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           child: Column(
             children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  title: Text(
-                    'Personnel',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              Skeletonizer(
+                enabled: _isLoading,
+                child: Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    minTileHeight: 70,
+                    title: Text(
+                      'Personnel',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      !isSmallScreen
+                          ? 'View personnel profiles here. Pull down to refresh.'
+                          : 'View personnel profiles here',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                    leading: const Icon(
+                      Icons.people_alt_outlined,
                       color: Colors.white,
                     ),
-                  ),
-                  subtitle: Text(
-                    !isSmallScreen
-                        ? 'View personnel profiles here. Pull down to refresh.'
-                        : 'View personnel profiles here',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  leading: const Icon(
-                    Icons.people_alt_outlined,
-                    color: Colors.white,
-                  ),
-                  trailing: WfhBadge(
-                    onTap: () {
-                      setState(() {
-                        _isWfhFilterActive = !_isWfhFilterActive;
-                      });
-                    },
+                    trailing: WfhBadge(
+                      onTap: () {
+                        setState(() {
+                          _isWfhFilterActive = !_isWfhFilterActive;
+                        });
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -219,7 +222,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     }
 
                     if (_searchQuery.isNotEmpty) {
-                      users =
+                      users = 
                           users.where((user) {
                             final profile = user.profile;
                             if (profile == null) return false;
@@ -337,20 +340,33 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     }
                   }
                   return Expanded(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(height: 50),
-                        SvgPicture.asset('assets/images/dog.svg', height: 100),
-                        Center(
-                          child: Text(
-                            _searchQuery.isEmpty
-                                ? 'No employee profiles found.'
-                                : 'No profiles match your search.',
-                            style: TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ],
+                    child: Skeletonizer(
+                      enabled: _isLoading,
+                      child: ListView.builder(
+                        itemCount: 10,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: Bone.circle(size: 48),
+                              title: Bone.text(
+                                words: 2,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Bone.text(
+                                words: 4,
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   );
                 },

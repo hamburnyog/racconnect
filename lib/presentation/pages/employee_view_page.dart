@@ -78,135 +78,140 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
     final avatarUrl = getPocketBaseFileUrl(widget.user.avatar, widget.user.id);
 
-    return IntrinsicHeight(
-      child: Column(
-        children: [
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              const Tab(text: 'Basic Information'),
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_hasAttendanceToday) ...[
-                      const Icon(
-                        Icons.broadcast_on_personal_outlined,
-                        color: Colors.green,
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    const Text('WFH Information'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: MediaQuery.of(context).viewInsets,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TabBar(
               controller: _tabController,
-              children: [
-                // Tab 1: Employee Info
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+              tabs: [
+                const Tab(text: 'Basic Information'),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: ListTile(
-                          minTileHeight: 70,
-                          leading: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            backgroundImage:
-                                avatarUrl != null
-                                    ? NetworkImage(avatarUrl)
-                                    : null,
-                            child:
-                                avatarUrl == null
-                                    ? const Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                    )
-                                    : null,
-                          ),
-                          title: Text(
-                            '${profile.lastName}, ${profile.firstName} ${profile.middleName}'
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Employee Number: ${profile.employeeNumber ?? 'N/A'}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          ),
-                          trailing: Icon(
-                            _getGenderIcon(profile.gender),
-                            color: Colors.white,
-                            size: 34,
-                          ),
+                      if (_hasAttendanceToday) ...[
+                        const Icon(
+                          Icons.broadcast_on_personal_outlined,
+                          color: Colors.green,
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoField(
-                              'Employment Status',
-                              profile.employmentStatus.toUpperCase(),
-                            ),
-                            _buildInfoField(
-                              'Birthdate',
-                              '${DateFormat('yyyy-MM-dd').format(profile.birthdate)} (${_calculateAge(profile.birthdate)})',
-                            ),
-                            _buildInfoField(
-                              'Position',
-                              profile.position.toUpperCase(),
-                            ),
-                            _buildInfoField(
-                              'Unit',
-                              (profile.sectionName ?? 'N/A').toUpperCase(),
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
+                      const SizedBox(width: 8),
+                      const Text('WFH Information'),
                     ],
                   ),
                 ),
-                // Tab 2: Attendance & Accomplishments
-                FutureBuilder<Map<String, dynamic>>(
-                  future: _dataFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else {
-                      final attendance =
-                          snapshot.data!['attendance'] as List<AttendanceModel>;
-                      final accomplishment =
-                          snapshot.data!['accomplishment']
-                              as AccomplishmentModel?;
-
-                      return WfhInfoDisplay(
-                        attendance: attendance,
-                        accomplishment: accomplishment,
-                        date: DateTime.now(),
-                      );
-                    }
-                  },
-                ),
               ],
             ),
-          ),
-        ],
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab 1: Employee Info
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Card(
+                          color: Theme.of(context).primaryColor,
+                          child: ListTile(
+                            minTileHeight: 70,
+                            leading: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Theme.of(context).primaryColor,
+                              backgroundImage:
+                                  avatarUrl != null
+                                      ? NetworkImage(avatarUrl)
+                                      : null,
+                              child:
+                                  avatarUrl == null
+                                      ? const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      )
+                                      : null,
+                            ),
+                            title: Text(
+                              '${profile.lastName}, ${profile.firstName} ${profile.middleName}'
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Employee Number: ${profile.employeeNumber ?? 'N/A'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                            trailing: Icon(
+                              _getGenderIcon(profile.gender),
+                              color: Colors.white,
+                              size: 34,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildInfoField(
+                                'Employment Status',
+                                profile.employmentStatus.toUpperCase(),
+                              ),
+                              _buildInfoField(
+                                'Birthdate',
+                                '${DateFormat('yyyy-MM-dd').format(profile.birthdate)} (${_calculateAge(profile.birthdate)})',
+                              ),
+                              _buildInfoField(
+                                'Position',
+                                profile.position.toUpperCase(),
+                              ),
+                              _buildInfoField(
+                                'Unit',
+                                (profile.sectionName ?? 'N/A').toUpperCase(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Tab 2: Attendance & Accomplishments
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: _dataFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else {
+                        final attendance =
+                            snapshot.data!['attendance'] as List<AttendanceModel>;
+                        final accomplishment =
+                            snapshot.data!['accomplishment']
+                                as AccomplishmentModel?;
+
+                        return WfhInfoDisplay(
+                          attendance: attendance,
+                          accomplishment: accomplishment,
+                          date: DateTime.now(),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

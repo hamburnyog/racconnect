@@ -573,8 +573,8 @@ class _ExportAccomplishmentsButtonState
                         }
                         : {
                           0: pw.FractionColumnWidth(0.15),
-                          1: pw.FractionColumnWidth(0.70),
-                          2: pw.FractionColumnWidth(0.15),
+                          1: pw.FractionColumnWidth(0.60),
+                          2: pw.FractionColumnWidth(0.25),
                         },
                 children: [
                   pw.TableRow(
@@ -755,7 +755,7 @@ class _ExportAccomplishmentsButtonState
                           horizontal: 4.0,
                         ),
                         child: pw.Text(
-                          'Approved by: ${_getUnitHeadName(null)}',
+                          'Approved by: ${_getUnitHeadName(userOffice)}',
                           style: pw.TextStyle(
                             fontSize: 10,
                             fontWeight: pw.FontWeight.bold,
@@ -830,9 +830,12 @@ class _ExportAccomplishmentsButtonState
     }
   }
 
-  String _getUnitHeadName(ProfileModel? profile) {
-    // Hardcoded for now
-    return 'John S. Calidguid, RSW, MPA';
+  String _getUnitHeadName(userOffice) {
+    String supervisor =
+        userOffice == 'Office of the RACC Officer'
+            ? 'Hon. Rowena M. Macalintal, ASEC'
+            : 'John S. Calidguid, RSW, MPA';
+    return supervisor;
   }
 
   @override

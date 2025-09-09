@@ -26,7 +26,7 @@ class ClockInButton extends StatelessWidget {
       icon = const SizedBox(
         width: 18,
         height: 18,
-        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.cyan),
+        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red),
       );
       label = 'Working..';
     } else if (timeLogsToday >= 2) {

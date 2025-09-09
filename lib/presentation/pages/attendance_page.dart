@@ -263,46 +263,49 @@ class _AttendancePageState extends State<AttendancePage>
                   ),
                   child: Column(
                     children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: ListTile(
-                          minTileHeight: 70,
-                          leading: const Icon(
-                            Icons.access_time_rounded,
-                            color: Colors.white,
-                          ),
-                          title: Text(
-                            'Attendance',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                      Skeletonizer(
+                        enabled: _isLoading,
+                        child: Card(
+                          color: Theme.of(context).primaryColor,
+                          child: ListTile(
+                            minTileHeight: 70,
+                            leading: const Icon(
+                              Icons.access_time_rounded,
                               color: Colors.white,
                             ),
-                          ),
-                          subtitle: Text(
-                            'Click on work to add your daily accomplishment',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
+                            title: Text(
+                              'Attendance',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          trailing: BlocBuilder<AuthCubit, AuthState>(
-                            builder: (context, authState) {
-                              final hasRole = _hasUserRole(authState);
+                            subtitle: Text(
+                              'Click on work to add your daily accomplishment',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                            trailing: BlocBuilder<AuthCubit, AuthState>(
+                              builder: (context, authState) {
+                                final hasRole = _hasUserRole(authState);
 
-                              if (!hasRole) {
-                                return const SizedBox.shrink();
-                              }
+                                if (!hasRole) {
+                                  return const SizedBox.shrink();
+                                }
 
-                              return ExportButton(
-                                selectedYear: selectedYear,
-                                selectedMonth: selectedMonth,
-                                holidayMap: holidayMap,
-                                suspensionMap: suspensionMap,
-                                leaveMap: leaveMap,
-                                travelMap: travelMap,
-                              );
-                            },
+                                return ExportButton(
+                                  selectedYear: selectedYear,
+                                  selectedMonth: selectedMonth,
+                                  holidayMap: holidayMap,
+                                  suspensionMap: suspensionMap,
+                                  leaveMap: leaveMap,
+                                  travelMap: travelMap,
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -362,40 +365,32 @@ class _AttendancePageState extends State<AttendancePage>
                                 ),
                                 const SizedBox(height: 10),
                                 Expanded(
-                                  child: Scrollbar(
-                                    controller: _scrollController,
-                                    thumbVisibility: true,
-                                    child: Skeletonizer(
-                                      enabled: _isLoading,
-                                      effect: const ShimmerEffect(
-                                        baseColor: Color(0xFFE0E0E0),
-                                        highlightColor: Color(0xFFEEEEEE),
-                                      ),
-                                      child: ListView.builder(
-                                        controller: _scrollController,
-                                        itemCount: days.length,
-                                        itemBuilder: (context, index) {
-                                          return buildAttendanceRow(
-                                            context: context,
-                                            scaffoldMessengerKey:
-                                                _scaffoldMessengerKey,
-                                            day: days[index],
-                                            attendanceMap: attendanceMap,
-                                            holidayMap: holidayMap,
-                                            suspensionMap: suspensionMap,
-                                            leaveMap: leaveMap, // Add leaveMap
-                                            travelMap:
-                                                travelMap, // Add travelMap
-                                            accomplishmentDates:
-                                                accomplishmentDates,
-                                            isSmallScreen: isSmallScreen,
-                                            greenGlowAnimation:
-                                                _greenGlowAnimation,
-                                            onRefreshAccomplishments:
-                                                _refreshAccomplishments,
-                                          );
-                                        },
-                                      ),
+                                  child: Skeletonizer(
+                                    enabled: _isLoading,
+                                    child: ListView.builder(
+                                      controller: _scrollController,
+                                      itemCount: days.length,
+                                      itemBuilder: (context, index) {
+                                        return buildAttendanceRow(
+                                          context: context,
+                                          scaffoldMessengerKey:
+                                              _scaffoldMessengerKey,
+                                          day: days[index],
+                                          attendanceMap: attendanceMap,
+                                          holidayMap: holidayMap,
+                                          suspensionMap: suspensionMap,
+                                          leaveMap: leaveMap, // Add leaveMap
+                                          travelMap:
+                                              travelMap, // Add travelMap
+                                          accomplishmentDates:
+                                              accomplishmentDates,
+                                          isSmallScreen: isSmallScreen,
+                                          greenGlowAnimation:
+                                              _greenGlowAnimation,
+                                          onRefreshAccomplishments:
+                                              _refreshAccomplishments,
+                                        );
+                                      },
                                     ),
                                   ),
                                 ),
