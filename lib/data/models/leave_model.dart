@@ -1,54 +1,59 @@
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 
 class LeaveModel {
   final String? id;
-  final String employeeNumber;
   final String type;
-  final DateTime date;
+  final List<DateTime> specificDates;
+  final List<String> employeeNumbers;
 
   LeaveModel({
     this.id,
-    required this.employeeNumber,
     required this.type,
-    required this.date,
+    required this.specificDates,
+    required this.employeeNumbers,
   });
 
   LeaveModel copyWith({
-    ValueGetter<String?>? id,
-    String? employeeNumber,
+    String? id,
     String? type,
-    DateTime? date,
+    List<DateTime>? specificDates,
+    List<String>? employeeNumbers,
   }) {
     return LeaveModel(
-      id: id != null ? id() : this.id,
-      employeeNumber: employeeNumber ?? this.employeeNumber,
+      id: id ?? this.id,
       type: type ?? this.type,
-      date: date ?? this.date,
+      specificDates: specificDates ?? this.specificDates,
+      employeeNumbers: employeeNumbers ?? this.employeeNumbers,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'employeeNumber': employeeNumber,
       'type': type,
-      'date': date.millisecondsSinceEpoch,
+      'specificDates': specificDates.map((x) => x.toIso8601String()).toList(),
+      'employeeNumbers': employeeNumbers,
     };
   }
 
   factory LeaveModel.fromMap(Map<String, dynamic> map) {
     return LeaveModel(
       id: map['id'],
-      employeeNumber: map['employeeNumber'] ?? '',
       type: map['type'] ?? '',
-      date:
-          map['date'] != null
-              ? (map['date'] is int
-                  ? DateTime.fromMillisecondsSinceEpoch(map['date'])
-                  : DateTime.parse(map['date']))
-              : DateTime.now(),
+      specificDates: List<DateTime>.from(
+        (map['specificDates'] ?? []).map((date) {
+          if (date is int) {
+            return DateTime.fromMillisecondsSinceEpoch(date);
+          } else if (date is String) {
+            return DateTime.parse(date);
+          } else {
+            return DateTime.now();
+          }
+        }),
+      ),
+      employeeNumbers: List<String>.from(map['employeeNumbers'] ?? []),
     );
   }
 
@@ -59,7 +64,7 @@ class LeaveModel {
 
   @override
   String toString() {
-    return 'LeaveModel(id: $id, employeeNumber: $employeeNumber, type: $type, date: $date)';
+    return 'LeaveModel(id: $id, type: $type, specificDates: $specificDates, employeeNumbers: $employeeNumbers)';
   }
 
   @override
@@ -68,16 +73,16 @@ class LeaveModel {
 
     return other is LeaveModel &&
         other.id == id &&
-        other.employeeNumber == employeeNumber &&
         other.type == type &&
-        other.date == date;
+        listEquals(other.specificDates, specificDates) &&
+        listEquals(other.employeeNumbers, employeeNumbers);
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-        employeeNumber.hashCode ^
         type.hashCode ^
-        date.hashCode;
+        specificDates.hashCode ^
+        employeeNumbers.hashCode;
   }
 }

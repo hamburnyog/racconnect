@@ -98,8 +98,7 @@ class _AttendancePageState extends State<AttendancePage>
     if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
-        // Load leaves for the current employee
-        await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
+        await leaveCubit.getAllLeaves();
 
         // Check if widget is still mounted
         if (!mounted) return;
@@ -163,11 +162,15 @@ class _AttendancePageState extends State<AttendancePage>
         if (leaveState is GetAllLeaveSuccess) {
           if (mounted) {
             setState(() {
-              leaveMap = {
-                for (var leave in leaveState.leaveModels)
-                  DateTime(leave.date.year, leave.date.month, leave.date.day):
-                      leave.type,
-              };
+              leaveMap = {};
+              for (var leave in leaveState.leaveModels) {
+                if (leave.employeeNumbers.contains(employeeNumber)) {
+                  for (var date in leave.specificDates) {
+                    final dateKey = DateTime(date.year, date.month, date.day);
+                    leaveMap[dateKey] = leave.type;
+                  }
+                }
+              }
             });
           }
         }

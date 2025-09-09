@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage> {
 
     // Load leaves if employee number is available
     if (employeeNumber.isNotEmpty) {
-      await leaveCubit.getAllLeaves(employeeNumber: employeeNumber);
+      await leaveCubit.getAllLeaves();
     }
     final leaveState = leaveCubit.state;
 
@@ -191,14 +191,16 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           for (var leave in leaveState.leaveModels) {
             // Only show leaves for the current employee
-            if (leave.employeeNumber == employeeNumber) {
-              final dateKey = DateFormat('yyyy-MM-dd').format(leave.date);
-              final eventString = '${leave.type},T=Leave';
+            if (leave.employeeNumbers.contains(employeeNumber)) {
+              for (var date in leave.specificDates) {
+                final dateKey = DateFormat('yyyy-MM-dd').format(date);
+                final eventString = '${leave.type},T=Leave';
 
-              if (mySelectedEvents.containsKey(dateKey)) {
-                mySelectedEvents[dateKey]!.add(eventString);
-              } else {
-                mySelectedEvents[dateKey] = [eventString];
+                if (mySelectedEvents.containsKey(dateKey)) {
+                  mySelectedEvents[dateKey]!.add(eventString);
+                } else {
+                  mySelectedEvents[dateKey] = [eventString];
+                }
               }
             }
           }

@@ -4,14 +4,9 @@ import 'package:racconnect/utility/pocketbase_client.dart';
 class LeaveRepository {
   final pb = PocketBaseClient.instance;
 
-  Future<List<LeaveModel>> getAllLeaves(String employeeNumber) async {
+  Future<List<LeaveModel>> getAllLeaves() async {
     try {
-      final response = await pb
-          .collection('leaves')
-          .getFullList(
-            sort: '-date',
-            filter: 'employeeNumber = "$employeeNumber"',
-          );
+      final response = await pb.collection('leaves').getFullList();
       return response.map((e) => LeaveModel.fromJson(e.toString())).toList();
     } catch (e) {
       rethrow;
@@ -19,20 +14,20 @@ class LeaveRepository {
   }
 
   Future<LeaveModel> addLeave({
-    required String employeeNumber,
     required String type,
-    required DateTime date,
+    required List<DateTime> specificDates,
+    required List<String> employeeNumbers,
   }) async {
     try {
       final body = <String, dynamic>{
-        "employeeNumber": employeeNumber,
         "type": type,
-        "date": date.toIso8601String(),
+        "specificDates": specificDates.map((e) => e.toIso8601String()).toList(),
+        "employeeNumbers": employeeNumbers,
       };
 
       final response = await pb.collection('leaves').create(body: body);
 
-      return LeaveModel.fromJson(response.toString());
+      return LeaveModel.fromMap(response.toJson());
     } catch (e) {
       rethrow;
     }
@@ -41,17 +36,22 @@ class LeaveRepository {
   Future<LeaveModel> updateLeave({
     required String id,
     String? type,
-    DateTime? date,
+    List<DateTime>? specificDates,
+    List<String>? employeeNumbers,
   }) async {
     try {
       final body = <String, dynamic>{};
 
       if (type != null) body["type"] = type;
-      if (date != null) body["date"] = date.toIso8601String();
+      if (specificDates != null) {
+        body["specificDates"] =
+            specificDates.map((e) => e.toIso8601String()).toList();
+      }
+      if (employeeNumbers != null) body["employeeNumbers"] = employeeNumbers;
 
       final response = await pb.collection('leaves').update(id, body: body);
 
-      return LeaveModel.fromJson(response.toString());
+      return LeaveModel.fromMap(response.toJson());
     } catch (e) {
       rethrow;
     }

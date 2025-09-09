@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/leave_model.dart';
+import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
+import 'package:racconnect/presentation/widgets/user_multi_select.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class LeaveForm extends StatefulWidget {
   final LeaveModel? leaveModel;
-  final String employeeNumber;
-  const LeaveForm({this.leaveModel, required this.employeeNumber, super.key});
+  const LeaveForm({this.leaveModel, super.key});
 
   @override
   State<LeaveForm> createState() => _LeaveFormState();
@@ -16,58 +18,49 @@ class LeaveForm extends StatefulWidget {
 
 class _LeaveFormState extends State<LeaveForm> {
   TextEditingController leaveTypeController = TextEditingController();
+  final List<ProfileModel> _selectedEmployees = [];
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
   final Set<DateTime> _selectedDates = <DateTime>{};
   final formKey = GlobalKey<FormState>();
 
-  // Common leave types for Philippine government employees
   final List<String> leaveTypes = [
     'Vacation Leave',
+    'Mandatory/Forced Leave',
     'Sick Leave',
     'Maternity Leave',
     'Paternity Leave',
-    'Special Leave Benefits for Women',
+    'Special Privilege Leave',
+    'Solo Parent Leave',
     'Study Leave',
-    'Bereavement Leave',
-    'Compensatory Time-Off (CTO)',
-    'Other',
+    '10-Day VAWC Leave',
+    'Rehabilitation Privilege',
+    'Special Leave Benefits for Women',
+    'Special Emergency (Calamity) Leave',
+    'Adoption Leave',
+    'Others',
   ];
 
-  void addLeaves() {
-    if (formKey.currentState!.validate() && _selectedDates.isNotEmpty) {
-      context.read<LeaveCubit>().addMultipleLeaves(
-        employeeNumber: widget.employeeNumber,
-        type: leaveTypeController.text.trim(),
-        dates: _selectedDates.toList(),
-      );
+  void addLeave() {
+    if (formKey.currentState!.validate()) {
+      context.read<LeaveCubit>().addLeave(
+            type: leaveTypeController.text.trim(),
+            specificDates: _selectedDates.toList(),
+            employeeNumbers: _selectedEmployees.map((e) => e.employeeNumber!).toList(),
+          );
       Navigator.of(context).pop();
-    } else if (_selectedDates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one date'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   void saveLeave() {
-    if (formKey.currentState!.validate() && _selectedDay != null) {
+    if (formKey.currentState!.validate()) {
       final leaveId = widget.leaveModel?.id ?? '';
       context.read<LeaveCubit>().updateLeave(
-        id: leaveId,
-        type: leaveTypeController.text.trim(),
-        date: _selectedDay!,
-      );
+            id: leaveId,
+            type: leaveTypeController.text.trim(),
+            specificDates: _selectedDates.toList(),
+            employeeNumbers: _selectedEmployees.map((e) => e.employeeNumber!).toList(),
+          );
       Navigator.of(context).pop();
-    } else if (_selectedDay == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a date'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -76,8 +69,11 @@ class _LeaveFormState extends State<LeaveForm> {
     super.initState();
     if (widget.leaveModel != null) {
       leaveTypeController.text = widget.leaveModel!.type;
-      _selectedDay = widget.leaveModel!.date;
-      _focusedDay = widget.leaveModel!.date;
+      _selectedDates.addAll(widget.leaveModel!.specificDates);
+      // Note: we are not pre-filling selectedEmployees because it will be handled by UserMultiSelect
+      if (widget.leaveModel!.specificDates.isNotEmpty) {
+        _focusedDay = widget.leaveModel!.specificDates.first;
+      }
     }
   }
 
@@ -115,9 +111,7 @@ class _LeaveFormState extends State<LeaveForm> {
                     child: Row(
                       children: [
                         Text(
-                          widget.leaveModel == null
-                              ? 'Add Leaves'
-                              : 'Edit Leave',
+                          widget.leaveModel == null ? 'New Leave' : 'Edit Leave',
                           style: const TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -138,17 +132,15 @@ class _LeaveFormState extends State<LeaveForm> {
               ),
               const SizedBox(height: 30),
               DropdownButtonFormField<String>(
-                initialValue:
-                    leaveTypeController.text.isEmpty
-                        ? null
-                        : leaveTypeController.text,
-                items:
-                    leaveTypes.map((String type) {
-                      return DropdownMenuItem<String>(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList(),
+                initialValue: leaveTypeController.text.isEmpty
+                    ? null
+                    : leaveTypeController.text,
+                items: leaveTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please select a leave type';
@@ -169,137 +161,142 @@ class _LeaveFormState extends State<LeaveForm> {
                 ),
               ),
               const SizedBox(height: 20),
-              if (widget.leaveModel == null) ...[
-                // For adding multiple leaves
-                const Text(
-                  'Select dates for your leave:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDay: DateTime.now().add(const Duration(days: 365)),
-                  focusedDay: _focusedDay,
-                  calendarFormat: CalendarFormat.month,
-                  headerStyle: const HeaderStyle(formatButtonVisible: false),
-                  availableGestures: AvailableGestures.horizontalSwipe,
-                  selectedDayPredicate: (day) {
-                    if (widget.leaveModel != null) {
-                      // For editing a single leave, highlight that date
-                      return isSameDay(_selectedDay, day);
-                    } else {
-                      // For adding multiple leaves, highlight selected dates
-                      return _selectedDates.any(
-                        (selectedDay) => isSameDay(selectedDay, day),
-                      );
-                    }
-                  },
-                  onDaySelected: (selectedDay, focusedDay) {
-                    if (widget.leaveModel == null) {
-                      // For adding multiple leaves
-                      setState(() {
-                        _focusedDay = focusedDay;
-                        if (_selectedDates.any(
-                          (date) => isSameDay(date, selectedDay),
-                        )) {
-                          // If already selected, remove it
-                          _selectedDates.removeWhere(
-                            (date) => isSameDay(date, selectedDay),
+              FormField<Set<DateTime>>(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select at least one date';
+                  }
+                  return null;
+                },
+                initialValue: _selectedDates,
+                builder: (FormFieldState<Set<DateTime>> state) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_selectedDates.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                alignment: WrapAlignment.start,
+                                children: _selectedDates.map((date) {
+                                  return Chip(
+                                    label: Text(
+                                      DateFormat('MMM d, yyyy').format(date),
+                                    ),
+                                    backgroundColor: Theme.of(context).primaryColor,
+                                    labelStyle: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                    deleteIconColor: Colors.white,
+                                    onDeleted: () {
+                                      setState(() {
+                                        _selectedDates.remove(date);
+                                        state.didChange(_selectedDates);
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      TableCalendar(
+                        firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                        lastDay: DateTime.now().add(const Duration(days: 365)),
+                        focusedDay: _focusedDay,
+                        calendarFormat: CalendarFormat.month,
+                        headerStyle: const HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                        ),
+                        availableGestures: AvailableGestures.horizontalSwipe,
+                        onHeaderTapped: (focusedDay) {
+                          setState(() {
+                            _focusedDay = DateTime.now();
+                          });
+                        },
+                        selectedDayPredicate: (day) {
+                          return _selectedDates.any(
+                            (selectedDay) => isSameDay(selectedDay, day),
                           );
-                        } else {
-                          // If not selected, add it
-                          _selectedDates.add(selectedDay);
-                        }
-                      });
-                    } else {
-                      // For editing a single leave
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    }
-                  },
-                  onPageChanged: (focusedDay) {
-                    _focusedDay = focusedDay;
-                  },
-                  calendarBuilders: CalendarBuilders(
-                    selectedBuilder: (context, date, _) {
-                      return Container(
-                        margin: const EdgeInsets.all(4.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _focusedDay = focusedDay;
+                            if (_selectedDates.any(
+                              (date) => isSameDay(date, selectedDay),
+                            )) {
+                              _selectedDates.removeWhere(
+                                (date) => isSameDay(date, selectedDay),
+                              );
+                            } else {
+                              _selectedDates.add(selectedDay);
+                            }
+                            state.didChange(_selectedDates);
+                          });
+                        },
+                        onPageChanged: (focusedDay) {
+                          _focusedDay = focusedDay;
+                        },
+                        calendarBuilders: CalendarBuilders(
+                          selectedBuilder: (context, date, _) {
+                            return Container(
+                              margin: const EdgeInsets.all(4.0),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            );
+                          },
+                          todayBuilder: (context, date, _) {
+                            return Container(
+                              margin: const EdgeInsets.all(4.0),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                            );
+                          },
                         ),
-                        child: Text(
-                          '${date.day}',
-                          style: const TextStyle(color: Colors.white),
+                      ),
+                      if (state.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            state.errorText!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    todayBuilder: (context, date, _) {
-                      return Container(
-                        margin: const EdgeInsets.all(4.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${date.day}',
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (_selectedDates.isNotEmpty)
-                  Text(
-                    '${_selectedDates.length} date(s) selected',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ] else ...[
-                // For editing a single leave, show a simple date picker
-                const Text(
-                  'Select leave date:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                TextFormField(
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Leave Date',
-                    hintText: 'Select date',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Padding(
-                      padding: EdgeInsets.only(right: 24.0),
-                      child: Icon(Icons.calendar_today),
-                    ),
-                  ),
-                  controller: TextEditingController(
-                    text:
-                        _selectedDay != null
-                            ? '${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}'
-                            : '',
-                  ),
-                  onTap: () async {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDay ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (pickedDate != null) {
-                      setState(() {
-                        _selectedDay = pickedDate;
-                      });
-                    }
-                  },
-                ),
-              ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              UserMultiSelect(
+                selectedEmployees: _selectedEmployees,
+                onSelectionChanged: (selected) {
+                  setState(() {
+                    // No need to do anything here as the widget handles its own state
+                  });
+                },
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -310,7 +307,7 @@ class _LeaveFormState extends State<LeaveForm> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  onPressed: widget.leaveModel == null ? addLeaves : saveLeave,
+                  onPressed: widget.leaveModel == null ? addLeave : saveLeave,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(
@@ -319,9 +316,7 @@ class _LeaveFormState extends State<LeaveForm> {
                         const Icon(Icons.save, color: Colors.white),
                         const SizedBox(width: 10),
                         Text(
-                          widget.leaveModel == null
-                              ? 'Add Leaves'
-                              : 'Save Changes',
+                          widget.leaveModel == null ? 'Add Leave' : 'Save Changes',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,

@@ -11,51 +11,18 @@ class LeaveCubit extends Cubit<LeaveState> {
   final LeaveRepository leaveRepository = LeaveRepository();
 
   Future<void> addLeave({
-    required String employeeNumber,
     required String type,
-    required DateTime date,
+    required List<DateTime> specificDates,
+    required List<String> employeeNumbers,
   }) async {
     try {
       emit(LeaveLoading());
       final leaveModel = await leaveRepository.addLeave(
-        employeeNumber: employeeNumber,
         type: type,
-        date: date,
+        specificDates: specificDates,
+        employeeNumbers: employeeNumbers,
       );
       emit(LeaveAddSuccess(leaveModel));
-    } catch (e) {
-      errorMessage(e);
-    }
-  }
-
-  Future<void> addMultipleLeaves({
-    required String employeeNumber,
-    required String type,
-    required List<DateTime> dates,
-  }) async {
-    try {
-      emit(LeaveLoading());
-
-      // Add each date as a separate leave record
-      for (DateTime date in dates) {
-        await leaveRepository.addLeave(
-          employeeNumber: employeeNumber,
-          type: type,
-          date: date,
-        );
-      }
-
-      // Refresh the list after adding all leaves
-      await getAllLeaves(employeeNumber: employeeNumber);
-      emit(
-        LeaveAddSuccess(
-          LeaveModel(
-            employeeNumber: employeeNumber,
-            type: type,
-            date: dates.first,
-          ),
-        ),
-      );
     } catch (e) {
       errorMessage(e);
     }
@@ -64,14 +31,16 @@ class LeaveCubit extends Cubit<LeaveState> {
   Future<void> updateLeave({
     required String id,
     String? type,
-    DateTime? date,
+    List<DateTime>? specificDates,
+    List<String>? employeeNumbers,
   }) async {
     try {
       emit(LeaveLoading());
       final leaveModel = await leaveRepository.updateLeave(
         id: id,
         type: type,
-        date: date,
+        specificDates: specificDates,
+        employeeNumbers: employeeNumbers,
       );
       emit(LeaveUpdateSuccess(leaveModel));
     } catch (e) {
@@ -89,10 +58,10 @@ class LeaveCubit extends Cubit<LeaveState> {
     }
   }
 
-  Future<void> getAllLeaves({required String employeeNumber}) async {
+  Future<void> getAllLeaves() async {
     try {
       emit(LeaveLoading());
-      final leaveModels = await leaveRepository.getAllLeaves(employeeNumber);
+      final leaveModels = await leaveRepository.getAllLeaves();
       emit(GetAllLeaveSuccess(leaveModels));
     } catch (e) {
       errorMessage(e);

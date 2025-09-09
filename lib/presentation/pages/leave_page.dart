@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/leave_model.dart';
+import 'package:racconnect/data/models/user_model.dart';
+import 'package:racconnect/data/repositories/auth_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/leave_form.dart';
@@ -19,58 +21,172 @@ class LeavePage extends StatefulWidget {
 }
 
 class _LeavePageState extends State<LeavePage> {
+  OverlayEntry? _overlayEntry;
   final ScrollController _scrollController = ScrollController();
+  List<UserModel> _allUsers = [];
   bool _isLoading = true;
 
-  void _showLeaveForm(String employeeNumber) {
+  void _showLeaveForm() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.75,
+      scrollControlDisabledMaxHeightRatio: 0.9,
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
-        return LeaveForm(employeeNumber: employeeNumber);
+        return const LeaveForm();
       },
-    ).then((_) => _loadLeaves());
+    );
   }
 
-  void _showLeaveFormWithEdit(LeaveModel leaveModel, String employeeNumber) {
+  void _showLeaveFormWithEdit(LeaveModel leaveModel) {
     showModalBottomSheet(
       context: context,
-      scrollControlDisabledMaxHeightRatio: 0.75,
+      isScrollControlled: true,
+      scrollControlDisabledMaxHeightRatio: 0.9,
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
-        return LeaveForm(
-          leaveModel: leaveModel,
-          employeeNumber: employeeNumber,
-        );
+        return LeaveForm(leaveModel: leaveModel);
       },
-    ).then((_) => _loadLeaves());
+    );
   }
 
   void _deleteLeave(String id) {
     context.read<LeaveCubit>().deleteLeave(id: id);
-    _loadLeaves();
+  }
+
+  List<String> _getEmployeeNames(List<String> employeeNumbers) {
+    final names = <String>[];
+    for (final employeeNumber in employeeNumbers) {
+      try {
+        final user = _allUsers.firstWhere(
+          (user) => user.profile?.employeeNumber == employeeNumber,
+        );
+        if (user.profile != null) {
+          names.add('${user.profile!.lastName}, ${user.profile!.firstName}');
+        } else {
+          names.add('Unknown Employee');
+        }
+      } catch (e) {
+        names.add('Unknown Employee');
+      }
+    }
+    return names;
+  }
+
+  String _formatLeaveDates(List<DateTime> dates) {
+    if (dates.isEmpty) return 'No dates';
+
+    // Sort dates
+    dates.sort((a, b) => a.compareTo(b));
+
+    if (dates.length == 1) {
+      return DateFormat('MMM d, yyyy').format(dates.first);
+    } else {
+      return '${DateFormat('MMM d, yyyy').format(dates.first)} - ${DateFormat('MMM d, yyyy').format(dates.last)}';
+    }
+  }
+
+  String _createTooltipMessage(LeaveModel leaveModel) {
+    final employeeNames = _getEmployeeNames(leaveModel.employeeNumbers);
+    final buffer = StringBuffer();
+
+    buffer.writeln('Staff:');
+    for (final name in employeeNames) {
+      buffer.writeln('  • $name');
+    }
+
+    if (leaveModel.specificDates.isNotEmpty) {
+      buffer.writeln('Dates:');
+      final sortedDates = List<DateTime>.from(leaveModel.specificDates)
+        ..sort((a, b) => a.compareTo(b));
+      for (final date in sortedDates) {
+        buffer.writeln('  • ${DateFormat('MMM d, yyyy').format(date)}');
+      }
+    }
+
+    return buffer.toString();
+  }
+
+  void _showTooltip(
+    BuildContext context,
+    Offset position,
+    Size size,
+    LeaveModel leaveModel,
+  ) {
+    _removeTooltip();
+    final overlay = Overlay.of(context);
+    final tooltip = _createTooltipMessage(leaveModel);
+
+    final tooltipWidth = 200.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    var left = position.dx + 5;
+    if (left + tooltipWidth > screenWidth) {
+      left = screenWidth - tooltipWidth;
+    }
+    if (left < 0) {
+      left = 0;
+    }
+
+    final top = (position.dy + size.height) + 5;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                _removeTooltip();
+              },
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            left: left,
+            top: top,
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8.0),
+              child: Container(
+                width: tooltipWidth,
+                padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  tooltip,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlay.insert(_overlayEntry!);
+  }
+
+  void _removeTooltip() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   @override
   void initState() {
     super.initState();
+    _loadUsers();
     _loadLeaves();
   }
 
   Future<void> _loadLeaves() async {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthenticatedState) {
-      final employeeNumber = authState.user.profile?.employeeNumber ?? '';
-      if (employeeNumber.isNotEmpty) {
-        await context.read<LeaveCubit>().getAllLeaves(
-          employeeNumber: employeeNumber,
-        );
-      }
-    }
+    setState(() {
+      _isLoading = true;
+    });
+    await context.read<LeaveCubit>().getAllLeaves();
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -78,9 +194,29 @@ class _LeavePageState extends State<LeavePage> {
     }
   }
 
+  Future<void> _loadUsers() async {
+    try {
+      final authRepository = AuthRepository();
+      final users = await authRepository.getUsers();
+      setState(() {
+        _allUsers = users;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading employees: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _removeTooltip();
     super.dispose();
   }
 
@@ -92,11 +228,9 @@ class _LeavePageState extends State<LeavePage> {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
         if (authState is AuthenticatedState) {
-          final employeeNumber = authState.user.profile?.employeeNumber ?? '';
-
-          return Skeletonizer(
-            enabled: _isLoading,
-            child: RefreshIndicator(
+          final userRole = authState.user.role;
+          if (userRole == 'Developer' || userRole == 'HR') {
+            return RefreshIndicator(
               triggerMode: RefreshIndicatorTriggerMode.anywhere,
               onRefresh: _loadLeaves,
               child: ScrollConfiguration(
@@ -108,80 +242,120 @@ class _LeavePageState extends State<LeavePage> {
                   },
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: Column(
-                    children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: ListTile(
-                          minTileHeight: 70,
-                          title: Text(
-                            'Leaves',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Skeletonizer(
+                    enabled: _isLoading,
+                    child: Column(
+                      children: [
+                        Card(
+                          color: Theme.of(context).primaryColor,
+                          child: ListTile(
+                            minTileHeight: 70,
+                            title: const Text(
+                              'Leaves',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              !isSmallScreen
+                                  ? 'Manage leaves here. Pull down to refresh, or swipe left on a record to delete.'
+                                  : 'Manage leaves here',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                            leading: const Icon(
+                              Icons.sick_outlined,
                               color: Colors.white,
                             ),
-                          ),
-                          subtitle: Text(
-                            !isSmallScreen
-                                ? 'View your leave dates here. Pull down to refresh, or swipe left on a record to delete.'
-                                : 'View your leave dates here',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
+                            trailing: MobileButton(
+                              isSmallScreen: isSmallScreen,
+                              onPressed: _showLeaveForm,
+                              icon: const Icon(Icons.add),
+                              label: 'Add',
                             ),
                           ),
-                          leading: Icon(
-                            Icons.sick_outlined,
-                            color: Colors.white,
-                          ),
-                          trailing: MobileButton(
-                            isSmallScreen: isSmallScreen,
-                            onPressed: () => _showLeaveForm(employeeNumber),
-                            icon: const Icon(Icons.add),
-                            label: 'Add',
-                          ),
                         ),
-                      ),
-                      BlocBuilder<LeaveCubit, LeaveState>(
-                        builder: (context, state) {
-                          if (state is LeaveError) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                        BlocConsumer<LeaveCubit, LeaveState>(
+                          listener: (context, state) {
+                            if (state is LeaveError) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(state.error),
                                   backgroundColor: Colors.red,
                                 ),
                               );
-                            });
-                          }
+                            } else if (state is LeaveAddSuccess) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Leave added successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _loadLeaves();
+                            } else if (state is LeaveUpdateSuccess) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Leave updated successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _loadLeaves();
+                            } else if (state is LeaveDeleteSuccess) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Leave deleted successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _loadLeaves();
+                            }
+                          },
+                          builder: (context, state) {
+                            if (state is GetAllLeaveSuccess) {
+                              final leaves = state.leaveModels.toList();
 
-                          if (state is GetAllLeaveSuccess) {
-                            final leaves = state.leaveModels.toList();
+                              if (leaves.isEmpty) {
+                                return Expanded(
+                                  child: ListView(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    children: [
+                                      const SizedBox(height: 50),
+                                      SvgPicture.asset(
+                                        'assets/images/dog.svg',
+                                        height: 100,
+                                      ),
+                                      const Center(
+                                        child: Text(
+                                          'Nothing is here yet. Add a leave to get started.',
+                                          style: TextStyle(fontSize: 10),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
 
-                            if (leaves.isNotEmpty) {
                               return Expanded(
                                 child: Scrollbar(
                                   controller: _scrollController,
                                   thumbVisibility: true,
                                   interactive: true,
                                   child: ListView.builder(
-                                    physics: AlwaysScrollableScrollPhysics(),
+                                    physics: const AlwaysScrollableScrollPhysics(),
                                     scrollDirection: Axis.vertical,
                                     controller: _scrollController,
                                     itemCount: leaves.length,
                                     itemBuilder: (context, index) {
                                       final leaveModel = leaves[index];
-
                                       return ClipRect(
                                         child: Dismissible(
-                                          key: UniqueKey(),
-                                          direction:
-                                              DismissDirection.endToStart,
+                                          key: ValueKey(leaveModel.id),
+                                          direction: DismissDirection.endToStart,
                                           onDismissed: (direction) async {},
                                           confirmDismiss: (
                                             DismissDirection direction,
@@ -192,30 +366,22 @@ class _LeavePageState extends State<LeavePage> {
                                                 return AlertDialog(
                                                   title: const Text("Confirm"),
                                                   content: const Text(
-                                                    "Are you sure you want to delete this leave date?",
+                                                    "Are you sure you want to delete this leave?",
                                                   ),
                                                   actions: <Widget>[
                                                     TextButton(
-                                                      onPressed:
-                                                          () => Navigator.of(
-                                                            context,
-                                                          ).pop(false),
-                                                      child: const Text(
-                                                        "Cancel",
-                                                      ),
+                                                      onPressed: () =>
+                                                          Navigator.of(context).pop(false),
+                                                      child: const Text("Cancel"),
                                                     ),
                                                     TextButton(
                                                       onPressed: () {
                                                         _deleteLeave(
                                                           leaveModel.id!,
                                                         );
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop(true);
+                                                        Navigator.of(context).pop(true);
                                                       },
-                                                      child: const Text(
-                                                        "Delete",
-                                                      ),
+                                                      child: const Text("Delete"),
                                                     ),
                                                   ],
                                                 );
@@ -225,8 +391,7 @@ class _LeavePageState extends State<LeavePage> {
                                           background: Container(
                                             decoration: BoxDecoration(
                                               color: Colors.pink,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             alignment: Alignment.centerRight,
                                             margin: const EdgeInsets.symmetric(
@@ -240,51 +405,76 @@ class _LeavePageState extends State<LeavePage> {
                                               color: Colors.white,
                                             ),
                                           ),
-                                          child: Card(
-                                            elevation: 3,
-                                            child: ListTile(
-                                              leading: CircleAvatar(
-                                                backgroundColor:
-                                                    Theme.of(
-                                                      context,
-                                                    ).primaryColor,
-                                                child: Icon(
-                                                  Icons.sick_outlined,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                              title: Text(
-                                                leaveModel.type,
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).primaryColor,
-                                                ),
-                                              ),
-                                              subtitle: Text(
-                                                DateFormat(
-                                                  'MMM d, yyyy',
-                                                ).format(leaveModel.date),
-                                                style: TextStyle(fontSize: 10),
-                                              ),
-                                              trailing: GestureDetector(
-                                                onTap: () {
-                                                  _showLeaveFormWithEdit(
+                                          child: Builder(
+                                            builder: (context) {
+                                              return GestureDetector(
+                                                onTapUp: (details) {
+                                                  final RenderBox renderBox =
+                                                      context.findRenderObject() as RenderBox;
+                                                  final size = renderBox.size;
+                                                  final position =
+                                                      renderBox.localToGlobal(Offset.zero);
+                                                  _showTooltip(
+                                                    context,
+                                                    position,
+                                                    size,
                                                     leaveModel,
-                                                    employeeNumber,
                                                   );
                                                 },
-                                                child: Icon(
-                                                  Icons.edit_note,
-                                                  color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).primaryColor,
+                                                child: Card(
+                                                  elevation: 3,
+                                                  child: ListTile(
+                                                    leading: CircleAvatar(
+                                                      backgroundColor:
+                                                          Theme.of(context).primaryColor,
+                                                      child: const Icon(
+                                                        Icons.sick_outlined,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    title: Text(
+                                                      leaveModel.type,
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        color: Theme.of(context).primaryColor,
+                                                      ),
+                                                    ),
+                                                    subtitle: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          '${leaveModel.employeeNumbers.length} employee${leaveModel.employeeNumbers.length != 1 ? 's' : ''}, ${leaveModel.specificDates.length} date${leaveModel.specificDates.length != 1 ? 's' : ''}',
+                                                          style: const TextStyle(
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                        if (leaveModel.specificDates.isNotEmpty)
+                                                          Text(
+                                                            _formatLeaveDates(
+                                                              leaveModel.specificDates,
+                                                            ),
+                                                            style: const TextStyle(
+                                                              fontSize: 10,
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                    trailing: GestureDetector(
+                                                      onTap: () {
+                                                        _showLeaveFormWithEdit(
+                                                          leaveModel,
+                                                        );
+                                                      },
+                                                      child: Icon(
+                                                        Icons.edit_note,
+                                                        color: Theme.of(context).primaryColor,
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
+                                              );
+                                            },
                                           ),
                                         ),
                                       );
@@ -293,35 +483,44 @@ class _LeavePageState extends State<LeavePage> {
                                 ),
                               );
                             }
-                          }
-                          return Expanded(
-                            child: ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              children: [
-                                SizedBox(height: 50),
-                                SvgPicture.asset(
-                                  'assets/images/dog.svg',
-                                  height: 100,
-                                ),
-                                Center(
-                                  child: Text(
-                                    'No leave dates recorded yet. Add leave dates to get started.',
-                                    style: TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                            return Expanded(
+                              child: ListView.builder(
+                                itemCount: 10,
+                                itemBuilder: (context, index) {
+                                  return Card(
+                                    clipBehavior: Clip.hardEdge,
+                                    elevation: 3,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ListTile(
+                                      leading: Bone.circle(size: 48),
+                                      title: Bone.text(
+                                        words: 2,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Bone.text(
+                                        words: 4,
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
+            );
+          }
         }
-        return Center(child: Text('Authentication required'));
+        return Center(child: Text('You do not have access to this page.'));
       },
     );
   }
