@@ -240,6 +240,13 @@ CellStyle leftAlignedStyle = CellStyle(
   horizontalAlign: HorizontalAlign.Left,
 );
 
+CellStyle leftAlignedStyleOic = CellStyle(
+  fontSize: 9,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Left,
+);
+
 CellStyle leftBoldUnderlinedAlignedStyle = CellStyle(
   bold: true,
   fontSize: 10,

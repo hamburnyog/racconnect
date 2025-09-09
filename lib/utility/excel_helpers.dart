@@ -575,7 +575,10 @@ void buildCertificationSection(
   cellList['D$attestationRowNumber'] = sheet.cell(
     CellIndex.indexByString('D$attestationRowNumber'),
   );
-  cellList['D$attestationRowNumber'].cellStyle = leftAlignedStyle;
+  cellList['D$attestationRowNumber'].cellStyle =
+      supervisorSections.contains('OIC')
+          ? leftAlignedStyleOic
+          : leftAlignedStyle;
 
   sheet.merge(
     CellIndex.indexByString('L$attestationRowNumber'),
@@ -586,7 +589,10 @@ void buildCertificationSection(
   cellList['L$attestationRowNumber'] = sheet.cell(
     CellIndex.indexByString('L$attestationRowNumber'),
   );
-  cellList['L$attestationRowNumber'].cellStyle = leftAlignedStyle;
+  cellList['L$attestationRowNumber'].cellStyle =
+      supervisorSections.contains('OIC')
+          ? leftAlignedStyleOic
+          : leftAlignedStyle;
 
   attestationRowNumber += 2;
 

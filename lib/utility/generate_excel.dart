@@ -506,45 +506,71 @@ Future<String?> generateExcel(
               13,
               0,
             );
+            final fivePm = DateTime(
+              currentDate.year,
+              currentDate.month,
+              currentDate.day,
+              17,
+              0,
+            );
 
             int dailyUndertimeMinutes = 0;
-
-            // Rule: Lunch break must be between 12 PM and 1 PM.
-            if (amOutTime != null && amOutTime.isBefore(lunchStartTime)) {
-              dailyUndertimeMinutes +=
-                  lunchStartTime.difference(amOutTime).inMinutes;
-            }
-            if (pmInTime != null && pmInTime.isAfter(lunchEndTime)) {
-              dailyUndertimeMinutes +=
-                  pmInTime.difference(lunchEndTime).inMinutes;
-            }
-
-            // Calculate rendered work hours, excluding the mandatory 1-hour lunch
             int totalWorkMinutes = 0;
-            if (amOutTime != null && pmInTime != null) {
-              // Has lunch break, calculate work minutes based on that.
-              final effectiveAmOut =
-                  amOutTime.isAfter(lunchStartTime)
-                      ? lunchStartTime
-                      : amOutTime;
-              final morningWork = effectiveAmOut.difference(amInTime).inMinutes;
 
+            // New rule: if login is at or after 12 PM
+            if (amInTime.hour >= 12) {
               final effectivePmIn =
-                  pmInTime.isBefore(lunchEndTime) ? lunchEndTime : pmInTime;
-              final afternoonWork =
-                  pmOutTime.difference(effectivePmIn).inMinutes;
+                  amInTime.isBefore(lunchEndTime) ? lunchEndTime : amInTime;
 
-              totalWorkMinutes = morningWork + afternoonWork;
+              final effectivePmOut =
+                  pmOutTime.isAfter(fivePm) ? fivePm : pmOutTime;
+
+              totalWorkMinutes =
+                  effectivePmOut.difference(effectivePmIn).inMinutes;
+
+              final requiredWorkMinutes = 4 * 60;
+              if (totalWorkMinutes < requiredWorkMinutes) {
+                dailyUndertimeMinutes = requiredWorkMinutes - totalWorkMinutes;
+              }
             } else {
-              // No lunch break recorded, assume 1 hour was taken.
-              // Calculate total duration and subtract 1 hour lunch
-              totalWorkMinutes = pmOutTime.difference(amInTime).inMinutes - 60;
-            }
+              // Existing logic for morning login
+              // Rule: Lunch break must be between 12 PM and 1 PM.
+              if (amOutTime != null && amOutTime.isBefore(lunchStartTime)) {
+                dailyUndertimeMinutes +=
+                    lunchStartTime.difference(amOutTime).inMinutes;
+              }
+              if (pmInTime != null && pmInTime.isAfter(lunchEndTime)) {
+                dailyUndertimeMinutes +=
+                    pmInTime.difference(lunchEndTime).inMinutes;
+              }
 
-            // Total required work is 8 hours (480 minutes)
-            final requiredWorkMinutes = 8 * 60;
-            if (totalWorkMinutes < requiredWorkMinutes) {
-              dailyUndertimeMinutes += requiredWorkMinutes - totalWorkMinutes;
+              // Calculate rendered work hours, excluding the mandatory 1-hour lunch
+              if (amOutTime != null && pmInTime != null) {
+                // Has lunch break, calculate work minutes based on that.
+                final effectiveAmOut = amOutTime.isAfter(lunchStartTime)
+                    ? lunchStartTime
+                    : amOutTime;
+                final morningWork =
+                    effectiveAmOut.difference(amInTime).inMinutes;
+
+                final effectivePmIn =
+                    pmInTime.isBefore(lunchEndTime) ? lunchEndTime : pmInTime;
+                final afternoonWork =
+                    pmOutTime.difference(effectivePmIn).inMinutes;
+
+                totalWorkMinutes = morningWork + afternoonWork;
+              } else {
+                // No lunch break recorded, assume 1 hour was taken.
+                // Calculate total duration and subtract 1 hour lunch
+                totalWorkMinutes =
+                    pmOutTime.difference(amInTime).inMinutes - 60;
+              }
+
+              // Total required work is 8 hours (480 minutes)
+              final requiredWorkMinutes = 8 * 60;
+              if (totalWorkMinutes < requiredWorkMinutes) {
+                dailyUndertimeMinutes += requiredWorkMinutes - totalWorkMinutes;
+              }
             }
 
             if (dailyUndertimeMinutes > 0) {

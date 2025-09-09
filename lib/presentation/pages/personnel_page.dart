@@ -9,6 +9,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/presentation/widgets/wfh_badge.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
   if (filename == null ||
@@ -151,11 +152,65 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 builder: (context, state) {
                   var users = [];
                   if (state is UsersLoading) {
-                    return Column(
-                      children: [
-                        SizedBox(height: 30),
-                        CircularProgressIndicator(),
-                      ],
+                    // Create fake data for skeleton loading
+                    final fakeUsers = List.filled(8, null);
+
+                    return Expanded(
+                      child: Skeletonizer(
+                        enabled: true,
+                        effect: const ShimmerEffect(
+                          baseColor: Color(0xFFE0E0E0),
+                          highlightColor: Color(0xFFEEEEEE),
+                        ),
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          interactive: true,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            scrollDirection: Axis.vertical,
+                            controller: _scrollController,
+                            itemCount: fakeUsers.length,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                clipBehavior: Clip.hardEdge,
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Color.fromARGB(
+                                      255,
+                                      0,
+                                      204,
+                                      116,
+                                    ),
+                                    child: Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    'Employee Name',
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF0066CC),
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Employee Number: 000000\nSection: Unknown',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     );
                   }
 

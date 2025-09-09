@@ -17,6 +17,7 @@ import 'package:racconnect/utility/group_attendance.dart';
 import 'package:racconnect/presentation/widgets/attendance_row.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -41,6 +42,7 @@ class _AttendancePageState extends State<AttendancePage>
       GlobalKey<ScaffoldMessengerState>();
   late AnimationController _greenGlowController;
   late Animation<Color?> _greenGlowAnimation;
+  bool _isLoading = false; // Add loading state
 
   List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
@@ -82,6 +84,10 @@ class _AttendancePageState extends State<AttendancePage>
   }
 
   Future<void> _loadInitialData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     context.read<HolidayCubit>().getAllHolidays();
     context.read<SuspensionCubit>().getAllSuspensions();
 
@@ -131,27 +137,39 @@ class _AttendancePageState extends State<AttendancePage>
                   )
                   .toList();
 
-          setState(() {
-            attendanceMap = groupAttendance(filteredLogs, suspensionMap);
+          if (mounted) {
+            setState(() {
+              attendanceMap = groupAttendance(filteredLogs, suspensionMap);
 
-            // Create a set of accomplishment dates for quick lookup
-            accomplishmentDates = {
-              for (var a in accomplishments)
-                DateFormat('yyyy-MM-dd').format(a.date),
-            };
-          });
+              // Create a set of accomplishment dates for quick lookup
+              accomplishmentDates = {
+                for (var a in accomplishments)
+                  DateFormat('yyyy-MM-dd').format(a.date),
+              };
+              _isLoading = false; // Set loading to false when data is loaded
+            });
+          }
+        } else {
+          // Handle other states (error, etc.)
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
         }
 
         // Handle leave state
         final leaveState = leaveCubit.state;
         if (leaveState is GetAllLeaveSuccess) {
-          setState(() {
-            leaveMap = {
-              for (var leave in leaveState.leaveModels)
-                DateTime(leave.date.year, leave.date.month, leave.date.day):
-                    leave.type,
-            };
-          });
+          if (mounted) {
+            setState(() {
+              leaveMap = {
+                for (var leave in leaveState.leaveModels)
+                  DateTime(leave.date.year, leave.date.month, leave.date.day):
+                      leave.type,
+              };
+            });
+          }
         }
 
         // Handle travel state
@@ -159,19 +177,21 @@ class _AttendancePageState extends State<AttendancePage>
         await travelCubit.getAllTravels();
         final travelState = travelCubit.state;
         if (travelState is GetAllTravelSuccess) {
-          setState(() {
-            travelMap = {};
-            for (var travel in travelState.travelModels) {
-              // Only show travel orders for the current employee
-              if (travel.employeeNumbers.contains(employeeNumber)) {
-                // Add each date in the travel order
-                for (var date in travel.specificDates) {
-                  final dateKey = DateTime(date.year, date.month, date.day);
-                  travelMap[dateKey] = travel.soNumber;
+          if (mounted) {
+            setState(() {
+              travelMap = {};
+              for (var travel in travelState.travelModels) {
+                // Only show travel orders for the current employee
+                if (travel.employeeNumbers.contains(employeeNumber)) {
+                  // Add each date in the travel order
+                  for (var date in travel.specificDates) {
+                    final dateKey = DateTime(date.year, date.month, date.day);
+                    travelMap[dateKey] = travel.soNumber;
+                  }
                 }
               }
-            }
-          });
+            });
+          }
         }
       }
     }
@@ -345,29 +365,169 @@ class _AttendancePageState extends State<AttendancePage>
                                   child: Scrollbar(
                                     controller: _scrollController,
                                     thumbVisibility: true,
-                                    child: ListView.builder(
-                                      controller: _scrollController,
-                                      itemCount: days.length,
-                                      itemBuilder: (context, index) {
-                                        return buildAttendanceRow(
-                                          context: context,
-                                          scaffoldMessengerKey:
-                                              _scaffoldMessengerKey,
-                                          day: days[index],
-                                          attendanceMap: attendanceMap,
-                                          holidayMap: holidayMap,
-                                          suspensionMap: suspensionMap,
-                                          leaveMap: leaveMap, // Add leaveMap
-                                          travelMap: travelMap, // Add travelMap
-                                          accomplishmentDates:
-                                              accomplishmentDates,
-                                          isSmallScreen: isSmallScreen,
-                                          greenGlowAnimation:
-                                              _greenGlowAnimation,
-                                          onRefreshAccomplishments:
-                                              _refreshAccomplishments,
-                                        );
-                                      },
+                                    child: Skeletonizer(
+                                      enabled: _isLoading,
+                                      effect: const ShimmerEffect(
+                                        baseColor: Color(0xFFE0E0E0),
+                                        highlightColor: Color(0xFFEEEEEE),
+                                      ),
+                                      child: ListView.builder(
+                                        controller: _scrollController,
+                                        itemCount:
+                                            _isLoading
+                                                ? 31
+                                                : days
+                                                    .length, // Show 31 skeleton items when loading
+                                        itemBuilder: (context, index) {
+                                          if (_isLoading) {
+                                            // Show skeleton item using actual structure
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 1.0,
+                                                  ),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 16,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        'MMM dd (E)',
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              isSmallScreen
+                                                                  ? 12
+                                                                  : 14,
+                                                          color: Colors.teal,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        '00:00 AM',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              isSmallScreen
+                                                                  ? 12
+                                                                  : 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        '00:00 PM',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              isSmallScreen
+                                                                  ? 12
+                                                                  : 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        '00:00 AM',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              isSmallScreen
+                                                                  ? 12
+                                                                  : 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        '00:00 PM',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              isSmallScreen
+                                                                  ? 12
+                                                                  : 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 4,
+                                                              vertical: 2,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color:
+                                                              Colors
+                                                                  .grey
+                                                                  .shade300,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                4,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          'Type',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize:
+                                                                isSmallScreen
+                                                                    ? 10
+                                                                    : 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color:
+                                                                Colors
+                                                                    .grey
+                                                                    .shade700,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }
+
+                                          return buildAttendanceRow(
+                                            context: context,
+                                            scaffoldMessengerKey:
+                                                _scaffoldMessengerKey,
+                                            day: days[index],
+                                            attendanceMap: attendanceMap,
+                                            holidayMap: holidayMap,
+                                            suspensionMap: suspensionMap,
+                                            leaveMap: leaveMap, // Add leaveMap
+                                            travelMap:
+                                                travelMap, // Add travelMap
+                                            accomplishmentDates:
+                                                accomplishmentDates,
+                                            isSmallScreen: isSmallScreen,
+                                            greenGlowAnimation:
+                                                _greenGlowAnimation,
+                                            onRefreshAccomplishments:
+                                                _refreshAccomplishments,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
