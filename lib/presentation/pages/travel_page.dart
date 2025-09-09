@@ -132,39 +132,38 @@ class _TravelPageState extends State<TravelPage> {
     final top = (position.dy + size.height) + 5;
 
     _overlayEntry = OverlayEntry(
-      builder:
-          (context) => Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () {
-                    _removeTooltip();
-                  },
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-              Positioned(
-                left: left,
-                top: top,
-                child: Material(
-                  elevation: 4.0,
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Container(
-                    width: tooltipWidth,
-                    padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[700],
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      tooltip,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                _removeTooltip();
+              },
+              child: Container(color: Colors.transparent),
+            ),
           ),
+          Positioned(
+            left: left,
+            top: top,
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8.0),
+              child: Container(
+                width: tooltipWidth,
+                padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  tooltip,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
 
     overlay.insert(_overlayEntry!);
@@ -183,6 +182,9 @@ class _TravelPageState extends State<TravelPage> {
   }
 
   Future<void> _loadTravels() async {
+    setState(() {
+      _isLoading = true;
+    });
     await context.read<TravelCubit>().getAllTravels();
     if (mounted) {
       setState(() {
@@ -222,21 +224,21 @@ class _TravelPageState extends State<TravelPage> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return Skeletonizer(
-      enabled: _isLoading,
-      child: RefreshIndicator(
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        onRefresh: _loadTravels,
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    return RefreshIndicator(
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
+      onRefresh: _loadTravels,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+          },
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Skeletonizer(
+            enabled: _isLoading,
             child: Column(
               children: [
                 Card(
@@ -311,183 +313,195 @@ class _TravelPageState extends State<TravelPage> {
                     if (state is GetAllTravelSuccess) {
                       final travels = state.travelModels.toList();
 
-                      if (travels.isNotEmpty) {
+                      if (travels.isEmpty) {
                         return Expanded(
-                          child: Scrollbar(
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              const SizedBox(height: 50),
+                              SvgPicture.asset(
+                                'assets/images/dog.svg',
+                                height: 100,
+                              ),
+                              const Center(
+                                child: Text(
+                                  'Nothing is here yet. Add a travel order to get started.',
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Expanded(
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          interactive: true,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            scrollDirection: Axis.vertical,
                             controller: _scrollController,
-                            thumbVisibility: true,
-                            interactive: true,
-                            child: ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              scrollDirection: Axis.vertical,
-                              controller: _scrollController,
-                              itemCount: travels.length,
-                              itemBuilder: (context, index) {
-                                final travelModel = travels[index];
-                                return ClipRect(
-                                  child: Dismissible(
-                                    key: ValueKey(travelModel.id),
-                                    direction: DismissDirection.endToStart,
-                                    onDismissed: (direction) async {},
-                                    confirmDismiss: (
-                                      DismissDirection direction,
-                                    ) async {
-                                      return await showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text("Confirm"),
-                                            content: const Text(
-                                              "Are you sure you want to delete this travel order?",
+                            itemCount: travels.length,
+                            itemBuilder: (context, index) {
+                              final travelModel = travels[index];
+                              return ClipRect(
+                                child: Dismissible(
+                                  key: ValueKey(travelModel.id),
+                                  direction: DismissDirection.endToStart,
+                                  onDismissed: (direction) async {},
+                                  confirmDismiss: (
+                                    DismissDirection direction,
+                                  ) async {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text("Confirm"),
+                                          content: const Text(
+                                            "Are you sure you want to delete this travel order?",
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(false),
+                                              child: const Text("Cancel"),
                                             ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.of(
-                                                      context,
-                                                    ).pop(false),
-                                                child: const Text("Cancel"),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  _deleteTravel(
-                                                    travelModel.id!,
-                                                  );
-                                                  Navigator.of(
-                                                    context,
-                                                  ).pop(true);
-                                                },
-                                                child: const Text("Delete"),
-                                              ),
-                                            ],
+                                            TextButton(
+                                              onPressed: () {
+                                                _deleteTravel(
+                                                  travelModel.id!,
+                                                );
+                                                Navigator.of(context).pop(true);
+                                              },
+                                              child: const Text("Delete"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  background: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.pink,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    alignment: Alignment.centerRight,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  child: Builder(
+                                    builder: (context) {
+                                      return GestureDetector(
+                                        onTapUp: (details) {
+                                          final RenderBox renderBox =
+                                              context.findRenderObject() as RenderBox;
+                                          final size = renderBox.size;
+                                          final position =
+                                              renderBox.localToGlobal(Offset.zero);
+                                          _showTooltip(
+                                            context,
+                                            position,
+                                            size,
+                                            travelModel,
                                           );
                                         },
-                                      );
-                                    },
-                                    background: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.pink,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      alignment: Alignment.centerRight,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    child: Builder(
-                                      builder: (context) {
-                                        return GestureDetector(
-                                          onTapUp: (details) {
-                                            final RenderBox renderBox =
-                                                context.findRenderObject()
-                                                    as RenderBox;
-                                            final size = renderBox.size;
-                                            final position = renderBox
-                                                .localToGlobal(Offset.zero);
-                                            _showTooltip(
-                                              context,
-                                              position,
-                                              size,
-                                              travelModel,
-                                            );
-                                          },
-                                          child: Card(
-                                            elevation: 3,
-                                            child: ListTile(
-                                              leading: CircleAvatar(
-                                                backgroundColor:
-                                                    Theme.of(
-                                                      context,
-                                                    ).primaryColor,
-                                                child: const Icon(
-                                                  Icons.directions_car,
-                                                  color: Colors.white,
-                                                ),
+                                        child: Card(
+                                          elevation: 3,
+                                          child: ListTile(
+                                            leading: CircleAvatar(
+                                              backgroundColor:
+                                                  Theme.of(context).primaryColor,
+                                              child: const Icon(
+                                                Icons.directions_car,
+                                                color: Colors.white,
                                               ),
-                                              title: Text(
-                                                travelModel.soNumber,
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).primaryColor,
-                                                ),
+                                            ),
+                                            title: Text(
+                                              travelModel.soNumber,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Theme.of(context).primaryColor,
                                               ),
-                                              subtitle: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
+                                            ),
+                                            subtitle: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${travelModel.employeeNumbers.length} employee${travelModel.employeeNumbers.length != 1 ? 's' : ''}, ${travelModel.specificDates.length} date${travelModel.specificDates.length != 1 ? 's' : ''}',
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                                if (travelModel.specificDates.isNotEmpty)
                                                   Text(
-                                                    '${travelModel.employeeNumbers.length} employee${travelModel.employeeNumbers.length != 1 ? 's' : ''}, ${travelModel.specificDates.length} date${travelModel.specificDates.length != 1 ? 's' : ''}',
+                                                    _formatTravelDates(
+                                                      travelModel.specificDates,
+                                                    ),
                                                     style: const TextStyle(
                                                       fontSize: 10,
                                                     ),
                                                   ),
-                                                  if (travelModel
-                                                      .specificDates
-                                                      .isNotEmpty)
-                                                    Text(
-                                                      _formatTravelDates(
-                                                        travelModel
-                                                            .specificDates,
-                                                      ),
-                                                      style: const TextStyle(
-                                                        fontSize: 10,
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                              trailing: GestureDetector(
-                                                onTap: () {
-                                                  _showTravelFormWithEdit(
-                                                    travelModel,
-                                                  );
-                                                },
-                                                child: Icon(
-                                                  Icons.edit_note,
-                                                  color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).primaryColor,
-                                                ),
+                                              ],
+                                            ),
+                                            trailing: GestureDetector(
+                                              onTap: () {
+                                                _showTravelFormWithEdit(
+                                                  travelModel,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.edit_note,
+                                                color: Theme.of(context).primaryColor,
                                               ),
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      }
+                        ),
+                      );
                     }
                     return Expanded(
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          const SizedBox(height: 50),
-                          SvgPicture.asset(
-                            'assets/images/dog.svg',
-                            height: 100,
-                          ),
-                          const Center(
-                            child: Text(
-                              'Nothing is here yet. Add a travel order to get started.',
-                              style: TextStyle(fontSize: 10),
+                      child: ListView.builder(
+                        itemCount: 10,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                        ],
+                            child: ListTile(
+                              leading: Bone.circle(size: 48),
+                              title: Bone.text(
+                                words: 2,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Bone.text(
+                                words: 4,
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

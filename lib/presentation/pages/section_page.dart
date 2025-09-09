@@ -56,6 +56,9 @@ class _SectionPageState extends State<SectionPage> {
   }
 
   Future<void> _loadSections() async {
+    setState(() {
+      _isLoading = true;
+    });
     await context.read<SectionCubit>().getAllSections();
     if (mounted) {
       setState(() {
@@ -75,21 +78,21 @@ class _SectionPageState extends State<SectionPage> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return Skeletonizer(
-      enabled: _isLoading,
-      child: RefreshIndicator(
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        onRefresh: _loadSections,
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    return RefreshIndicator(
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
+      onRefresh: _loadSections,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+          },
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Skeletonizer(
+            enabled: _isLoading,
             child: Column(
               children: [
                 Card(
@@ -158,139 +161,161 @@ class _SectionPageState extends State<SectionPage> {
                     if (state is GetAllSectionSuccess) {
                       final sections = state.sectionModels.toList();
 
-                      if (sections.isNotEmpty) {
+                      if (sections.isEmpty) {
                         return Expanded(
-                          child: Scrollbar(
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(height: 50),
+                              SvgPicture.asset(
+                                'assets/images/dog.svg',
+                                height: 100,
+                              ),
+                              Center(
+                                child: Text(
+                                  'Nothing is here yet. Add a record to get started.',
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Expanded(
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          interactive: true,
+                          child: ListView.builder(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            scrollDirection: Axis.vertical,
                             controller: _scrollController,
-                            thumbVisibility: true,
-                            interactive: true,
-                            child: ListView.builder(
-                              physics: AlwaysScrollableScrollPhysics(),
-                              scrollDirection: Axis.vertical,
-                              controller: _scrollController,
-                              itemCount: sections.length,
-                              itemBuilder: (context, index) {
-                                final sectionModel = sections[index];
-                                return ClipRect(
-                                  child: Dismissible(
-                                    key: ValueKey(sectionModel.id),
-                                    direction: DismissDirection.endToStart,
-                                    onDismissed: (direction) async {},
-                                    confirmDismiss: (
-                                      DismissDirection direction,
-                                    ) async {
-                                      return await showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text("Confirm"),
-                                            content: const Text(
-                                              "Are you sure you want to delete this record?",
+                            itemCount: sections.length,
+                            itemBuilder: (context, index) {
+                              final sectionModel = sections[index];
+                              return ClipRect(
+                                child: Dismissible(
+                                  key: ValueKey(sectionModel.id),
+                                  direction: DismissDirection.endToStart,
+                                  onDismissed: (direction) async {},
+                                  confirmDismiss: (
+                                    DismissDirection direction,
+                                  ) async {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text("Confirm"),
+                                          content: const Text(
+                                            "Are you sure you want to delete this record?",
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(false),
+                                              child: const Text("Cancel"),
                                             ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.of(
-                                                      context,
-                                                    ).pop(false),
-                                                child: const Text("Cancel"),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  if (sectionModel.id != null) {
-                                                    _deleteSection(
-                                                      sectionModel.id!,
-                                                    );
-                                                  }
-                                                  Navigator.of(
-                                                    context,
-                                                  ).pop(true);
-                                                },
-                                                child: const Text("Delete"),
-                                              ),
-                                            ],
+                                            TextButton(
+                                              onPressed: () {
+                                                if (sectionModel.id != null) {
+                                                  _deleteSection(
+                                                    sectionModel.id!,
+                                                  );
+                                                }
+                                                Navigator.of(context).pop(true);
+                                              },
+                                              child: const Text("Delete"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  background: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.pink,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    alignment: Alignment.centerRight,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  child: Card(
+                                    elevation: 3,
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        child: Icon(
+                                          Icons.group,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        sectionModel.code,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        sectionModel.name,
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                      trailing: GestureDetector(
+                                        onTap: () {
+                                          _showSectionFormWithEdit(
+                                            sectionModel,
                                           );
                                         },
-                                      );
-                                    },
-                                    background: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.pink,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      alignment: Alignment.centerRight,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    child: Card(
-                                      elevation: 3,
-                                      child: ListTile(
-                                        leading: CircleAvatar(
-                                          backgroundColor:
-                                              Theme.of(context).primaryColor,
-                                          child: Icon(
-                                            Icons.group,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        title: Text(
-                                          sectionModel.code,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          sectionModel.name,
-                                          style: TextStyle(fontSize: 10),
-                                        ),
-                                        trailing: GestureDetector(
-                                          onTap: () {
-                                            _showSectionFormWithEdit(
-                                              sectionModel,
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.edit_note,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
+                                        child: Icon(
+                                          Icons.edit_note,
+                                          color: Theme.of(context).primaryColor,
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      }
+                        ),
+                      );
                     }
                     return Expanded(
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          SizedBox(height: 50),
-                          SvgPicture.asset(
-                            'assets/images/dog.svg',
-                            height: 100,
-                          ),
-                          Center(
-                            child: Text(
-                              'Nothing is here yet. Add a record to get started.',
-                              style: TextStyle(fontSize: 10),
+                      child: ListView.builder(
+                        itemCount: 10,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                        ],
+                            child: ListTile(
+                              leading: Bone.circle(size: 48),
+                              title: Bone.text(
+                                words: 2,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Bone.text(
+                                words: 4,
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
