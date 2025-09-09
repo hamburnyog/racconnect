@@ -126,4 +126,8 @@ class AccomplishmentRepository {
         .update(id, body: data);
     return AccomplishmentModel.fromMap(record.toJson());
   }
+
+  Future<void> deleteAccomplishment({required String id}) async {
+    await pb.collection('accomplishments').delete(id);
+  }
 }

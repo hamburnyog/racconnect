@@ -343,24 +343,28 @@ class _ExportAccomplishmentsButtonState
     final garamond = await PdfGoogleFonts.cormorantGaramondRegular();
     final garamondBold = await PdfGoogleFonts.cormorantGaramondBold();
 
-    final tableHeaders = [
-      'Date',
-      'Activity / Deliverables',
-      'Accomplishment',
-      'Remarks',
-    ];
+    final tableHeaders =
+        isAnnexA
+            ? ['Date', 'Activity / Deliverables', 'Accomplishment', 'Remarks']
+            : ['Date', 'Accomplishment', 'Remarks'];
 
     final tableData =
-        accomplishments
-            .map(
-              (acc) => [
-                DateFormat('MMM dd, yyyy').format(acc.date),
-                acc.target.replaceAll('\n', ' ').replaceAll('\r', ' '),
-                acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
-                '',
-              ],
-            )
-            .toList();
+        accomplishments.map((acc) {
+          if (isAnnexA) {
+            return [
+              DateFormat('MMM dd, yyyy').format(acc.date),
+              acc.target.replaceAll('\n', ' ').replaceAll('\r', ' '),
+              acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
+              '',
+            ];
+          } else {
+            return [
+              DateFormat('MMM dd, yyyy').format(acc.date),
+              acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
+              '',
+            ];
+          }
+        }).toList();
 
     pdf.addPage(
       pw.MultiPage(
@@ -559,96 +563,166 @@ class _ExportAccomplishmentsButtonState
               pw.Table(
                 border: pw.TableBorder.all(),
                 tableWidth: pw.TableWidth.max,
-                columnWidths: {
-                  0: pw.FractionColumnWidth(0.15),
-                  1: pw.FractionColumnWidth(0.35),
-                  2: pw.FractionColumnWidth(0.35),
-                  3: pw.FractionColumnWidth(0.15),
-                },
+                columnWidths:
+                    isAnnexA
+                        ? {
+                          0: pw.FractionColumnWidth(0.15),
+                          1: pw.FractionColumnWidth(0.35),
+                          2: pw.FractionColumnWidth(0.35),
+                          3: pw.FractionColumnWidth(0.15),
+                        }
+                        : {
+                          0: pw.FractionColumnWidth(0.15),
+                          1: pw.FractionColumnWidth(0.70),
+                          2: pw.FractionColumnWidth(0.15),
+                        },
                 children: [
                   pw.TableRow(
                     decoration: const pw.BoxDecoration(
                       color: PdfColors.grey300,
                     ),
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          tableHeaders[0],
-                          textAlign: pw.TextAlign.center,
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          tableHeaders[1],
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          tableHeaders[2],
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          tableHeaders[3],
-                          textAlign: pw.TextAlign.center,
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
+                    children:
+                        isAnnexA
+                            ? [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[0],
+                                  textAlign: pw.TextAlign.center,
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[1],
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[2],
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[3],
+                                  textAlign: pw.TextAlign.center,
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ]
+                            : [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[0],
+                                  textAlign: pw.TextAlign.center,
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[1],
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.all(4),
+                                child: pw.Text(
+                                  tableHeaders[2],
+                                  textAlign: pw.TextAlign.center,
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
                   ),
                   ...tableData.map(
                     (row) => pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(4),
-                          child: pw.Text(
-                            row[0],
-                            textAlign: pw.TextAlign.center,
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(4),
-                          child: pw.Text(
-                            row[1],
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(4),
-                          child: pw.Text(
-                            row[2],
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(4),
-                          child: pw.Text(
-                            row[3],
-                            textAlign: pw.TextAlign.center,
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ],
+                      children:
+                          isAnnexA
+                              ? [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[0],
+                                    textAlign: pw.TextAlign.center,
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[1],
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[2],
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[3],
+                                    textAlign: pw.TextAlign.center,
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              ]
+                              : [
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[0],
+                                    textAlign: pw.TextAlign.center,
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[1],
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: const pw.EdgeInsets.all(4),
+                                  child: pw.Text(
+                                    row[2],
+                                    textAlign: pw.TextAlign.center,
+                                    style: const pw.TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              ],
                     ),
                   ),
                 ],

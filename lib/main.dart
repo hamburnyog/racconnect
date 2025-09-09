@@ -13,6 +13,7 @@ import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
+import 'package:racconnect/logic/cubit/time_check_cubit.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
 // import 'package:racconnect/utility/app_bloc_observer.dart';
@@ -59,6 +60,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<SuspensionCubit>(create: (_) => SuspensionCubit()),
         BlocProvider<LeaveCubit>(create: (_) => LeaveCubit()),
         BlocProvider<TravelCubit>(create: (_) => TravelCubit()),
+        BlocProvider<TimeCheckCubit>(create: (_) => TimeCheckCubit()),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',
