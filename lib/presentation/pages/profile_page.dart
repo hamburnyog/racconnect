@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -80,29 +80,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> loadSections() async {
     try {
-      final response = await http.get(
-        Uri.parse('$serverUrl/api/collections/sections/records'),
-      );
-      if (response.statusCode == 200) {
-        final List records = jsonDecode(response.body)['items'];
+      final pb = PocketBaseClient.instance;
+      final records = await pb.collection('sections').getFullList();
 
-        setState(() {
-          sectionOptions =
-              records.map<Map<String, String>>((e) {
-                return {'id': e['id'], 'name': e['name']};
-              }).toList();
+      setState(() {
+        sectionOptions = records.map<Map<String, String>>((e) {
+          return {'id': e.id, 'name': e.data['name']};
+        }).toList();
 
-          if (profile?.section != null) {
-            final match = sectionOptions.firstWhere(
-              (opt) => opt['id'] == profile!.section,
-              orElse: () => {},
-            );
-            sectionId = match['id'];
-          }
-        });
-      } else {
-        debugPrint('Failed to load sections');
-      }
+        if (profile?.section != null) {
+          final match = sectionOptions.firstWhere(
+            (opt) => opt['id'] == profile!.section,
+            orElse: () => {},
+          );
+          sectionId = match['id'];
+        }
+      });
     } catch (e) {
       debugPrint('Error fetching sections: $e');
     }

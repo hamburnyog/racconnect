@@ -78,8 +78,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
     final avatarUrl = getPocketBaseFileUrl(widget.user.avatar, widget.user.id);
 
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
+    return IntrinsicHeight(
       child: Column(
         children: [
           TabBar(

@@ -312,8 +312,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                       showModalBottomSheet(
                                         context: context,
                                         isScrollControlled: true,
-                                        scrollControlDisabledMaxHeightRatio:
-                                            0.75,
                                         showDragHandle: true,
                                         useSafeArea: true,
                                         builder: (BuildContext builder) {
