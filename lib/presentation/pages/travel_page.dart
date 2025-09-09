@@ -10,6 +10,7 @@ import 'package:racconnect/data/repositories/auth_repository.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/travel_form.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class TravelPage extends StatefulWidget {
   const TravelPage({super.key});
@@ -22,6 +23,7 @@ class _TravelPageState extends State<TravelPage> {
   OverlayEntry? _overlayEntry;
   final ScrollController _scrollController = ScrollController();
   List<UserModel> _allUsers = [];
+  bool _isLoading = true;
 
   void _showTravelForm() {
     showModalBottomSheet(
@@ -33,7 +35,7 @@ class _TravelPageState extends State<TravelPage> {
       builder: (BuildContext builder) {
         return const TravelForm();
       },
-    );
+    ).then((_) => _loadTravels());
   }
 
   void _showTravelFormWithEdit(TravelModel travelModel) {
@@ -46,11 +48,12 @@ class _TravelPageState extends State<TravelPage> {
       builder: (BuildContext builder) {
         return TravelForm(travelModel: travelModel);
       },
-    );
+    ).then((_) => _loadTravels());
   }
 
   void _deleteTravel(String id) {
     context.read<TravelCubit>().deleteTravel(id: id);
+    _loadTravels();
   }
 
   List<String> _getEmployeeNames(List<String> employeeNumbers) {
@@ -177,7 +180,16 @@ class _TravelPageState extends State<TravelPage> {
   void initState() {
     super.initState();
     _loadUsers();
-    context.read<TravelCubit>().getAllTravels();
+    _loadTravels();
+  }
+
+  Future<void> _loadTravels() async {
+    await context.read<TravelCubit>().getAllTravels();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadUsers() async {
@@ -211,262 +223,244 @@ class _TravelPageState extends State<TravelPage> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return RefreshIndicator(
-      triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () async {
-        context.read<TravelCubit>().getAllTravels();
-      },
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.trackpad,
-          },
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Column(
-            children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  title: const Text(
-                    'Travel',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+    return Skeletonizer(
+      enabled: _isLoading,
+      child: RefreshIndicator(
+        triggerMode: RefreshIndicatorTriggerMode.anywhere,
+        onRefresh: _loadTravels,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Column(
+              children: [
+                Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    minTileHeight: 70,
+                    title: const Text(
+                      'Travel',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      !isSmallScreen
+                          ? 'Manage travel orders here. Pull down to refresh, or swipe left on a record to delete.'
+                          : 'Manage travel orders here',
+                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                    leading: const Icon(
+                      Icons.airplane_ticket,
                       color: Colors.white,
                     ),
-                  ),
-                  subtitle: Text(
-                    !isSmallScreen
-                        ? 'Manage travel orders here. Pull down to refresh, or swipe left on a record to delete.'
-                        : 'Manage travel orders here',
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  leading: const Icon(
-                    Icons.airplane_ticket,
-                    color: Colors.white,
-                  ),
-                  trailing: MobileButton(
-                    isSmallScreen: isSmallScreen,
-                    onPressed: _showTravelForm,
-                    icon: const Icon(Icons.add),
-                    label: 'Add',
+                    trailing: MobileButton(
+                      isSmallScreen: isSmallScreen,
+                      onPressed: _showTravelForm,
+                      icon: const Icon(Icons.add),
+                      label: 'Add',
+                    ),
                   ),
                 ),
-              ),
-              BlocBuilder<TravelCubit, TravelState>(
-                builder: (context, state) {
-                  var travels = [];
-                  if (state is TravelLoading) {
-                    return const Column(
-                      children: [
-                        SizedBox(height: 30),
-                        CircularProgressIndicator(),
-                      ],
-                    );
-                  }
+                BlocBuilder<TravelCubit, TravelState>(
+                  builder: (context, state) {
+                    if (state is TravelError) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.error),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      });
+                    }
 
-                  if (state is TravelError) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.error),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    });
-                  }
+                    if (state is GetAllTravelSuccess) {
+                      final travels = state.travelModels.toList();
 
-                  if (state is TravelError ||
-                      state is TravelAddSuccess ||
-                      state is TravelUpdateSuccess ||
-                      state is TravelDeleteSuccess) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      context.read<TravelCubit>().getAllTravels();
-                    });
-                  }
-
-                  if (state is GetAllTravelSuccess) {
-                    travels = state.travelModels.toList();
-
-                    if (travels.isNotEmpty) {
-                      return Expanded(
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          thumbVisibility: true,
-                          interactive: true,
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            scrollDirection: Axis.vertical,
+                      if (travels.isNotEmpty) {
+                        return Expanded(
+                          child: Scrollbar(
                             controller: _scrollController,
-                            itemCount: travels.length,
-                            itemBuilder: (context, index) {
-                              final travelModel = travels[index];
-                              return ClipRect(
-                                child: Dismissible(
-                                  key: Key(travelModel.id!),
-                                  direction: DismissDirection.endToStart,
-                                  onDismissed: (direction) async {},
-                                  confirmDismiss: (
-                                    DismissDirection direction,
-                                  ) async {
-                                    return await showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text("Confirm"),
-                                          content: const Text(
-                                            "Are you sure you want to delete this travel order?",
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.of(
-                                                    context,
-                                                  ).pop(false),
-                                              child: const Text("Cancel"),
+                            thumbVisibility: true,
+                            interactive: true,
+                            child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              scrollDirection: Axis.vertical,
+                              controller: _scrollController,
+                              itemCount: travels.length,
+                              itemBuilder: (context, index) {
+                                final travelModel = travels[index];
+                                return ClipRect(
+                                  child: Dismissible(
+                                    key: Key(travelModel.id!),
+                                    direction: DismissDirection.endToStart,
+                                    onDismissed: (direction) async {},
+                                    confirmDismiss: (
+                                      DismissDirection direction,
+                                    ) async {
+                                      return await showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Confirm"),
+                                            content: const Text(
+                                              "Are you sure you want to delete this travel order?",
                                             ),
-                                            TextButton(
-                                              onPressed: () {
-                                                _deleteTravel(travelModel.id!);
-                                                Navigator.of(context).pop(true);
-                                              },
-                                              child: const Text("Delete"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                  background: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.pink,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    alignment: Alignment.centerRight,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  child: Builder(
-                                    builder: (context) {
-                                      return GestureDetector(
-                                        onTapUp: (details) {
-                                          final RenderBox renderBox =
-                                              context.findRenderObject()
-                                                  as RenderBox;
-                                          final size = renderBox.size;
-                                          final position = renderBox
-                                              .localToGlobal(Offset.zero);
-                                          _showTooltip(
-                                            context,
-                                            position,
-                                            size,
-                                            travelModel,
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      context,
+                                                    ).pop(false),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  _deleteTravel(travelModel.id!);
+                                                  Navigator.of(context).pop(true);
+                                                },
+                                                child: const Text("Delete"),
+                                              ),
+                                            ],
                                           );
                                         },
-                                        child: Card(
-                                          elevation: 3,
-                                          child: ListTile(
-                                            leading: CircleAvatar(
-                                              backgroundColor:
-                                                  Theme.of(
-                                                    context,
-                                                  ).primaryColor,
-                                              child: const Icon(
-                                                Icons.directions_car,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            title: Text(
-                                              travelModel.soNumber,
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color:
+                                      );
+                                    },
+                                    background: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.pink,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.centerRight,
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                      ),
+                                      child: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    child: Builder(
+                                      builder: (context) {
+                                        return GestureDetector(
+                                          onTapUp: (details) {
+                                            final RenderBox renderBox =
+                                                context.findRenderObject()
+                                                    as RenderBox;
+                                            final size = renderBox.size;
+                                            final position = renderBox
+                                                .localToGlobal(Offset.zero);
+                                            _showTooltip(
+                                              context,
+                                              position,
+                                              size,
+                                              travelModel,
+                                            );
+                                          },
+                                          child: Card(
+                                            elevation: 3,
+                                            child: ListTile(
+                                              leading: CircleAvatar(
+                                                backgroundColor:
                                                     Theme.of(
                                                       context,
                                                     ).primaryColor,
-                                              ),
-                                            ),
-                                            subtitle: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${travelModel.employeeNumbers.length} employee${travelModel.employeeNumbers.length != 1 ? 's' : ''}, ${travelModel.specificDates.length} date${travelModel.specificDates.length != 1 ? 's' : ''}',
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                  ),
+                                                child: const Icon(
+                                                  Icons.directions_car,
+                                                  color: Colors.white,
                                                 ),
-                                                if (travelModel
-                                                    .specificDates
-                                                    .isNotEmpty)
+                                              ),
+                                              title: Text(
+                                                travelModel.soNumber,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                ),
+                                              ),
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
                                                   Text(
-                                                    _formatTravelDates(
-                                                      travelModel.specificDates,
-                                                    ),
+                                                    '${travelModel.employeeNumbers.length} employee${travelModel.employeeNumbers.length != 1 ? 's' : ''}, ${travelModel.specificDates.length} date${travelModel.specificDates.length != 1 ? 's' : ''}',
                                                     style: const TextStyle(
                                                       fontSize: 10,
                                                     ),
                                                   ),
-                                              ],
-                                            ),
-                                            trailing: GestureDetector(
-                                              onTap: () {
-                                                _showTravelFormWithEdit(
-                                                  travelModel,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.edit_note,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).primaryColor,
+                                                  if (travelModel
+                                                      .specificDates
+                                                      .isNotEmpty)
+                                                    Text(
+                                                      _formatTravelDates(
+                                                        travelModel.specificDates,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              trailing: GestureDetector(
+                                                onTap: () {
+                                                  _showTravelFormWithEdit(
+                                                    travelModel,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.edit_note,
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     }
-                  }
-                  return Expanded(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        const SizedBox(height: 50),
-                        SvgPicture.asset('assets/images/dog.svg', height: 100),
-                        const Center(
-                          child: Text(
-                            'Nothing is here yet. Add a travel order to get started.',
-                            style: TextStyle(fontSize: 10),
+                    return Expanded(
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 50),
+                          SvgPicture.asset('assets/images/dog.svg', height: 100),
+                          const Center(
+                            child: Text(
+                              'Nothing is here yet. Add a travel order to get started.',
+                              style: TextStyle(fontSize: 10),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

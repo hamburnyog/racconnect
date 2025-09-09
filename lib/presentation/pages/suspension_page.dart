@@ -8,6 +8,7 @@ import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/suspension_form.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SuspensionPage extends StatefulWidget {
   const SuspensionPage({super.key});
@@ -18,6 +19,7 @@ class SuspensionPage extends StatefulWidget {
 
 class _SuspensionPageState extends State<SuspensionPage> {
   final ScrollController _scrollController = ScrollController();
+  bool _isLoading = true;
 
   void _showSuspensionForm() {
     showModalBottomSheet(
@@ -29,7 +31,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
       builder: (BuildContext builder) {
         return SuspensionForm();
       },
-    );
+    ).then((_) => _loadSuspensions());
   }
 
   void _showSuspensionFormWithEdit(SuspensionModel suspensionModel) {
@@ -41,17 +43,27 @@ class _SuspensionPageState extends State<SuspensionPage> {
       builder: (BuildContext builder) {
         return SuspensionForm(suspensionModel: suspensionModel);
       },
-    );
+    ).then((_) => _loadSuspensions());
   }
 
   void _deleteSuspension(String id) {
     context.read<SuspensionCubit>().deleteSuspension(id: id);
+    _loadSuspensions();
   }
 
   @override
   void initState() {
     super.initState();
-    context.read<SuspensionCubit>().getAllSuspensions();
+    _loadSuspensions();
+  }
+
+  Future<void> _loadSuspensions() async {
+    await context.read<SuspensionCubit>().getAllSuspensions();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -65,212 +77,198 @@ class _SuspensionPageState extends State<SuspensionPage> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return RefreshIndicator(
-      triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () async {
-        context.read<SuspensionCubit>().getAllSuspensions();
-      },
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.trackpad,
-          },
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Column(
-            children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  title: Text(
-                    'Suspensions',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+    return Skeletonizer(
+      enabled: _isLoading,
+      child: RefreshIndicator(
+        triggerMode: RefreshIndicatorTriggerMode.anywhere,
+        onRefresh: _loadSuspensions,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Column(
+              children: [
+                Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    minTileHeight: 70,
+                    title: Text(
+                      'Suspensions',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    !isSmallScreen
-                        ? 'Manage your suspensions here. Pull down to refresh, or swipe left on a record to delete.'
-                        : 'Manage your suspensions here',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  leading: Icon(Icons.flood_outlined, color: Colors.white),
-                  trailing: MobileButton(
-                    isSmallScreen: isSmallScreen,
-                    onPressed: _showSuspensionForm,
-                    icon: const Icon(Icons.add),
-                    label: 'Add',
+                    subtitle: Text(
+                      !isSmallScreen
+                          ? 'Manage your suspensions here. Pull down to refresh, or swipe left on a record to delete.'
+                          : 'Manage your suspensions here',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                    leading: Icon(Icons.flood_outlined, color: Colors.white),
+                    trailing: MobileButton(
+                      isSmallScreen: isSmallScreen,
+                      onPressed: _showSuspensionForm,
+                      icon: const Icon(Icons.add),
+                      label: 'Add',
+                    ),
                   ),
                 ),
-              ),
-              BlocBuilder<SuspensionCubit, SuspensionState>(
-                builder: (context, state) {
-                  var suspensions = [];
-                  if (state is SuspensionLoading) {
-                    return Column(
-                      children: [
-                        SizedBox(height: 30),
-                        CircularProgressIndicator(),
-                      ],
-                    );
-                  }
+                BlocBuilder<SuspensionCubit, SuspensionState>(
+                  builder: (context, state) {
+                    if (state is SuspensionError) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.error),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      });
+                    }
 
-                  if (state is SuspensionError) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.error),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    });
-                  }
+                    if (state is GetAllSuspensionSuccess) {
+                      final suspensions = state.suspensionModels.toList();
 
-                  if (state is SuspensionError ||
-                      state is SuspensionAddSuccess ||
-                      state is SuspensionUpdateSuccess ||
-                      state is SuspensionDeleteSuccess) {
-                    context.read<SuspensionCubit>().getAllSuspensions();
-                  }
-
-                  if (state is GetAllSuspensionSuccess) {
-                    suspensions = state.suspensionModels.toList();
-
-                    if (suspensions.isNotEmpty) {
-                      return Expanded(
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          thumbVisibility: true,
-                          interactive: true,
-                          child: ListView.builder(
-                            physics: AlwaysScrollableScrollPhysics(),
-                            scrollDirection: Axis.vertical,
+                      if (suspensions.isNotEmpty) {
+                        return Expanded(
+                          child: Scrollbar(
                             controller: _scrollController,
-                            itemCount: suspensions.length,
-                            itemBuilder: (context, index) {
-                              final suspensionModel = suspensions[index];
-                              return ClipRect(
-                                child: Dismissible(
-                                  key: UniqueKey(),
-                                  direction: DismissDirection.endToStart,
-                                  onDismissed: (direction) async {},
-                                  confirmDismiss: (
-                                    DismissDirection direction,
-                                  ) async {
-                                    return await showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text("Confirm"),
-                                          content: const Text(
-                                            "Are you sure you want to delete this record?",
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.of(
-                                                    context,
-                                                  ).pop(false),
-                                              child: const Text("Cancel"),
+                            thumbVisibility: true,
+                            interactive: true,
+                            child: ListView.builder(
+                              physics: AlwaysScrollableScrollPhysics(),
+                              scrollDirection: Axis.vertical,
+                              controller: _scrollController,
+                              itemCount: suspensions.length,
+                              itemBuilder: (context, index) {
+                                final suspensionModel = suspensions[index];
+                                return ClipRect(
+                                  child: Dismissible(
+                                    key: UniqueKey(),
+                                    direction: DismissDirection.endToStart,
+                                    onDismissed: (direction) async {},
+                                    confirmDismiss: (
+                                      DismissDirection direction,
+                                    ) async {
+                                      return await showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Confirm"),
+                                            content: const Text(
+                                              "Are you sure you want to delete this record?",
                                             ),
-                                            TextButton(
-                                              onPressed: () {
-                                                _deleteSuspension(
-                                                  suspensionModel.id,
-                                                );
-                                                Navigator.of(context).pop(true);
-                                              },
-                                              child: const Text("Delete"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                  background: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.pink,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    alignment: Alignment.centerRight,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  child: Card(
-                                    elevation: 3,
-                                    child: ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor:
-                                            Theme.of(context).primaryColor,
-                                        child: Icon(
-                                          Icons.flood_outlined,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        suspensionModel.name,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        '${DateFormat('MMMM d, yyyy').format(suspensionModel.datetime)}${suspensionModel.isHalfday ? ' - Halfday (${DateFormat('h:mm a').format(suspensionModel.datetime)})' : ''}',
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showSuspensionFormWithEdit(
-                                            suspensionModel,
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      context,
+                                                    ).pop(false),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  if (suspensionModel.id != null) {
+                                                    _deleteSuspension(
+                                                      suspensionModel.id!,
+                                                    );
+                                                  }
+                                                  Navigator.of(context).pop(true);
+                                                },
+                                                child: const Text("Delete"),
+                                              ),
+                                            ],
                                           );
                                         },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
+                                      );
+                                    },
+                                    background: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.pink,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.centerRight,
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                      ),
+                                      child: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    child: Card(
+                                      elevation: 3,
+                                      child: ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor:
+                                              Theme.of(context).primaryColor,
+                                          child: Icon(
+                                            Icons.flood_outlined,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        title: Text(
+                                          suspensionModel.name,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Theme.of(context).primaryColor,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          '${DateFormat('MMMM d, yyyy').format(suspensionModel.datetime)}${suspensionModel.isHalfday ? ' - Halfday (${DateFormat('h:mm a').format(suspensionModel.datetime)})' : ''}',
+                                          style: TextStyle(fontSize: 10),
+                                        ),
+                                        trailing: GestureDetector(
+                                          onTap: () {
+                                            _showSuspensionFormWithEdit(
+                                              suspensionModel,
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.edit_note,
+                                            color: Theme.of(context).primaryColor,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     }
-                  }
-                  return Expanded(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(height: 50),
-                        SvgPicture.asset('assets/images/dog.svg', height: 100),
-                        Center(
-                          child: Text(
-                            'Nothing is here yet. Add a record to get started.',
-                            style: TextStyle(fontSize: 10),
+                    return Expanded(
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(height: 50),
+                          SvgPicture.asset('assets/images/dog.svg', height: 100),
+                          Center(
+                            child: Text(
+                              'Nothing is here yet. Add a record to get started.',
+                              style: TextStyle(fontSize: 10),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

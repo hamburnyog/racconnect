@@ -35,17 +35,30 @@ class _PersonnelPageState extends State<PersonnelPage> {
   List<AttendanceModel> _todayAttendance = [];
   final _attendanceRepository = AttendanceRepository();
   bool _isWfhFilterActive = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    context.read<AuthCubit>().getUsers();
-    _fetchTodayAttendance();
+    _loadData();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+        await context.read<AuthCubit>().getUsers();
+    await _fetchTodayAttendance();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchTodayAttendance() async {
@@ -75,10 +88,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () async {
-        context.read<AuthCubit>().getUsers();
-        _fetchTodayAttendance();
-      },
+      onRefresh: _loadData,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           dragDevices: {
@@ -150,70 +160,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
               ),
               BlocBuilder<AuthCubit, AuthState>(
                 builder: (context, state) {
-                  var users = [];
-                  if (state is UsersLoading) {
-                    // Create fake data for skeleton loading
-                    final fakeUsers = List.filled(8, null);
-
-                    return Expanded(
-                      child: Skeletonizer(
-                        enabled: true,
-                        effect: const ShimmerEffect(
-                          baseColor: Color(0xFFE0E0E0),
-                          highlightColor: Color(0xFFEEEEEE),
-                        ),
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          thumbVisibility: true,
-                          interactive: true,
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            scrollDirection: Axis.vertical,
-                            controller: _scrollController,
-                            itemCount: fakeUsers.length,
-                            itemBuilder: (context, index) {
-                              return Card(
-                                clipBehavior: Clip.hardEdge,
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Color.fromARGB(
-                                      255,
-                                      0,
-                                      204,
-                                      116,
-                                    ),
-                                    child: Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  title: const Text(
-                                    'Employee Name',
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color(0xFF0066CC),
-                                    ),
-                                  ),
-                                  subtitle: const Text(
-                                    'Employee Number: 000000\nSection: Unknown',
-                                    style: TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
                   if (state is AuthError) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +177,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     final loggedInUserSectionCode =
                         loggedInUser.profile?.sectionCode;
 
-                    users =
+                    var users =
                         state.users
                             .where(
                               (user) =>
@@ -292,97 +238,100 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                     if (users.isNotEmpty) {
                       return Expanded(
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          thumbVisibility: true,
-                          interactive: true,
-                          child: ListView.builder(
-                            physics: AlwaysScrollableScrollPhysics(),
-                            scrollDirection: Axis.vertical,
+                        child: Skeletonizer(
+                          enabled: _isLoading,
+                          child: Scrollbar(
                             controller: _scrollController,
-                            itemCount: users.length,
-                            itemBuilder: (context, index) {
-                              final user = users[index];
-                              final profileModel = user.profile;
-                              if (profileModel == null) {
-                                return const SizedBox.shrink();
-                              }
-                              final avatarUrl = getPocketBaseFileUrl(
-                                user.avatar,
-                                user.id,
-                              );
-                              final middleInitial =
-                                  profileModel.middleName != null &&
-                                          profileModel.middleName!.isNotEmpty
-                                      ? ' ${profileModel.middleName![0]}.'
-                                      : '';
+                            thumbVisibility: true,
+                            interactive: true,
+                            child: ListView.builder(
+                              physics: AlwaysScrollableScrollPhysics(),
+                              scrollDirection: Axis.vertical,
+                              controller: _scrollController,
+                              itemCount: users.length,
+                              itemBuilder: (context, index) {
+                                final user = users[index];
+                                final profileModel = user.profile;
+                                if (profileModel == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                final avatarUrl = getPocketBaseFileUrl(
+                                  user.avatar,
+                                  user.id,
+                                );
+                                final middleInitial =
+                                    profileModel.middleName != null &&
+                                            profileModel.middleName!.isNotEmpty
+                                        ? ' ${profileModel.middleName![0]}.'
+                                        : '';
 
-                              final hasAttendance = _todayAttendance.any(
-                                (att) =>
-                                    att.employeeNumber ==
-                                    profileModel.employeeNumber,
-                              );
+                                final hasAttendance = _todayAttendance.any(
+                                  (att) =>
+                                      att.employeeNumber ==
+                                      profileModel.employeeNumber,
+                                );
 
-                              return Card(
-                                clipBehavior: Clip.hardEdge,
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor:
-                                        Theme.of(context).primaryColor,
-                                    backgroundImage:
-                                        avatarUrl != null
-                                            ? NetworkImage(avatarUrl)
-                                            : null,
-                                    child:
-                                        avatarUrl == null
-                                            ? const Icon(
-                                              Icons.person,
-                                              color: Colors.white,
+                                return Card(
+                                  clipBehavior: Clip.hardEdge,
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          Theme.of(context).primaryColor,
+                                      backgroundImage:
+                                          avatarUrl != null
+                                              ? NetworkImage(avatarUrl)
+                                              : null,
+                                      child:
+                                          avatarUrl == null
+                                              ? const Icon(
+                                                Icons.person,
+                                                color: Colors.white,
+                                              )
+                                              : null,
+                                    ),
+                                    title: Text(
+                                      '${profileModel.lastName}, ${profileModel.firstName}$middleInitial'
+                                          .toUpperCase(),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'Employee Number: ${profileModel.employeeNumber ?? 'N/A'}\nSection: ${profileModel.sectionCode ?? 'Not Assigned'}',
+                                      style: TextStyle(fontSize: 10),
+                                    ),
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        scrollControlDisabledMaxHeightRatio: 0.75,
+                                        showDragHandle: true,
+                                        useSafeArea: true,
+                                        builder: (BuildContext builder) {
+                                          return EmployeeViewPage(user: user);
+                                        },
+                                      );
+                                    },
+                                    trailing:
+                                        hasAttendance
+                                            ? Icon(
+                                              Icons
+                                                  .broadcast_on_personal_outlined,
+                                              color: Colors.green,
                                             )
                                             : null,
                                   ),
-                                  title: Text(
-                                    '${profileModel.lastName}, ${profileModel.firstName}$middleInitial'
-                                        .toUpperCase(),
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    'Employee Number: ${profileModel.employeeNumber ?? 'N/A'}\nSection: ${profileModel.sectionCode ?? 'Not Assigned'}',
-                                    style: TextStyle(fontSize: 10),
-                                  ),
-                                  onTap: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      scrollControlDisabledMaxHeightRatio: 0.75,
-                                      showDragHandle: true,
-                                      useSafeArea: true,
-                                      builder: (BuildContext builder) {
-                                        return EmployeeViewPage(user: user);
-                                      },
-                                    );
-                                  },
-                                  trailing:
-                                      hasAttendance
-                                          ? Icon(
-                                            Icons
-                                                .broadcast_on_personal_outlined,
-                                            color: Colors.green,
-                                          )
-                                          : null,
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       );

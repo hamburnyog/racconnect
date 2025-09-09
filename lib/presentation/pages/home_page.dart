@@ -9,6 +9,7 @@ import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDay;
   bool _lockClockIn = true;
   int _timeLogsToday = 0;
+  bool _isLoading = true;
 
   Map<String, List> mySelectedEvents = {};
 
@@ -32,8 +34,17 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     checkProfile();
     _selectedDay = _focusedDay;
-    loadEvents();
+    _loadAllData();
     _loadAttendanceData();
+  }
+
+  Future<void> _loadAllData() async {
+    await loadEvents();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadAttendanceData() async {
@@ -239,262 +250,265 @@ class _HomePageState extends State<HomePage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedDay = now;
-                        _focusedDay = now;
-                      });
-                    },
-                    child: ListTile(
-                      leading: const Icon(Icons.home, color: Colors.white),
-                      minTileHeight: 70,
-                      title: Text(
-                        (isSmallScreen)
-                            ? DateFormat.yMMMMd().format(now)
-                            : 'Today is ${DateFormat.yMMMMd().format(now)}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+      child: Skeletonizer(
+        enabled: _isLoading,
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Card(
+                    color: Theme.of(context).primaryColor,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedDay = now;
+                          _focusedDay = now;
+                        });
+                      },
+                      child: ListTile(
+                        leading: const Icon(Icons.home, color: Colors.white),
+                        minTileHeight: 70,
+                        title: Text(
+                          (isSmallScreen)
+                              ? DateFormat.yMMMMd().format(now)
+                              : 'Today is ${DateFormat.yMMMMd().format(now)}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        listOfDayEvents(_selectedDay!).isNotEmpty
-                            ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
-                            : (_selectedDay == null ||
-                                (_selectedDay!.year == now.year &&
-                                    _selectedDay!.month == now.month &&
-                                    _selectedDay!.day == now.day))
-                            ? 'No event for today'
-                            : 'No event for the selected day',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
+                        subtitle: Text(
+                          listOfDayEvents(_selectedDay!).isNotEmpty
+                              ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
+                              : (_selectedDay == null ||
+                                  (_selectedDay!.year == now.year &&
+                                      _selectedDay!.month == now.month &&
+                                      _selectedDay!.day == now.day))
+                              ? 'No event for today'
+                              : 'No event for the selected day',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
                         ),
-                      ),
-                      trailing: ClockInButton(
-                        lockClockIn: _lockClockIn,
-                        onPressed: _showAttendanceForm,
-                        timeLogsToday: _timeLogsToday,
+                        trailing: ClockInButton(
+                          lockClockIn: _lockClockIn,
+                          onPressed: _showAttendanceForm,
+                          timeLogsToday: _timeLogsToday,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: BlocBuilder<EventCubit, EventState>(
-                    builder: (context, state) {
-                      if (state is EventLoading) {
-                        return const Column(
-                          children: [
-                            SizedBox(height: 30),
-                            CircularProgressIndicator(),
-                          ],
-                        );
-                      }
-
-                      if (state is EventError) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(state.error),
-                              backgroundColor: Colors.red,
-                            ),
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: BlocBuilder<EventCubit, EventState>(
+                      builder: (context, state) {
+                        if (state is EventLoading) {
+                          return const Column(
+                            children: [
+                              SizedBox(height: 30),
+                              CircularProgressIndicator(),
+                            ],
                           );
-                        });
-                      }
+                        }
 
-                      if (state is GetAllEventSuccess &&
-                          listOfDayEvents(_selectedDay!).isNotEmpty) {
-                        return Column(
-                          children: [
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Wrap(
-                                alignment: WrapAlignment.start,
-                                spacing: 8.0,
-                                runSpacing: 8.0,
-                                children:
-                                    listOfDayEvents(_selectedDay!).map<Widget>((
-                                      myEvent,
-                                    ) {
-                                      final parts = myEvent.toString().split(
-                                        ',T=',
-                                      );
-                                      final title = parts[0];
-                                      final type =
-                                          parts.length > 1
-                                              ? parts[1]
-                                              : 'Unknown';
-
-                                      return Chip(
-                                        avatar: CircleAvatar(
-                                          backgroundColor: Colors.grey.shade200,
-                                          child: Icon(
-                                            () {
-                                              switch (type) {
-                                                case 'Holiday':
-                                                  return Icons.event;
-                                                case 'Birthday':
-                                                  return Icons.cake;
-                                                case 'Suspension':
-                                                  return Icons.flood;
-                                                case 'Leave':
-                                                  return Icons.sick;
-                                                case 'Travel':
-                                                  return Icons.directions_car;
-                                                default:
-                                                  return Icons.event;
-                                              }
-                                            }(),
-                                            color: () {
-                                              switch (type) {
-                                                case 'Holiday':
-                                                  return Colors.green;
-                                                case 'Birthday':
-                                                  return Colors.red;
-                                                case 'Suspension':
-                                                  return Colors.orange;
-                                                case 'Leave':
-                                                  return Colors.purple;
-                                                case 'Travel':
-                                                  return Colors.teal;
-                                                default:
-                                                  return Colors.grey;
-                                              }
-                                            }(),
-                                            size: 18,
-                                          ),
-                                        ),
-                                        label: Text(
-                                          title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
+                        if (state is EventError) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.error),
+                                backgroundColor: Colors.red,
                               ),
-                            ),
-                          ],
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TableCalendar(
-                      headerStyle: const HeaderStyle(
-                        formatButtonVisible: false,
-                        titleCentered: true,
-                      ),
-                      rowHeight: isSmallScreen ? 40 : 60,
-                      startingDayOfWeek: StartingDayOfWeek.sunday,
-                      availableGestures: AvailableGestures.none,
-                      firstDay: now.subtract(const Duration(days: 365)),
-                      lastDay: now.add(const Duration(days: 365)),
-                      focusedDay: _focusedDay,
-                      selectedDayPredicate: (day) {
-                        return isSameDay(_selectedDay, day);
-                      },
-                      onDaySelected: (selectedDay, focusedDay) {
-                        if (!isSameDay(_selectedDay, selectedDay)) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
+                            );
                           });
                         }
+
+                        if (state is GetAllEventSuccess &&
+                            listOfDayEvents(_selectedDay!).isNotEmpty) {
+                          return Column(
+                            children: [
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Wrap(
+                                  alignment: WrapAlignment.start,
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children:
+                                      listOfDayEvents(_selectedDay!).map<Widget>((
+                                    myEvent,
+                                  ) {
+                                    final parts = myEvent.toString().split(
+                                          ',T=',
+                                        );
+                                    final title = parts[0];
+                                    final type =
+                                        parts.length > 1
+                                            ? parts[1]
+                                            : 'Unknown';
+
+                                    return Chip(
+                                      avatar: CircleAvatar(
+                                        backgroundColor: Colors.grey.shade200,
+                                        child: Icon(
+                                          () {
+                                            switch (type) {
+                                              case 'Holiday':
+                                                return Icons.event;
+                                              case 'Birthday':
+                                                return Icons.cake;
+                                              case 'Suspension':
+                                                return Icons.flood;
+                                              case 'Leave':
+                                                return Icons.sick;
+                                              case 'Travel':
+                                                return Icons.directions_car;
+                                              default:
+                                                return Icons.event;
+                                            }
+                                          }(),
+                                          color: () {
+                                            switch (type) {
+                                              case 'Holiday':
+                                                return Colors.green;
+                                              case 'Birthday':
+                                                return Colors.red;
+                                              case 'Suspension':
+                                                return Colors.orange;
+                                              case 'Leave':
+                                                return Colors.purple;
+                                              case 'Travel':
+                                                return Colors.teal;
+                                              default:
+                                                return Colors.grey;
+                                            }
+                                          }(),
+                                          size: 18,
+                                        ),
+                                      ),
+                                      label: Text(
+                                        title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const SizedBox.shrink();
                       },
-                      onPageChanged: (focusedDay) {
-                        _focusedDay = focusedDay;
-                      },
-                      eventLoader: listOfDayEvents,
-                      calendarBuilders: CalendarBuilders(
-                        dowBuilder: (context, day) {
-                          final text = DateFormat.E().format(day);
-                          if (day.weekday == DateTime.sunday ||
-                              day.weekday == DateTime.saturday) {
+                    ),
+                  ),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TableCalendar(
+                        headerStyle: const HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                        ),
+                        rowHeight: isSmallScreen ? 40 : 60,
+                        startingDayOfWeek: StartingDayOfWeek.sunday,
+                        availableGestures: AvailableGestures.none,
+                        firstDay: now.subtract(const Duration(days: 365)),
+                        lastDay: now.add(const Duration(days: 365)),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) {
+                          return isSameDay(_selectedDay, day);
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          if (!isSameDay(_selectedDay, selectedDay)) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
+                          }
+                        },
+                        onPageChanged: (focusedDay) {
+                          _focusedDay = focusedDay;
+                        },
+                        eventLoader: listOfDayEvents,
+                        calendarBuilders: CalendarBuilders(
+                          dowBuilder: (context, day) {
+                            final text = DateFormat.E().format(day);
+                            if (day.weekday == DateTime.sunday ||
+                                day.weekday == DateTime.saturday) {
+                              return Center(
+                                child: Text(
+                                  text.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            }
                             return Center(
                               child: Text(
                                 text.toUpperCase(),
                                 style: const TextStyle(
-                                  color: Colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             );
-                          }
-                          return Center(
-                            child: Text(
-                              text.toUpperCase(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                          },
+                          markerBuilder: (context, date, events) {
+                            if (events.isEmpty) return null;
+                            return Positioned(
+                              bottom: isSmallScreen ? 2 : 5,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children:
+                                    events.map((event) {
+                                      final parts = event.toString().split(',T=');
+                                      final type =
+                                          parts.length > 1 ? parts[1] : 'Unknown';
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 1.5,
+                                        ),
+                                        width: isSmallScreen ? 6 : 8,
+                                        height: isSmallScreen ? 6 : 8,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: () {
+                                            switch (type) {
+                                              case 'Birthday':
+                                                return Colors.red;
+                                              case 'Holiday':
+                                                return Colors.green;
+                                              case 'Suspension':
+                                                return Colors.orange;
+                                              case 'Leave':
+                                                return Colors.purple;
+                                              case 'Travel':
+                                                return Colors.teal;
+                                              default:
+                                                return Colors.grey;
+                                            }
+                                          }(),
+                                        ),
+                                      );
+                                    }).toList(),
                               ),
-                            ),
-                          );
-                        },
-                        markerBuilder: (context, date, events) {
-                          if (events.isEmpty) return null;
-                          return Positioned(
-                            bottom: isSmallScreen ? 2 : 5,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children:
-                                  events.map((event) {
-                                    final parts = event.toString().split(',T=');
-                                    final type =
-                                        parts.length > 1 ? parts[1] : 'Unknown';
-                                    return Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 1.5,
-                                      ),
-                                      width: isSmallScreen ? 6 : 8,
-                                      height: isSmallScreen ? 6 : 8,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: () {
-                                          switch (type) {
-                                            case 'Birthday':
-                                              return Colors.red;
-                                            case 'Holiday':
-                                              return Colors.green;
-                                            case 'Suspension':
-                                              return Colors.orange;
-                                            case 'Leave':
-                                              return Colors.purple;
-                                            case 'Travel':
-                                              return Colors.teal;
-                                            default:
-                                              return Colors.grey;
-                                          }
-                                        }(),
-                                      ),
-                                    );
-                                  }).toList(),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
