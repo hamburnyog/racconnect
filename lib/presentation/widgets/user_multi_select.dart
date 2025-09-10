@@ -17,9 +17,10 @@ String? getPocketBaseFileUrl(String? filename, String? recordId) {
 class UserMultiSelect extends StatefulWidget {
   final Function(List<ProfileModel>) onSelectionChanged;
   final List<ProfileModel> selectedEmployees;
+  final List<String>? initialEmployeeNumbers; // Add this parameter
 
   const UserMultiSelect(
-      {super.key, required this.onSelectionChanged, required this.selectedEmployees});
+      {super.key, required this.onSelectionChanged, required this.selectedEmployees, this.initialEmployeeNumbers});
 
   @override
   State<UserMultiSelect> createState() => _UserMultiSelectState();
@@ -82,6 +83,21 @@ class _UserMultiSelectState extends State<UserMultiSelect> {
           .toList();
 
       allProfiles = allUsers.map((user) => user.profile!).toList();
+
+      // If initial employee numbers are provided, pre-select matching profiles
+      if (widget.initialEmployeeNumbers != null) {
+        final initialProfiles = allProfiles
+            .where(
+              (profile) =>
+                  profile.employeeNumber != null &&
+                  widget.initialEmployeeNumbers!
+                      .contains(profile.employeeNumber),
+            )
+            .toList();
+        widget.selectedEmployees.clear();
+        widget.selectedEmployees.addAll(initialProfiles);
+        widget.onSelectionChanged(widget.selectedEmployees);
+      }
 
       if (mounted) {
         setState(() {

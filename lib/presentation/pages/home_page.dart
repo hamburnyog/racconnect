@@ -525,25 +525,34 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        // Positioned FAB button
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const OrgChartDialog(),
-                  fullscreenDialog: true,
+        // Positioned FAB button - only show for users with a role
+        BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, authState) {
+            // Hide FAB if user has no role or is not authenticated
+            if (authState is! AuthenticatedState || authState.user.role == null || authState.user.role!.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            
+            return Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton(
+                backgroundColor: Colors.white,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const OrgChartDialog(),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.account_tree,
+                  color: Theme.of(context).primaryColor,
                 ),
-              );
-            },
-            child: Icon(
-              Icons.account_tree,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

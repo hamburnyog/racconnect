@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
@@ -335,6 +336,26 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               },
                             ),
                           ),
+                        ),
+                      );
+                    } else {
+                      // Show empty state when no users found
+                      return Expanded(
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 50),
+                            SvgPicture.asset(
+                              'assets/images/dog.svg',
+                              height: 100,
+                            ),
+                            const Center(
+                              child: Text(
+                                'Nothing is here yet. Add a record to get started.',
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }

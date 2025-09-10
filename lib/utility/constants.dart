@@ -54,6 +54,11 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.directions_car),
     label: 'Travels',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
+  ),
 ];
 
 const sideBarItemsOic = [
@@ -87,9 +92,14 @@ const sideBarItemsHr = [
     label: 'Holidays',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.calendar_month_outlined),
-    activeIcon: Icon(Icons.calendar_month),
+    icon: Icon(Icons.flood_outlined),
+    activeIcon: Icon(Icons.flood),
     label: 'Suspensions',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
   ),
 ];
 
@@ -112,11 +122,6 @@ const sideBarItemsUser = [
     icon: Icon(Icons.access_time),
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.sick_outlined),
-    activeIcon: Icon(Icons.sick_rounded),
-    label: 'Leaves',
   ),
 ];
 

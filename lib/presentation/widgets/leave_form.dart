@@ -24,29 +24,30 @@ class _LeaveFormState extends State<LeaveForm> {
   final formKey = GlobalKey<FormState>();
 
   final List<String> leaveTypes = [
-    'Vacation Leave',
-    'Mandatory/Forced Leave',
     'Sick Leave',
+    'Vacation Leave',
     'Maternity Leave',
     'Paternity Leave',
     'Special Privilege Leave',
     'Solo Parent Leave',
     'Study Leave',
-    '10-Day VAWC Leave',
-    'Rehabilitation Privilege',
-    'Special Leave Benefits for Women',
-    'Special Emergency (Calamity) Leave',
     'Adoption Leave',
+    '10-Day VAWC Leave',
+    'Mandatory/Forced Leave',
+    'Rehabilitation Privilege',
+    'Leave Benefits for Women',
+    'Emergency (Calamity) Leave',
     'Others',
   ];
 
   void addLeave() {
     if (formKey.currentState!.validate()) {
       context.read<LeaveCubit>().addLeave(
-            type: leaveTypeController.text.trim(),
-            specificDates: _selectedDates.toList(),
-            employeeNumbers: _selectedEmployees.map((e) => e.employeeNumber!).toList(),
-          );
+        type: leaveTypeController.text.trim(),
+        specificDates: _selectedDates.toList(),
+        employeeNumbers:
+            _selectedEmployees.map((e) => e.employeeNumber!).toList(),
+      );
       Navigator.of(context).pop();
     }
   }
@@ -55,11 +56,12 @@ class _LeaveFormState extends State<LeaveForm> {
     if (formKey.currentState!.validate()) {
       final leaveId = widget.leaveModel?.id ?? '';
       context.read<LeaveCubit>().updateLeave(
-            id: leaveId,
-            type: leaveTypeController.text.trim(),
-            specificDates: _selectedDates.toList(),
-            employeeNumbers: _selectedEmployees.map((e) => e.employeeNumber!).toList(),
-          );
+        id: leaveId,
+        type: leaveTypeController.text.trim(),
+        specificDates: _selectedDates.toList(),
+        employeeNumbers:
+            _selectedEmployees.map((e) => e.employeeNumber!).toList(),
+      );
       Navigator.of(context).pop();
     }
   }
@@ -70,7 +72,6 @@ class _LeaveFormState extends State<LeaveForm> {
     if (widget.leaveModel != null) {
       leaveTypeController.text = widget.leaveModel!.type;
       _selectedDates.addAll(widget.leaveModel!.specificDates);
-      // Note: we are not pre-filling selectedEmployees because it will be handled by UserMultiSelect
       if (widget.leaveModel!.specificDates.isNotEmpty) {
         _focusedDay = widget.leaveModel!.specificDates.first;
       }
@@ -111,7 +112,9 @@ class _LeaveFormState extends State<LeaveForm> {
                     child: Row(
                       children: [
                         Text(
-                          widget.leaveModel == null ? 'New Leave' : 'Edit Leave',
+                          widget.leaveModel == null
+                              ? 'New Leave'
+                              : 'Edit Leave',
                           style: const TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -132,15 +135,17 @@ class _LeaveFormState extends State<LeaveForm> {
               ),
               const SizedBox(height: 30),
               DropdownButtonFormField<String>(
-                initialValue: leaveTypeController.text.isEmpty
-                    ? null
-                    : leaveTypeController.text,
-                items: leaveTypes.map((String type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  );
-                }).toList(),
+                initialValue:
+                    leaveTypeController.text.isEmpty
+                        ? null
+                        : leaveTypeController.text,
+                items:
+                    leaveTypes.map((String type) {
+                      return DropdownMenuItem<String>(
+                        value: type,
+                        child: Text(type),
+                      );
+                    }).toList(),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please select a leave type';
@@ -182,30 +187,36 @@ class _LeaveFormState extends State<LeaveForm> {
                                 spacing: 8.0,
                                 runSpacing: 4.0,
                                 alignment: WrapAlignment.start,
-                                children: _selectedDates.map((date) {
-                                  return Chip(
-                                    label: Text(
-                                      DateFormat('MMM d, yyyy').format(date),
-                                    ),
-                                    backgroundColor: Theme.of(context).primaryColor,
-                                    labelStyle: const TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                    deleteIconColor: Colors.white,
-                                    onDeleted: () {
-                                      setState(() {
-                                        _selectedDates.remove(date);
-                                        state.didChange(_selectedDates);
-                                      });
-                                    },
-                                  );
-                                }).toList(),
+                                children:
+                                    _selectedDates.map((date) {
+                                      return Chip(
+                                        label: Text(
+                                          DateFormat(
+                                            'MMM d, yyyy',
+                                          ).format(date),
+                                        ),
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        labelStyle: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        deleteIconColor: Colors.white,
+                                        onDeleted: () {
+                                          setState(() {
+                                            _selectedDates.remove(date);
+                                            state.didChange(_selectedDates);
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
                               ),
                             ),
                           ],
                         ),
                       TableCalendar(
-                        firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                        firstDay: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
                         lastDay: DateTime.now().add(const Duration(days: 365)),
                         focusedDay: _focusedDay,
                         calendarFormat: CalendarFormat.month,
@@ -291,6 +302,7 @@ class _LeaveFormState extends State<LeaveForm> {
               const SizedBox(height: 20),
               UserMultiSelect(
                 selectedEmployees: _selectedEmployees,
+                initialEmployeeNumbers: widget.leaveModel?.employeeNumbers,
                 onSelectionChanged: (selected) {
                   setState(() {
                     // No need to do anything here as the widget handles its own state
@@ -316,7 +328,9 @@ class _LeaveFormState extends State<LeaveForm> {
                         const Icon(Icons.save, color: Colors.white),
                         const SizedBox(width: 10),
                         Text(
-                          widget.leaveModel == null ? 'Add Leave' : 'Save Changes',
+                          widget.leaveModel == null
+                              ? 'Add Leave'
+                              : 'Save Changes',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,

@@ -770,7 +770,7 @@ class _ExportAccomplishmentsButtonState
               pw.Center(
                 child: pw.Text(
                   '*** THIS IS A SYSTEM-GENERATED REPORT. NOTHING FOLLOWS. ***',
-                  style: pw.TextStyle(color: PdfColors.black, fontSize: 6),
+                  style: pw.TextStyle(color: PdfColors.grey, fontSize: 6),
                 ),
               ),
             ],
