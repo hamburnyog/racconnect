@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
+import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,11 +19,19 @@ import 'package:printing/printing.dart';
 class ExportAccomplishmentsButton extends StatefulWidget {
   final int selectedYear;
   final int selectedMonth;
+  final Map<DateTime, String> holidayMap;
+  final Map<DateTime, SuspensionModel> suspensionMap;
+  final Map<DateTime, String> leaveMap;
+  final Map<DateTime, String> travelMap;
 
   const ExportAccomplishmentsButton({
     super.key,
     required this.selectedYear,
     required this.selectedMonth,
+    required this.holidayMap,
+    required this.suspensionMap,
+    required this.leaveMap,
+    required this.travelMap,
   });
 
   @override
@@ -236,6 +245,10 @@ class _ExportAccomplishmentsButtonState
         period: period,
         isAnnexA: isAnnexA,
         isCOS: isCOS,
+        holidayMap: widget.holidayMap,
+        suspensionMap: widget.suspensionMap,
+        leaveMap: widget.leaveMap,
+        travelMap: widget.travelMap,
       );
 
       if (!mounted) return;
@@ -316,6 +329,10 @@ class _ExportAccomplishmentsButtonState
     String? period,
     bool isAnnexA = true,
     bool isCOS = false,
+    required Map<DateTime, String> holidayMap,
+    required Map<DateTime, SuspensionModel> suspensionMap,
+    required Map<DateTime, String> leaveMap,
+    required Map<DateTime, String> travelMap,
   }) async {
     final pdf = pw.Document();
 
@@ -348,23 +365,68 @@ class _ExportAccomplishmentsButtonState
             ? ['Date', 'Activity / Deliverables', 'Accomplishment', 'Remarks']
             : ['Date', 'Accomplishment', 'Remarks'];
 
-    final tableData =
-        accomplishments.map((acc) {
-          if (isAnnexA) {
+    final List<List<dynamic>> tableData;
+    if (isAnnexA) {
+      tableData =
+          accomplishments.map((acc) {
             return [
               DateFormat('MMM dd, yyyy').format(acc.date),
               acc.target.replaceAll('\n', ' ').replaceAll('\r', ' '),
               acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
               '',
             ];
-          } else {
-            return [
-              DateFormat('MMM dd, yyyy').format(acc.date),
-              acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
-              '',
-            ];
-          }
-        }).toList();
+          }).toList();
+    } else {
+      tableData = <List<dynamic>>[];
+      final daysInPeriod = getDaysInPeriod(month.year, month.month, period);
+
+      for (var day in daysInPeriod) {
+        final accomplishmentsForDay =
+            accomplishments
+                .where((acc) => DateUtils.isSameDay(acc.date, day))
+                .toList();
+
+        final holidayName = holidayMap[day];
+        final suspension = suspensionMap[day];
+        final leaveName = leaveMap[day];
+        final travelName = travelMap[day];
+
+        String nonWorkingDayText = '';
+        if (holidayName != null) {
+          nonWorkingDayText = holidayName;
+        } else if (suspension != null) {
+          nonWorkingDayText = suspension.name;
+        } else if (leaveName != null) {
+          nonWorkingDayText = leaveName;
+        } else if (travelName != null) {
+          nonWorkingDayText = 'On Travel Order: $travelName';
+        } else if (day.weekday == DateTime.saturday ||
+            day.weekday == DateTime.sunday) {
+          nonWorkingDayText = 'Weekend';
+        }
+
+        final accomplishmentText = accomplishmentsForDay
+            .map((e) => e.accomplishment)
+            .join('\n');
+
+        final richText = pw.RichText(
+          text: pw.TextSpan(
+            children: [
+              if (nonWorkingDayText.isNotEmpty)
+                pw.TextSpan(
+                  text: '${nonWorkingDayText.toUpperCase()}\n',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              pw.TextSpan(text: accomplishmentText),
+            ],
+          ),
+        );
+
+        tableData.add([DateFormat('MMM dd, yyyy').format(day), richText, '']);
+      }
+    }
 
     pdf.addPage(
       pw.MultiPage(
@@ -573,8 +635,8 @@ class _ExportAccomplishmentsButtonState
                         }
                         : {
                           0: pw.FractionColumnWidth(0.15),
-                          1: pw.FractionColumnWidth(0.60),
-                          2: pw.FractionColumnWidth(0.25),
+                          1: pw.FractionColumnWidth(0.50),
+                          2: pw.FractionColumnWidth(0.35),
                         },
                 children: [
                   pw.TableRow(
@@ -666,43 +728,33 @@ class _ExportAccomplishmentsButtonState
                     (row) => pw.TableRow(
                       children:
                           isAnnexA
-                              ? [
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[0],
-                                    textAlign: pw.TextAlign.center,
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[1],
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[2],
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[3],
-                                    textAlign: pw.TextAlign.center,
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                              ]
+                              ? (row as List<String>)
+                                  .asMap()
+                                  .map(
+                                    (index, cell) => MapEntry(
+                                      index,
+                                      pw.Padding(
+                                        padding: const pw.EdgeInsets.all(4),
+                                        child: pw.Text(
+                                          cell,
+                                          textAlign:
+                                              index == 0 || index == 3
+                                                  ? pw.TextAlign.center
+                                                  : pw.TextAlign.left,
+                                          style: const pw.TextStyle(
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .values
+                                  .toList()
                               : [
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),
                                   child: pw.Text(
-                                    row[0],
+                                    row[0] as String,
                                     textAlign: pw.TextAlign.center,
                                     style: const pw.TextStyle(fontSize: 10),
                                   ),
@@ -710,14 +762,14 @@ class _ExportAccomplishmentsButtonState
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),
                                   child: pw.Text(
-                                    row[1],
+                                    (row[1] as pw.RichText).text.toPlainText(),
                                     style: const pw.TextStyle(fontSize: 10),
                                   ),
                                 ),
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),
                                   child: pw.Text(
-                                    row[2],
+                                    row[2] as String,
                                     textAlign: pw.TextAlign.center,
                                     style: const pw.TextStyle(fontSize: 10),
                                   ),
@@ -836,6 +888,28 @@ class _ExportAccomplishmentsButtonState
             ? 'Hon. Rowena M. Macalintal, ASEC'
             : 'John S. Calidguid, RSW, MPA';
     return supervisor;
+  }
+
+  List<DateTime> getDaysInPeriod(int year, int month, String? period) {
+    DateTime startDate;
+    DateTime endDate;
+
+    if (period == 'first') {
+      startDate = DateTime(year, month, 1);
+      endDate = DateTime(year, month, 15);
+    } else if (period == 'second') {
+      startDate = DateTime(year, month, 16);
+      endDate = DateTime(year, month + 1, 0);
+    } else {
+      startDate = DateTime(year, month, 1);
+      endDate = DateTime(year, month + 1, 0);
+    }
+
+    final days = <DateTime>[];
+    for (var i = 0; i <= endDate.difference(startDate).inDays; i++) {
+      days.add(startDate.add(Duration(days: i)));
+    }
+    return days;
   }
 
   @override

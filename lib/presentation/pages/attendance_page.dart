@@ -429,6 +429,10 @@ class _AttendancePageState extends State<AttendancePage>
                         ExportAccomplishmentsButton(
                           selectedYear: selectedYear,
                           selectedMonth: selectedMonth,
+                          holidayMap: holidayMap,
+                          suspensionMap: suspensionMap,
+                          leaveMap: leaveMap,
+                          travelMap: travelMap,
                         ),
                         if (showImportButton)
                           ImportButton(
