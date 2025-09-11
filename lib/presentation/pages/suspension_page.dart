@@ -253,6 +253,11 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                   child: Card(
                                     elevation: 3,
                                     child: ListTile(
+                                      onTap: () {
+                                        _showSuspensionFormWithEdit(
+                                          suspensionModel,
+                                        );
+                                      },
                                       leading: CircleAvatar(
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
@@ -272,16 +277,9 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                         '${DateFormat('MMMM d, yyyy').format(suspensionModel.datetime)}${suspensionModel.isHalfday ? ' - Halfday (${DateFormat('h:mm a').format(suspensionModel.datetime)})' : ''}',
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showSuspensionFormWithEdit(
-                                            suspensionModel,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ),

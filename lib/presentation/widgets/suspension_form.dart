@@ -235,7 +235,9 @@ class _SuspensionFormState extends State<SuspensionForm> {
                       }
                       final hour = selectedTime.hour;
                       final minute = selectedTime.minute;
-                      if (hour < 7 || (hour >= 18 && minute > 30)) {
+                      if (hour < 7 ||
+                          hour > 18 ||
+                          (hour == 18 && minute > 30)) {
                         return 'Time must be between 7:00 AM and 6:30 PM';
                       }
                     }
@@ -252,6 +254,7 @@ class _SuspensionFormState extends State<SuspensionForm> {
                         selectedTime = pickedTime;
                         timeController.text = pickedTime.format(context);
                       });
+                      formKey.currentState!.validate(); // Re-validate the form
                     }
                   },
                   decoration: const InputDecoration(

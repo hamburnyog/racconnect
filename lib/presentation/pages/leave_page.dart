@@ -5,8 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/leave_model.dart';
-import 'package:racconnect/data/models/user_model.dart';
-import 'package:racconnect/data/repositories/auth_repository.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/leave_form.dart';
@@ -21,9 +19,7 @@ class LeavePage extends StatefulWidget {
 }
 
 class _LeavePageState extends State<LeavePage> {
-  OverlayEntry? _overlayEntry;
   final ScrollController _scrollController = ScrollController();
-  List<UserModel> _allUsers = [];
   bool _isLoading = true;
 
   void _showLeaveForm() {
@@ -56,25 +52,6 @@ class _LeavePageState extends State<LeavePage> {
     context.read<LeaveCubit>().deleteLeave(id: id);
   }
 
-  List<String> _getEmployeeNames(List<String> employeeNumbers) {
-    final names = <String>[];
-    for (final employeeNumber in employeeNumbers) {
-      try {
-        final user = _allUsers.firstWhere(
-          (user) => user.profile?.employeeNumber == employeeNumber,
-        );
-        if (user.profile != null) {
-          names.add('${user.profile!.lastName}, ${user.profile!.firstName}');
-        } else {
-          names.add('Unknown Employee');
-        }
-      } catch (e) {
-        names.add('Unknown Employee');
-      }
-    }
-    return names;
-  }
-
   String _formatLeaveDates(List<DateTime> dates) {
     if (dates.isEmpty) return 'No dates';
 
@@ -88,97 +65,9 @@ class _LeavePageState extends State<LeavePage> {
     }
   }
 
-  String _createTooltipMessage(LeaveModel leaveModel) {
-    final employeeNames = _getEmployeeNames(leaveModel.employeeNumbers);
-    final buffer = StringBuffer();
-
-    buffer.writeln('Staff:');
-    for (final name in employeeNames) {
-      buffer.writeln('  • $name');
-    }
-
-    if (leaveModel.specificDates.isNotEmpty) {
-      buffer.writeln('Dates:');
-      final sortedDates = List<DateTime>.from(leaveModel.specificDates)
-        ..sort((a, b) => a.compareTo(b));
-      for (final date in sortedDates) {
-        buffer.writeln('  • ${DateFormat('MMM d, yyyy').format(date)}');
-      }
-    }
-
-    return buffer.toString();
-  }
-
-  void _showTooltip(
-    BuildContext context,
-    Offset position,
-    Size size,
-    LeaveModel leaveModel,
-  ) {
-    _removeTooltip();
-    final overlay = Overlay.of(context);
-    final tooltip = _createTooltipMessage(leaveModel);
-
-    final tooltipWidth = 200.0;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    var left = position.dx + 5;
-    if (left + tooltipWidth > screenWidth) {
-      left = screenWidth - tooltipWidth;
-    }
-    if (left < 0) {
-      left = 0;
-    }
-
-    final top = (position.dy + size.height) + 5;
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                _removeTooltip();
-              },
-              child: Container(color: Colors.transparent),
-            ),
-          ),
-          Positioned(
-            left: left,
-            top: top,
-            child: Material(
-              elevation: 4.0,
-              borderRadius: BorderRadius.circular(8.0),
-              child: Container(
-                width: tooltipWidth,
-                padding: const EdgeInsets.only(top: 8.0, left: 8, right: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[700],
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  tooltip,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlay.insert(_overlayEntry!);
-  }
-
-  void _removeTooltip() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
   @override
   void initState() {
     super.initState();
-    _loadUsers();
     _loadLeaves();
   }
 
@@ -194,29 +83,9 @@ class _LeavePageState extends State<LeavePage> {
     }
   }
 
-  Future<void> _loadUsers() async {
-    try {
-      final authRepository = AuthRepository();
-      final users = await authRepository.getUsers();
-      setState(() {
-        _allUsers = users;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading employees: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     _scrollController.dispose();
-    _removeTooltip();
     super.dispose();
   }
 
@@ -407,70 +276,53 @@ class _LeavePageState extends State<LeavePage> {
                                           ),
                                           child: Builder(
                                             builder: (context) {
-                                              return GestureDetector(
-                                                onTapUp: (details) {
-                                                  final RenderBox renderBox =
-                                                      context.findRenderObject() as RenderBox;
-                                                  final size = renderBox.size;
-                                                  final position =
-                                                      renderBox.localToGlobal(Offset.zero);
-                                                  _showTooltip(
-                                                    context,
-                                                    position,
-                                                    size,
-                                                    leaveModel,
-                                                  );
-                                                },
-                                                child: Card(
-                                                  elevation: 3,
-                                                  child: ListTile(
-                                                    leading: CircleAvatar(
-                                                      backgroundColor:
-                                                          Theme.of(context).primaryColor,
-                                                      child: const Icon(
-                                                        Icons.sick_outlined,
-                                                        color: Colors.white,
-                                                      ),
+                                              return Card(
+                                                elevation: 3,
+                                                child: ListTile(
+                                                  onTap: () {
+                                                    _showLeaveFormWithEdit(
+                                                      leaveModel,
+                                                    );
+                                                  },
+                                                  leading: CircleAvatar(
+                                                    backgroundColor:
+                                                        Theme.of(context).primaryColor,
+                                                    child: const Icon(
+                                                      Icons.sick_outlined,
+                                                      color: Colors.white,
                                                     ),
-                                                    title: Text(
-                                                      leaveModel.type,
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Theme.of(context).primaryColor,
-                                                      ),
+                                                  ),
+                                                  title: Text(
+                                                    leaveModel.type,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: Theme.of(context).primaryColor,
                                                     ),
-                                                    subtitle: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment.start,
-                                                      children: [
+                                                  ),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        '${leaveModel.employeeNumbers.length} employee${leaveModel.employeeNumbers.length != 1 ? 's' : ''}, ${leaveModel.specificDates.length} date${leaveModel.specificDates.length != 1 ? 's' : ''}',
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                      if (leaveModel.specificDates.isNotEmpty)
                                                         Text(
-                                                          '${leaveModel.employeeNumbers.length} employee${leaveModel.employeeNumbers.length != 1 ? 's' : ''}, ${leaveModel.specificDates.length} date${leaveModel.specificDates.length != 1 ? 's' : ''}',
+                                                          _formatLeaveDates(
+                                                            leaveModel.specificDates,
+                                                          ),
                                                           style: const TextStyle(
                                                             fontSize: 10,
                                                           ),
                                                         ),
-                                                        if (leaveModel.specificDates.isNotEmpty)
-                                                          Text(
-                                                            _formatLeaveDates(
-                                                              leaveModel.specificDates,
-                                                            ),
-                                                            style: const TextStyle(
-                                                              fontSize: 10,
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    ),
-                                                    trailing: GestureDetector(
-                                                      onTap: () {
-                                                        _showLeaveFormWithEdit(
-                                                          leaveModel,
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.edit_note,
-                                                        color: Theme.of(context).primaryColor,
-                                                      ),
-                                                    ),
+                                                    ],
+                                                  ),
+                                                  trailing: Icon(
+                                                    Icons.edit_note,
+                                                    color: Theme.of(context).primaryColor,
                                                   ),
                                                 ),
                                               );

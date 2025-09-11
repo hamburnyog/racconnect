@@ -285,7 +285,7 @@ class _AttendancePageState extends State<AttendancePage>
                               ),
                             ),
                             subtitle: Text(
-                              'Click on work to add your daily accomplishment',
+                              'Click on any day to add your daily accomplishment',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 10,
@@ -383,8 +383,7 @@ class _AttendancePageState extends State<AttendancePage>
                                           holidayMap: holidayMap,
                                           suspensionMap: suspensionMap,
                                           leaveMap: leaveMap, // Add leaveMap
-                                          travelMap:
-                                              travelMap, // Add travelMap
+                                          travelMap: travelMap, // Add travelMap
                                           accomplishmentDates:
                                               accomplishmentDates,
                                           isSmallScreen: isSmallScreen,

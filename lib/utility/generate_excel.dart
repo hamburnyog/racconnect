@@ -319,7 +319,13 @@ Future<String?> generateExcel(
             // Half-day suspension with no time-in
             final eightAm =
                 DateTime(currentYear, currentMonth, day, 8, 0);
-            final suspensionTime = suspensionModel.datetime;
+            final suspensionTime = DateTime(
+              currentYear,
+              currentMonth,
+              day,
+              suspensionModel.datetime.hour,
+              suspensionModel.datetime.minute,
+            );
             int dailyUndertimeMinutes =
                 suspensionTime.difference(eightAm).inMinutes;
 

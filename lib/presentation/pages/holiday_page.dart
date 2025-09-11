@@ -256,6 +256,11 @@ class _HolidayPageState extends State<HolidayPage> {
                                   child: Card(
                                     elevation: 3,
                                     child: ListTile(
+                                      onTap: () {
+                                        _showHolidayFormWithEdit(
+                                          holidayModel,
+                                        );
+                                      },
                                       leading: CircleAvatar(
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
@@ -277,16 +282,9 @@ class _HolidayPageState extends State<HolidayPage> {
                                         ).format(holidayModel.date),
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showHolidayFormWithEdit(
-                                            holidayModel,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ),

@@ -252,6 +252,11 @@ class _SectionPageState extends State<SectionPage> {
                                   child: Card(
                                     elevation: 3,
                                     child: ListTile(
+                                      onTap: () {
+                                        _showSectionFormWithEdit(
+                                          sectionModel,
+                                        );
+                                      },
                                       leading: CircleAvatar(
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
@@ -271,16 +276,9 @@ class _SectionPageState extends State<SectionPage> {
                                         sectionModel.name,
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showSectionFormWithEdit(
-                                            sectionModel,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ),
