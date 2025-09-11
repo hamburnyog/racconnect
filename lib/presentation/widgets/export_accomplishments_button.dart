@@ -399,10 +399,11 @@ class _ExportAccomplishmentsButtonState
         } else if (leaveName != null) {
           nonWorkingDayText = leaveName;
         } else if (travelName != null) {
-          nonWorkingDayText = 'On Travel Order: $travelName';
-        } else if (day.weekday == DateTime.saturday ||
-            day.weekday == DateTime.sunday) {
-          nonWorkingDayText = 'Weekend';
+          nonWorkingDayText = 'Special Order #$travelName';
+        } else if (day.weekday == DateTime.saturday) {
+          nonWorkingDayText = 'Saturday';
+        } else if (day.weekday == DateTime.sunday) {
+          nonWorkingDayText = 'Sunday';
         }
 
         final accomplishmentText = accomplishmentsForDay
@@ -415,9 +416,7 @@ class _ExportAccomplishmentsButtonState
               if (nonWorkingDayText.isNotEmpty)
                 pw.TextSpan(
                   text: '${nonWorkingDayText.toUpperCase()}\n',
-                  style: pw.TextStyle(
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
               pw.TextSpan(text: accomplishmentText),
             ],
@@ -761,10 +760,7 @@ class _ExportAccomplishmentsButtonState
                                 ),
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    (row[1] as pw.RichText).text.toPlainText(),
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
+                                  child: row[1] as pw.RichText,
                                 ),
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),

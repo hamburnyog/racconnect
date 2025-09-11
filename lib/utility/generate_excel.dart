@@ -104,7 +104,7 @@ Future<String?> generateExcel(
               ? holidayName
               : (isLeave
                   ? "FILED - $leaveName"
-                  : (isTravel ? "TRAVEL - $travelName" : null));
+                  : (isTravel ? "TRAVEL - S.O. #$travelName" : null));
 
       final dayLogs =
           monthlyAttendance.where((log) {
