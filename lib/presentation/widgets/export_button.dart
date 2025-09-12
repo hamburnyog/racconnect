@@ -68,7 +68,7 @@ class _ExportButtonState extends State<ExportButton> {
         isSmallScreen: isSmallScreen,
         onPressed: isProfileComplete && !_isExporting ? handleExport : null,
         icon: Icon(_isExporting ? Icons.hourglass_bottom : Icons.download),
-        label: _isExporting ? 'Exporting...' : 'Export',
+        label: _isExporting ? 'Exporting' : 'Export',
       ),
     );
   }

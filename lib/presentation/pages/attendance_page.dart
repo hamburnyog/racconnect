@@ -10,6 +10,7 @@ import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
+import 'package:racconnect/presentation/widgets/migrate_remarks_button.dart';
 import 'package:racconnect/presentation/widgets/export_accomplishments_button.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
@@ -435,6 +436,12 @@ class _AttendancePageState extends State<AttendancePage>
                         ),
                         if (showImportButton)
                           ImportButton(
+                            selectedYear: selectedYear,
+                            selectedMonth: selectedMonth,
+                            onRefresh: _loadInitialData,
+                          ),
+                        if (showImportButton)
+                          MigrateRemarksButton(
                             selectedYear: selectedYear,
                             selectedMonth: selectedMonth,
                             onRefresh: _loadInitialData,
