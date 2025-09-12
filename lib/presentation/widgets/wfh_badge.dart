@@ -9,7 +9,7 @@ class WfhBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSmallScreen = MediaQuery.of(context).size.width <= 700;
+    final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
     return BlocProvider(
       create:
@@ -27,13 +27,13 @@ class WfhBadge extends StatelessWidget {
               MobileButton(
                 isSmallScreen: isSmallScreen,
                 onPressed: onTap,
-                icon: Icons.broadcast_on_personal_outlined,
+                icon: const Icon(Icons.broadcast_on_personal_outlined),
                 label: 'WFH',
               ),
               if (wfhCount > 0)
                 Positioned(
-                  right: isSmallScreen ? -4 : 8,
-                  top: isSmallScreen ? -4 : 2,
+                  right: isSmallScreen ? -4 : 2,
+                  top: isSmallScreen ? -4 : -4,
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(

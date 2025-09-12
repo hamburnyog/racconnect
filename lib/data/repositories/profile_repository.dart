@@ -8,7 +8,7 @@ class ProfileRepository {
     try {
       final response = await pb
           .collection('profiles')
-          .getFullList(sort: '+lastName', expand: 'section');
+          .getFullList(sort: '+lastName', expand: 'section,user');
       return response.map((e) => ProfileModel.fromJson(e.toString())).toList();
     } catch (e) {
       rethrow;

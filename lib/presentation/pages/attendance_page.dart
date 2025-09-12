@@ -7,6 +7,7 @@ import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
+import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
 import 'package:racconnect/presentation/widgets/export_accomplishments_button.dart';
@@ -15,6 +16,8 @@ import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/utility/group_attendance.dart';
 import 'package:racconnect/presentation/widgets/attendance_row.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
+import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -30,6 +33,8 @@ class _AttendancePageState extends State<AttendancePage>
   Map<String, Map<String, String>> attendanceMap = {};
   Map<DateTime, String> holidayMap = {};
   Map<DateTime, SuspensionModel> suspensionMap = {};
+  Map<DateTime, String> leaveMap = {}; // For storing leave information
+  Map<DateTime, String> travelMap = {}; // For storing travel order information
   Set<String> accomplishmentDates = {};
   List<AttendanceModel> logs = [];
   final ScrollController _scrollController = ScrollController();
@@ -37,6 +42,7 @@ class _AttendancePageState extends State<AttendancePage>
       GlobalKey<ScaffoldMessengerState>();
   late AnimationController _greenGlowController;
   late Animation<Color?> _greenGlowAnimation;
+  bool _isLoading = false; // Add loading state
 
   List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
@@ -78,15 +84,30 @@ class _AttendancePageState extends State<AttendancePage>
   }
 
   Future<void> _loadInitialData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     context.read<HolidayCubit>().getAllHolidays();
     context.read<SuspensionCubit>().getAllSuspensions();
+
+    // Load leaves
+    final leaveCubit = context.read<LeaveCubit>();
 
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
+        await leaveCubit.getAllLeaves();
+
+        // Check if widget is still mounted
+        if (!mounted) return;
+
         final cubit = context.read<AttendanceCubit>();
         await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
+
+        // Check if widget is still mounted
+        if (!mounted) return;
 
         // Fetch accomplishments for the selected month
         final startDate = DateTime(selectedYear, selectedMonth, 1);
@@ -98,6 +119,9 @@ class _AttendancePageState extends State<AttendancePage>
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
             .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
+
+        // Check if widget is still mounted
+        if (!mounted) return;
 
         final state = cubit.state;
         if (state is GetEmployeeAttendanceSuccess) {
@@ -112,15 +136,65 @@ class _AttendancePageState extends State<AttendancePage>
                   )
                   .toList();
 
-          setState(() {
-            attendanceMap = groupAttendance(filteredLogs, suspensionMap);
+          if (mounted) {
+            setState(() {
+              attendanceMap = groupAttendance(filteredLogs, suspensionMap);
 
-            // Create a set of accomplishment dates for quick lookup
-            accomplishmentDates = {
-              for (var a in accomplishments)
-                DateFormat('yyyy-MM-dd').format(a.date),
-            };
-          });
+              // Create a set of accomplishment dates for quick lookup
+              accomplishmentDates = {
+                for (var a in accomplishments)
+                  DateFormat('yyyy-MM-dd').format(a.date),
+              };
+              _isLoading = false; // Set loading to false when data is loaded
+            });
+          }
+        } else {
+          // Handle other states (error, etc.)
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        }
+
+        // Handle leave state
+        final leaveState = leaveCubit.state;
+        if (leaveState is GetAllLeaveSuccess) {
+          if (mounted) {
+            setState(() {
+              leaveMap = {};
+              for (var leave in leaveState.leaveModels) {
+                if (leave.employeeNumbers.contains(employeeNumber)) {
+                  for (var date in leave.specificDates) {
+                    final dateKey = DateTime(date.year, date.month, date.day);
+                    leaveMap[dateKey] = leave.type;
+                  }
+                }
+              }
+            });
+          }
+        }
+
+        // Handle travel state
+        final travelCubit = context.read<TravelCubit>();
+        await travelCubit.getAllTravels();
+        final travelState = travelCubit.state;
+        if (travelState is GetAllTravelSuccess) {
+          if (mounted) {
+            setState(() {
+              travelMap = {};
+              for (var travel in travelState.travelModels) {
+                // Only show travel orders for the current employee
+                if (travel.employeeNumbers.contains(employeeNumber)) {
+                  // Add each date in the travel order
+                  for (var date in travel.specificDates) {
+                    final dateKey = DateTime(date.year, date.month, date.day);
+                    travelMap[dateKey] = travel.soNumber;
+                  }
+                }
+              }
+            });
+          }
         }
       }
     }
@@ -192,44 +266,49 @@ class _AttendancePageState extends State<AttendancePage>
                   ),
                   child: Column(
                     children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: ListTile(
-                          minTileHeight: 70,
-                          leading: const Icon(
-                            Icons.access_time_rounded,
-                            color: Colors.white,
-                          ),
-                          title: Text(
-                            'Attendance',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                      Skeletonizer(
+                        enabled: _isLoading,
+                        child: Card(
+                          color: Theme.of(context).primaryColor,
+                          child: ListTile(
+                            minTileHeight: 70,
+                            leading: const Icon(
+                              Icons.access_time_rounded,
                               color: Colors.white,
                             ),
-                          ),
-                          subtitle: Text(
-                            'Click on work to add your daily accomplishment',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
+                            title: Text(
+                              'Attendance',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          trailing: BlocBuilder<AuthCubit, AuthState>(
-                            builder: (context, authState) {
-                              final hasRole = _hasUserRole(authState);
+                            subtitle: Text(
+                              'Click on any day to add your daily accomplishment',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                            trailing: BlocBuilder<AuthCubit, AuthState>(
+                              builder: (context, authState) {
+                                final hasRole = _hasUserRole(authState);
 
-                              if (!hasRole) {
-                                return const SizedBox.shrink();
-                              }
+                                if (!hasRole) {
+                                  return const SizedBox.shrink();
+                                }
 
-                              return ExportButton(
-                                selectedYear: selectedYear,
-                                selectedMonth: selectedMonth,
-                                holidayMap: holidayMap,
-                                suspensionMap: suspensionMap,
-                              );
-                            },
+                                return ExportButton(
+                                  selectedYear: selectedYear,
+                                  selectedMonth: selectedMonth,
+                                  holidayMap: holidayMap,
+                                  suspensionMap: suspensionMap,
+                                  leaveMap: leaveMap,
+                                  travelMap: travelMap,
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -289,9 +368,8 @@ class _AttendancePageState extends State<AttendancePage>
                                 ),
                                 const SizedBox(height: 10),
                                 Expanded(
-                                  child: Scrollbar(
-                                    controller: _scrollController,
-                                    thumbVisibility: true,
+                                  child: Skeletonizer(
+                                    enabled: _isLoading,
                                     child: ListView.builder(
                                       controller: _scrollController,
                                       itemCount: days.length,
@@ -304,6 +382,8 @@ class _AttendancePageState extends State<AttendancePage>
                                           attendanceMap: attendanceMap,
                                           holidayMap: holidayMap,
                                           suspensionMap: suspensionMap,
+                                          leaveMap: leaveMap, // Add leaveMap
+                                          travelMap: travelMap, // Add travelMap
                                           accomplishmentDates:
                                               accomplishmentDates,
                                           isSmallScreen: isSmallScreen,
@@ -348,6 +428,10 @@ class _AttendancePageState extends State<AttendancePage>
                         ExportAccomplishmentsButton(
                           selectedYear: selectedYear,
                           selectedMonth: selectedMonth,
+                          holidayMap: holidayMap,
+                          suspensionMap: suspensionMap,
+                          leaveMap: leaveMap,
+                          travelMap: travelMap,
                         ),
                         if (showImportButton)
                           ImportButton(

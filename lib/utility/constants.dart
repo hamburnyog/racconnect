@@ -49,6 +49,16 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.flood),
     label: 'Suspensions',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.directions_car_filled_outlined),
+    activeIcon: Icon(Icons.directions_car),
+    label: 'Travels',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
+  ),
 ];
 
 const sideBarItemsOic = [
@@ -82,19 +92,24 @@ const sideBarItemsHr = [
     label: 'Holidays',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.calendar_month_outlined),
-    activeIcon: Icon(Icons.calendar_month),
+    icon: Icon(Icons.flood_outlined),
+    activeIcon: Icon(Icons.flood),
     label: 'Suspensions',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.sick_outlined),
+    activeIcon: Icon(Icons.sick_rounded),
+    label: 'Leaves',
   ),
 ];
 
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.calendar_month_outlined),
-  //   activeIcon: Icon(Icons.calendar_month),
-  //   label: 'Special Orders',
-  // ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.airplane_ticket_outlined),
+    activeIcon: Icon(Icons.directions_car),
+    label: 'Travels',
+  ),
 ];
 
 const sideBarItemsUser = [
@@ -108,11 +123,6 @@ const sideBarItemsUser = [
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
   ),
-  // BottomNavigationBarItem(
-  //   icon: Icon(Icons.sick_outlined),
-  //   activeIcon: Icon(Icons.sick_rounded),
-  //   label: 'Leaves',
-  // ),
 ];
 
 // Cell Styles
@@ -235,6 +245,13 @@ CellStyle leftAlignedStyle = CellStyle(
   horizontalAlign: HorizontalAlign.Left,
 );
 
+CellStyle leftAlignedStyleOic = CellStyle(
+  fontSize: 9,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Left,
+);
+
 CellStyle leftBoldUnderlinedAlignedStyle = CellStyle(
   bold: true,
   fontSize: 10,
@@ -242,4 +259,28 @@ CellStyle leftBoldUnderlinedAlignedStyle = CellStyle(
   verticalAlign: VerticalAlign.Center,
   horizontalAlign: HorizontalAlign.Left,
   bottomBorder: Border(borderStyle: BorderStyle.Thin),
+);
+
+CellStyle greyedCellStyle = CellStyle(
+  fontSize: 10,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Center,
+  topBorder: Border(borderStyle: BorderStyle.Thin),
+  leftBorder: Border(borderStyle: BorderStyle.Thin),
+  bottomBorder: Border(borderStyle: BorderStyle.Thin),
+  rightBorder: Border(borderStyle: BorderStyle.Thin),
+  backgroundColorHex: ExcelColor.blue100, // Light blue background
+  bold: true,
+);
+
+CellStyle greyedTopBottomBorderCellStyle = CellStyle(
+  fontSize: 10,
+  fontFamily: getFontFamily(FontFamily.Arial),
+  verticalAlign: VerticalAlign.Center,
+  horizontalAlign: HorizontalAlign.Center,
+  bottomBorder: Border(borderStyle: BorderStyle.Thin),
+  topBorder: Border(borderStyle: BorderStyle.Thin),
+  backgroundColorHex: ExcelColor.blue100, // Light blue background
+  bold: true,
 );

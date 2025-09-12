@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class MobileButton extends StatelessWidget {
   final VoidCallback? onPressed;
-  final IconData icon;
+  final Widget icon;
   final String label;
   final Color? backgroundColor;
   final Color? foregroundColor;
@@ -32,10 +32,11 @@ class MobileButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: foregroundColor ?? Theme.of(context).primaryColor,
-                size: 18,
+              IconTheme(
+                data: IconThemeData(
+                  color: foregroundColor ?? Theme.of(context).primaryColor,
+                ),
+                child: icon,
               ),
               const SizedBox(width: 4),
               Text(
@@ -54,7 +55,7 @@ class MobileButton extends StatelessWidget {
       return ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 150, maxHeight: 40),
         child: ElevatedButton.icon(
-          icon: Icon(icon),
+          icon: icon,
           label: Text(label),
           style: ElevatedButton.styleFrom(
             foregroundColor: foregroundColor ?? Theme.of(context).primaryColor,

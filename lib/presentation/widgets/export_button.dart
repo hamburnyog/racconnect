@@ -15,6 +15,8 @@ class ExportButton extends StatefulWidget {
   final int selectedMonth;
   final Map<DateTime, String> holidayMap;
   final Map<DateTime, SuspensionModel> suspensionMap;
+  final Map<DateTime, String> leaveMap; // Add leaveMap
+  final Map<DateTime, String> travelMap; // Add travelMap
 
   const ExportButton({
     super.key,
@@ -22,6 +24,8 @@ class ExportButton extends StatefulWidget {
     required this.selectedMonth,
     required this.holidayMap,
     required this.suspensionMap,
+    required this.leaveMap, // Add leaveMap parameter
+    required this.travelMap, // Add travelMap parameter
   });
 
   @override
@@ -52,10 +56,8 @@ class _ExportButtonState extends State<ExportButton> {
       if (!isProfileComplete) return;
 
       if (isCOS) {
-        // Show dialog for COS employees to choose export options
         _showCOSExportOptions(profile!);
       } else {
-        // Regular export for non-COS employees
         await _performExport(profile!, employeeNumber, null);
       }
     }
@@ -65,7 +67,7 @@ class _ExportButtonState extends State<ExportButton> {
       child: MobileButton(
         isSmallScreen: isSmallScreen,
         onPressed: isProfileComplete && !_isExporting ? handleExport : null,
-        icon: _isExporting ? Icons.hourglass_bottom : Icons.download,
+        icon: Icon(_isExporting ? Icons.hourglass_bottom : Icons.download),
         label: _isExporting ? 'Exporting...' : 'Export',
       ),
     );
@@ -83,33 +85,21 @@ class _ExportButtonState extends State<ExportButton> {
               child: const Text('First Half (1-15)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'first',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'first');
               },
             ),
             TextButton(
               child: const Text('Second Half (16-last day)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'second',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'second');
               },
             ),
             TextButton(
               child: const Text('Whole Month'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(
-                  profile,
-                  profile.employeeNumber ?? '',
-                  'whole',
-                );
+                _performExport(profile, profile.employeeNumber ?? '', 'whole');
               },
             ),
           ],
@@ -179,6 +169,8 @@ class _ExportButtonState extends State<ExportButton> {
         monthlyLogs,
         widget.holidayMap,
         widget.suspensionMap,
+        widget.leaveMap, // Add leaveMap
+        widget.travelMap, // Add travelMap
         startDate: startDate,
         endDate: endDate,
       );

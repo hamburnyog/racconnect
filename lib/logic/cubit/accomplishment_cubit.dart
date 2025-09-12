@@ -28,4 +28,14 @@ class AccomplishmentCubit extends Cubit<AccomplishmentState> {
       emit(AccomplishmentError(e.toString()));
     }
   }
+
+  void deleteAccomplishment({required String id}) async {
+    emit(AccomplishmentLoading());
+    try {
+      await _accomplishmentRepository.deleteAccomplishment(id: id);
+      fetchAccomplishments(); // Refresh the list
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
 }

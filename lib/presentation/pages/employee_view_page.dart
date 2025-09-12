@@ -5,6 +5,7 @@ import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
+import 'package:racconnect/presentation/widgets/wfh_info_display.dart';
 import 'package:racconnect/utility/constants.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
@@ -69,8 +70,6 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
     final profile = widget.user.profile;
 
     if (profile == null) {
@@ -78,219 +77,141 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
     }
 
     final avatarUrl = getPocketBaseFileUrl(widget.user.avatar, widget.user.id);
-    final middleInitial =
-        profile.middleName != null && profile.middleName!.isNotEmpty
-            ? ' ${profile.middleName![0]}.'
-            : '';
 
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
-      child: Column(
-        children: [
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: 'Basic Information'),
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_hasAttendanceToday) ...[
-                      Icon(
-                        Icons.broadcast_on_personal_outlined,
-                        color: Colors.green,
-                      ),
-                    ],
-                    SizedBox(width: 8),
-                    Text('Current WFH Details'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: MediaQuery.of(context).viewInsets,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TabBar(
               controller: _tabController,
-              children: [
-                // Tab 1: Employee Info
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+              tabs: [
+                const Tab(text: 'Basic Information'),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: ListTile(
-                          minTileHeight: 70,
-                          leading: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            backgroundImage:
-                                avatarUrl != null
-                                    ? NetworkImage(avatarUrl)
-                                    : null,
-                            child:
-                                avatarUrl == null
-                                    ? const Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                    )
-                                    : null,
-                          ),
-                          title: Text(
-                            isSmallScreen
-                                ? 'Employee Details'
-                                : 'Employee Profile Information',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                      if (_hasAttendanceToday) ...[
+                        const Icon(
+                          Icons.broadcast_on_personal_outlined,
+                          color: Colors.green,
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      const Text('WFH Information'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab 1: Employee Info
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Card(
+                          color: Theme.of(context).primaryColor,
+                          child: ListTile(
+                            minTileHeight: 70,
+                            leading: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Theme.of(context).primaryColor,
+                              backgroundImage:
+                                  avatarUrl != null
+                                      ? NetworkImage(avatarUrl)
+                                      : null,
+                              child:
+                                  avatarUrl == null
+                                      ? const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      )
+                                      : null,
                             ),
-                          ),
-                          subtitle: Text(
-                            'Details for ${profile.firstName}$middleInitial ${profile.lastName}',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
+                            title: Text(
+                              '${profile.lastName}, ${profile.firstName} ${profile.middleName}'
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Employee Number: ${profile.employeeNumber ?? 'N/A'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                            trailing: Icon(
+                              _getGenderIcon(profile.gender),
+                              color: Colors.white,
+                              size: 34,
                             ),
                           ),
                         ),
-                      ),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildInfoField(
-                                'Employee Number',
-                                profile.employeeNumber ?? 'N/A',
+                                'Employment Status',
+                                profile.employmentStatus.toUpperCase(),
                               ),
-                              _buildInfoField('First Name', profile.firstName),
-                              _buildInfoField(
-                                'Middle Name',
-                                profile.middleName ?? 'N/A',
-                              ),
-                              _buildInfoField('Last Name', profile.lastName),
                               _buildInfoField(
                                 'Birthdate',
-                                DateFormat(
-                                  'yyyy-MM-dd',
-                                ).format(profile.birthdate),
+                                '${DateFormat('yyyy-MM-dd').format(profile.birthdate)} (${_calculateAge(profile.birthdate)})',
                               ),
-                              _buildInfoField('Gender', profile.gender),
-                              _buildInfoField('Position', profile.position),
                               _buildInfoField(
-                                'Employment Status',
-                                profile.employmentStatus,
+                                'Position',
+                                profile.position.toUpperCase(),
                               ),
                               _buildInfoField(
                                 'Unit',
-                                profile.sectionName ?? 'N/A',
+                                (profile.sectionName ?? 'N/A').toUpperCase(),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                // Tab 2: Attendance & Accomplishments
-                FutureBuilder<Map<String, dynamic>>(
-                  future: _dataFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else {
-                      final attendance =
-                          snapshot.data!['attendance'] as List<AttendanceModel>;
-                      final accomplishment =
-                          snapshot.data!['accomplishment']
-                              as AccomplishmentModel?;
+                  // Tab 2: Attendance & Accomplishments
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: _dataFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else {
+                        final attendance =
+                            snapshot.data!['attendance'] as List<AttendanceModel>;
+                        final accomplishment =
+                            snapshot.data!['accomplishment']
+                                as AccomplishmentModel?;
 
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Attendance',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            if (attendance.isEmpty)
-                              Center(child: Text('No attendance for today.'))
-                            else
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                itemCount: attendance.length,
-                                itemBuilder: (context, index) {
-                                  final log = attendance[index];
-                                  return ListTile(
-                                    leading: Icon(
-                                      log.type == 'Time In'
-                                          ? Icons.login
-                                          : Icons.logout,
-                                    ),
-                                    title: Text(log.type),
-                                    subtitle: Text(
-                                      DateFormat(
-                                        'hh:mm:ss a',
-                                      ).format(log.timestamp),
-                                    ),
-                                  );
-                                },
-                              ),
-                            SizedBox(height: 20),
-                            Text(
-                              'Accomplishments',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            if (accomplishment == null)
-                              Center(
-                                child: Text('No accomplishments for today.'),
-                              )
-                            else
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Target:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(accomplishment.target),
-                                    SizedBox(height: 20),
-                                    Text(
-                                      'Accomplishment:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(accomplishment.accomplishment),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
+                        return WfhInfoDisplay(
+                          attendance: attendance,
+                          accomplishment: accomplishment,
+                          date: DateTime.now(),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -301,15 +222,39 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.purple)),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
-          Divider(),
+          const Divider(),
         ],
       ),
     );
+  }
+
+  IconData _getGenderIcon(String gender) {
+    if (gender.toLowerCase() == 'female') {
+      return Icons.female;
+    } else if (gender.toLowerCase() == 'male') {
+      return Icons.male;
+    } else {
+      return Icons.transgender;
+    }
+  }
+
+  String _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return '$age';
   }
 }

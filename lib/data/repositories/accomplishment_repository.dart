@@ -7,19 +7,26 @@ class AccomplishmentRepository {
   Future<List<AccomplishmentModel>> getAccomplishments() async {
     try {
       final response = await pb.collection('accomplishments').getFullList();
-      return response.map((e) => AccomplishmentModel.fromMap(e.toJson())).toList();
+      return response
+          .map((e) => AccomplishmentModel.fromMap(e.toJson()))
+          .toList();
     } catch (e) {
       rethrow;
     }
   }
 
   Future<List<AccomplishmentModel>> getEmployeeAccomplishments(
-      String employeeNumber, DateTime startDate, DateTime endDate) async {
+    String employeeNumber,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     try {
       final isoStart = startDate.toUtc().toIso8601String().split('.').first;
       final isoEnd = endDate.toUtc().toIso8601String().split('.').first;
 
-      final response = await pb.collection('accomplishments').getFullList(
+      final response = await pb
+          .collection('accomplishments')
+          .getFullList(
             filter:
                 'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
             sort: '+date',
@@ -33,12 +40,17 @@ class AccomplishmentRepository {
   }
 
   Future<List<AccomplishmentModel>> getEmployeeAccomplishmentsForMonth(
-      String employeeNumber, DateTime startDate, DateTime endDate) async {
+    String employeeNumber,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     try {
       final isoStart = startDate.toUtc().toIso8601String().split('.').first;
       final isoEnd = endDate.toUtc().toIso8601String().split('.').first;
 
-      final response = await pb.collection('accomplishments').getFullList(
+      final response = await pb
+          .collection('accomplishments')
+          .getFullList(
             filter:
                 'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
             sort: '+date',
@@ -52,7 +64,9 @@ class AccomplishmentRepository {
   }
 
   Future<AccomplishmentModel?> getAccomplishmentByDate(
-      DateTime date, String employeeNumber) async {
+    DateTime date,
+    String employeeNumber,
+  ) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = startOfDay
@@ -61,7 +75,9 @@ class AccomplishmentRepository {
       final isoStart = startOfDay.toUtc().toIso8601String().split('.').first;
       final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
 
-      final response = await pb.collection('accomplishments').getFullList(
+      final response = await pb
+          .collection('accomplishments')
+          .getFullList(
             filter:
                 'date >= "$isoStart" && date <= "$isoEnd" && employeeNumber = "$employeeNumber"',
           );
@@ -105,7 +121,13 @@ class AccomplishmentRepository {
       'employeeNumber': employeeNumber,
     };
 
-    final record = await pb.collection('accomplishments').update(id, body: data);
+    final record = await pb
+        .collection('accomplishments')
+        .update(id, body: data);
     return AccomplishmentModel.fromMap(record.toJson());
+  }
+
+  Future<void> deleteAccomplishment({required String id}) async {
+    await pb.collection('accomplishments').delete(id);
   }
 }

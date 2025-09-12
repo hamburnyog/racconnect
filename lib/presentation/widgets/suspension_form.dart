@@ -36,17 +36,6 @@ class _SuspensionFormState extends State<SuspensionForm> {
 
   void addSuspension() {
     if (formKey.currentState!.validate()) {
-      if (isHalfday && timeController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Time is required when half-day suspension is checked',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
       DateTime finalDateTime;
       final date = DateTime.parse(dateController.text);
       if (isHalfday) {
@@ -71,15 +60,6 @@ class _SuspensionFormState extends State<SuspensionForm> {
 
   void saveSuspension() {
     if (formKey.currentState!.validate()) {
-      if (isHalfday && timeController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Time is required when suspension is enabled'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
       DateTime finalDateTime;
       final date = DateTime.parse(dateController.text);
       if (isHalfday) {
@@ -248,6 +228,21 @@ class _SuspensionFormState extends State<SuspensionForm> {
                 TextFormField(
                   controller: timeController,
                   readOnly: true,
+                  validator: (value) {
+                    if (isHalfday) {
+                      if (value == null || value.isEmpty) {
+                        return 'Time is required for half-day suspension';
+                      }
+                      final hour = selectedTime.hour;
+                      final minute = selectedTime.minute;
+                      if (hour < 7 ||
+                          hour > 18 ||
+                          (hour == 18 && minute > 30)) {
+                        return 'Time must be between 7:00 AM and 6:30 PM';
+                      }
+                    }
+                    return null;
+                  },
                   onTap: () async {
                     FocusScope.of(context).requestFocus(FocusNode());
                     TimeOfDay? pickedTime = await showTimePicker(
@@ -259,6 +254,7 @@ class _SuspensionFormState extends State<SuspensionForm> {
                         selectedTime = pickedTime;
                         timeController.text = pickedTime.format(context);
                       });
+                      formKey.currentState!.validate(); // Re-validate the form
                     }
                   },
                   decoration: const InputDecoration(

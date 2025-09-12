@@ -7,6 +7,7 @@ import 'package:racconnect/data/models/section_model.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/section_form.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SectionPage extends StatefulWidget {
   const SectionPage({super.key});
@@ -17,6 +18,7 @@ class SectionPage extends StatefulWidget {
 
 class _SectionPageState extends State<SectionPage> {
   final ScrollController _scrollController = ScrollController();
+  bool _isLoading = true;
 
   void _showSectionForm() {
     showModalBottomSheet(
@@ -50,7 +52,19 @@ class _SectionPageState extends State<SectionPage> {
   @override
   void initState() {
     super.initState();
-    context.read<SectionCubit>().getAllSections();
+    _loadSections();
+  }
+
+  Future<void> _loadSections() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await context.read<SectionCubit>().getAllSections();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -66,9 +80,7 @@ class _SectionPageState extends State<SectionPage> {
 
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () async {
-        context.read<SectionCubit>().getAllSections();
-      },
+      onRefresh: _loadSections,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           dragDevices: {
@@ -79,69 +91,97 @@ class _SectionPageState extends State<SectionPage> {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Column(
-            children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  title: Text(
-                    'Sections',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+          child: Skeletonizer(
+            enabled: _isLoading,
+            child: Column(
+              children: [
+                Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    minTileHeight: 70,
+                    title: Text(
+                      'Sections',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      !isSmallScreen
+                          ? 'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.'
+                          : 'Manage your sections here',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                    leading: Icon(Icons.group_rounded, color: Colors.white),
+                    trailing: MobileButton(
+                      isSmallScreen: isSmallScreen,
+                      onPressed: _showSectionForm,
+                      icon: const Icon(Icons.add),
+                      label: 'Add',
                     ),
                   ),
-                  subtitle: Text(
-                    !isSmallScreen
-                        ? 'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.'
-                        : 'Manage your sections here',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  leading: Icon(Icons.group_rounded, color: Colors.white),
-                  trailing: MobileButton(
-                    isSmallScreen: isSmallScreen,
-                    onPressed: _showSectionForm,
-                    icon: Icons.add,
-                    label: 'Add',
-                  ),
                 ),
-              ),
-              BlocBuilder<SectionCubit, SectionState>(
-                builder: (context, state) {
-                  var sections = [];
-                  if (state is SectionLoading) {
-                    return Column(
-                      children: [
-                        SizedBox(height: 30),
-                        CircularProgressIndicator(),
-                      ],
-                    );
-                  }
-
-                  if (state is SectionError) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                BlocConsumer<SectionCubit, SectionState>(
+                  listener: (context, state) {
+                    if (state is SectionError) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(state.error),
                           backgroundColor: Colors.red,
                         ),
                       );
-                    });
-                  }
+                    } else if (state is SectionAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
+                    } else if (state is SectionUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
+                    } else if (state is SectionDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Section deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadSections();
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is GetAllSectionSuccess) {
+                      final sections = state.sectionModels.toList();
 
-                  if (state is SectionError ||
-                      state is SectionAddSuccess ||
-                      state is SectionUpdateSuccess ||
-                      state is SectionDeleteSuccess) {
-                    context.read<SectionCubit>().getAllSections();
-                  }
+                      if (sections.isEmpty) {
+                        return Expanded(
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(height: 50),
+                              SvgPicture.asset(
+                                'assets/images/dog.svg',
+                                height: 100,
+                              ),
+                              Center(
+                                child: Text(
+                                  'Nothing is here yet. Add a record to get started.',
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
 
-                  if (state is GetAllSectionSuccess) {
-                    sections = state.sectionModels.toList();
-
-                    if (sections.isNotEmpty) {
                       return Expanded(
                         child: Scrollbar(
                           controller: _scrollController,
@@ -156,7 +196,7 @@ class _SectionPageState extends State<SectionPage> {
                               final sectionModel = sections[index];
                               return ClipRect(
                                 child: Dismissible(
-                                  key: UniqueKey(),
+                                  key: ValueKey(sectionModel.id),
                                   direction: DismissDirection.endToStart,
                                   onDismissed: (direction) async {},
                                   confirmDismiss: (
@@ -172,15 +212,17 @@ class _SectionPageState extends State<SectionPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed:
-                                                  () => Navigator.of(
-                                                    context,
-                                                  ).pop(false),
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                _deleteSection(sectionModel.id);
+                                                if (sectionModel.id != null) {
+                                                  _deleteSection(
+                                                    sectionModel.id!,
+                                                  );
+                                                }
                                                 Navigator.of(context).pop(true);
                                               },
                                               child: const Text("Delete"),
@@ -210,6 +252,11 @@ class _SectionPageState extends State<SectionPage> {
                                   child: Card(
                                     elevation: 3,
                                     child: ListTile(
+                                      onTap: () {
+                                        _showSectionFormWithEdit(
+                                          sectionModel,
+                                        );
+                                      },
                                       leading: CircleAvatar(
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
@@ -229,16 +276,9 @@ class _SectionPageState extends State<SectionPage> {
                                         sectionModel.name,
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showSectionFormWithEdit(
-                                            sectionModel,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ),
@@ -249,25 +289,37 @@ class _SectionPageState extends State<SectionPage> {
                         ),
                       );
                     }
-                  }
-                  return Expanded(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(height: 50),
-                        SvgPicture.asset('assets/images/dog.svg', height: 100),
-                        Center(
-                          child: Text(
-                            'Nothing is here yet. Add a record to get started.',
-                            style: TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                    return Expanded(
+                      child: ListView.builder(
+                        itemCount: 10,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: Bone.circle(size: 48),
+                              title: Bone.text(
+                                words: 2,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Bone.text(
+                                words: 4,
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

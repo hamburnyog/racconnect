@@ -8,6 +8,7 @@ import 'package:racconnect/data/models/holiday_model.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/presentation/widgets/holiday_form.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HolidayPage extends StatefulWidget {
   const HolidayPage({super.key});
@@ -18,6 +19,7 @@ class HolidayPage extends StatefulWidget {
 
 class _HolidayPageState extends State<HolidayPage> {
   final ScrollController _scrollController = ScrollController();
+  bool _isLoading = true;
 
   void _showHolidayForm() {
     showModalBottomSheet(
@@ -51,7 +53,19 @@ class _HolidayPageState extends State<HolidayPage> {
   @override
   void initState() {
     super.initState();
-    context.read<HolidayCubit>().getAllHolidays();
+    _loadHolidays();
+  }
+
+  Future<void> _loadHolidays() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await context.read<HolidayCubit>().getAllHolidays();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -67,9 +81,7 @@ class _HolidayPageState extends State<HolidayPage> {
 
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      onRefresh: () async {
-        context.read<HolidayCubit>().getAllHolidays();
-      },
+      onRefresh: _loadHolidays,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           dragDevices: {
@@ -80,72 +92,100 @@ class _HolidayPageState extends State<HolidayPage> {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Column(
-            children: [
-              Card(
-                color: Theme.of(context).primaryColor,
-                child: ListTile(
-                  minTileHeight: 70,
-                  title: Text(
-                    'Holidays',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+          child: Skeletonizer(
+            enabled: _isLoading,
+            child: Column(
+              children: [
+                Card(
+                  color: Theme.of(context).primaryColor,
+                  child: ListTile(
+                    minTileHeight: 70,
+                    title: Text(
+                      'Holidays',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      !isSmallScreen
+                          ? 'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.'
+                          : 'Manage your holidays here',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                    leading: Icon(
+                      Icons.calendar_month_outlined,
                       color: Colors.white,
                     ),
-                  ),
-                  subtitle: Text(
-                    !isSmallScreen
-                        ? 'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.'
-                        : 'Manage your holidays here',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  leading: Icon(
-                    Icons.calendar_month_outlined,
-                    color: Colors.white,
-                  ),
-                  trailing: MobileButton(
-                    isSmallScreen: isSmallScreen,
-                    onPressed: _showHolidayForm,
-                    icon: Icons.add,
-                    label: 'Add',
+                    trailing: MobileButton(
+                      isSmallScreen: isSmallScreen,
+                      onPressed: _showHolidayForm,
+                      icon: const Icon(Icons.add),
+                      label: 'Add',
+                    ),
                   ),
                 ),
-              ),
-              BlocBuilder<HolidayCubit, HolidayState>(
-                builder: (context, state) {
-                  var holidays = [];
-                  if (state is HolidayLoading) {
-                    return Column(
-                      children: [
-                        SizedBox(height: 30),
-                        CircularProgressIndicator(),
-                      ],
-                    );
-                  }
-
-                  if (state is HolidayError) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                BlocConsumer<HolidayCubit, HolidayState>(
+                  listener: (context, state) {
+                    if (state is HolidayError) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(state.error),
                           backgroundColor: Colors.red,
                         ),
                       );
-                    });
-                  }
+                    } else if (state is HolidayAddSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
+                    } else if (state is HolidayUpdateSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday updated successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
+                    } else if (state is HolidayDeleteSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Holiday deleted successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      _loadHolidays();
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is GetAllHolidaySuccess) {
+                      final holidays = state.holidayModels.toList();
 
-                  if (state is HolidayError ||
-                      state is HolidayAddSuccess ||
-                      state is HolidayUpdateSuccess ||
-                      state is HolidayDeleteSuccess) {
-                    context.read<HolidayCubit>().getAllHolidays();
-                  }
+                      if (holidays.isEmpty) {
+                        return Expanded(
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(height: 50),
+                              SvgPicture.asset(
+                                'assets/images/dog.svg',
+                                height: 100,
+                              ),
+                              Center(
+                                child: Text(
+                                  'Nothing is here yet. Add a record to get started.',
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
 
-                  if (state is GetAllHolidaySuccess) {
-                    holidays = state.holidayModels.toList();
-
-                    if (holidays.isNotEmpty) {
                       return Expanded(
                         child: Scrollbar(
                           controller: _scrollController,
@@ -160,7 +200,7 @@ class _HolidayPageState extends State<HolidayPage> {
                               final holidayModel = holidays[index];
                               return ClipRect(
                                 child: Dismissible(
-                                  key: UniqueKey(),
+                                  key: ValueKey(holidayModel.id),
                                   direction: DismissDirection.endToStart,
                                   onDismissed: (direction) async {},
                                   confirmDismiss: (
@@ -176,15 +216,17 @@ class _HolidayPageState extends State<HolidayPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed:
-                                                  () => Navigator.of(
-                                                    context,
-                                                  ).pop(false),
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                _deleteHoliday(holidayModel.id);
+                                                if (holidayModel.id != null) {
+                                                  _deleteHoliday(
+                                                    holidayModel.id!,
+                                                  );
+                                                }
                                                 Navigator.of(context).pop(true);
                                               },
                                               child: const Text("Delete"),
@@ -214,6 +256,11 @@ class _HolidayPageState extends State<HolidayPage> {
                                   child: Card(
                                     elevation: 3,
                                     child: ListTile(
+                                      onTap: () {
+                                        _showHolidayFormWithEdit(
+                                          holidayModel,
+                                        );
+                                      },
                                       leading: CircleAvatar(
                                         backgroundColor:
                                             Theme.of(context).primaryColor,
@@ -235,16 +282,9 @@ class _HolidayPageState extends State<HolidayPage> {
                                         ).format(holidayModel.date),
                                         style: TextStyle(fontSize: 10),
                                       ),
-                                      trailing: GestureDetector(
-                                        onTap: () {
-                                          _showHolidayFormWithEdit(
-                                            holidayModel,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_note,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                   ),
@@ -255,25 +295,37 @@ class _HolidayPageState extends State<HolidayPage> {
                         ),
                       );
                     }
-                  }
-                  return Expanded(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(height: 50),
-                        SvgPicture.asset('assets/images/dog.svg', height: 100),
-                        Center(
-                          child: Text(
-                            'Nothing is here yet. Add a record to get started.',
-                            style: TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                    return Expanded(
+                      child: ListView.builder(
+                        itemCount: 10,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: Bone.circle(size: 48),
+                              title: Bone.text(
+                                words: 2,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Bone.text(
+                                words: 4,
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

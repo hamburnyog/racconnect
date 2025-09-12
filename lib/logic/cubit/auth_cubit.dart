@@ -99,7 +99,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  void getUsers() async {
+  Future<void> getUsers() async {
     if (state is AuthenticatedState) {
       final user = (state as AuthenticatedState).user;
       try {
