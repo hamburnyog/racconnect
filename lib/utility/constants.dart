@@ -2,7 +2,20 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart' hide Border, BorderStyle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-final String serverUrl = dotenv.env['POCKETBASE_URL']!;
+String get serverUrl {
+  try {
+    final url = dotenv.env['POCKETBASE_URL'];
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+  } catch (e) {
+    // If dotenv is not initialized or env var doesn't exist, use fallback
+  }
+  
+  // Fallback for different environments
+  const bool isDebugMode = bool.fromEnvironment('dart.vm.product') == false;
+  return isDebugMode ? 'http://localhost:8090' : 'https://racconnect.codecarpentry.com';
+}
 
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';

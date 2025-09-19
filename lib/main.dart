@@ -24,9 +24,23 @@ Future<void> main() async {
   
   // Load environment variables based on build mode
   const bool isDebugMode = bool.fromEnvironment('dart.vm.product') == false;
-  await dotenv.load(
-    fileName: isDebugMode ? ".env.development" : ".env",
-  );
+  try {
+    await dotenv.load(
+      fileName: isDebugMode ? ".env.development" : ".env",
+    );
+  } catch (e) {
+    // If env file doesn't exist, try to load .env.example or .env.sample
+    try {
+      await dotenv.load(fileName: ".env.example");
+    } catch (e2) {
+      try {
+        await dotenv.load(fileName: ".env.sample");
+      } catch (e3) {
+        // If no env files exist, dotenv will use empty values
+        print('No environment files found, using empty values');
+      }
+    }
+  }
   
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: HydratedStorageDirectory(

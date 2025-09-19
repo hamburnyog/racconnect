@@ -176,7 +176,15 @@ class AttendanceRepository {
 
   static Future<String?> getIpAddress() async {
     try {
-      final url = Uri.parse(dotenv.env['IP_ADDRESS_API_URL']!);
+      String? ipApiUrl;
+      try {
+        ipApiUrl = dotenv.env['IP_ADDRESS_API_URL'];
+      } catch (e) {
+        // If dotenv is not initialized, use default
+        ipApiUrl = 'https://api.ipify.org';
+      }
+      
+      final url = Uri.parse(ipApiUrl ?? 'https://api.ipify.org');
       final response = await http.get(url);
 
       return response.statusCode == 200 ? response.body : null;
