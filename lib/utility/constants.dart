@@ -2,7 +2,7 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart' hide Border, BorderStyle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-final String serverUrl = dotenv.env['POCKETBASE_URL'] ?? 'https://racconnect.codecarpentry.com';
+final String serverUrl = dotenv.env['POCKETBASE_URL']!;
 
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';

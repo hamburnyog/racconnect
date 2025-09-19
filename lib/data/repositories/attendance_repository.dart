@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
@@ -175,7 +176,7 @@ class AttendanceRepository {
 
   static Future<String?> getIpAddress() async {
     try {
-      final url = Uri.parse('https://api.ipify.org');
+      final url = Uri.parse(dotenv.env['IP_ADDRESS_API_URL']!);
       final response = await http.get(url);
 
       return response.statusCode == 200 ? response.body : null;
