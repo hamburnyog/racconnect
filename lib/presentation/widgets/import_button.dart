@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/utility/import_attendance_button.dart';
 
 class ImportButton extends StatelessWidget {
@@ -41,14 +40,12 @@ class ImportButton extends StatelessWidget {
             onPressed: () async {
               final attendanceRepo =
                   localContext.read<AttendanceCubit>().attendanceRepository;
-              final internetCubit = localContext.read<InternetCubit>();
 
               await AttendanceImport(
                 context: localContext,
                 attendanceRepo: attendanceRepo,
                 selectedYear: selectedYear,
                 selectedMonth: selectedMonth,
-                internetCubit: internetCubit,
                 onImportSuccess: () async {
                   await onRefresh();
                 },

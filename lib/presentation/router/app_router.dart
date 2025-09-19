@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/time_check_cubit.dart';
 import 'package:racconnect/presentation/screens/disconnected_screen.dart';
 import 'package:racconnect/presentation/screens/main_screen.dart';
@@ -13,13 +12,11 @@ class AppRouter {
   Route? onGenerateRoute(RouteSettings routeSettings) {
     return MaterialPageRoute(
       builder: (context) {
-        final internetState = context.watch<InternetCubit>().state;
         final timeState = context.watch<TimeCheckCubit>().state;
         
-        bool internetConnected = internetState is InternetConnected;
         bool timeTampered = timeState is TimeTampered;
         
-        if (!internetConnected || timeTampered) {
+        if (timeTampered) {
           return DisconnectedScreen();
         } else {
           switch (routeSettings.name) {

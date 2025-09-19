@@ -7,9 +7,7 @@ import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/data/repositories/auth_repository.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MigrateRemarksButton extends StatefulWidget {
   final int selectedYear;
@@ -39,7 +37,6 @@ class _MigrateRemarksButtonState extends State<MigrateRemarksButton> {
             context: context,
             selectedYear: widget.selectedYear,
             selectedMonth: widget.selectedMonth,
-            internetCubit: context.read<InternetCubit>(),
             onImportSuccess: widget.onRefresh,
           );
           migration.startMigration();
@@ -55,7 +52,6 @@ class _Migration {
   final BuildContext context;
   final int selectedYear;
   final int selectedMonth;
-  final InternetCubit internetCubit;
   final VoidCallback? onImportSuccess;
   final AuthRepository authRepo = AuthRepository();
   final AttendanceRepository attendanceRepo = AttendanceRepository();
@@ -65,34 +61,15 @@ class _Migration {
     required this.context,
     required this.selectedYear,
     required this.selectedMonth,
-    required this.internetCubit,
     this.onImportSuccess,
   });
 
   final ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
   final ValueNotifier<String> statusNotifier = ValueNotifier('Preparing...');
   late BuildContext dialogContext;
-  bool _isPaused = false;
-  late StreamSubscription internetSub;
 
   Future<void> startMigration() async {
     _showProgressDialog();
-
-    internetSub = internetCubit.stream.listen((state) {
-      if (state is InternetDisconnected) {
-        _isPaused = true;
-        if (context.mounted) {
-          try {
-            Navigator.of(dialogContext).pop(); // hide dialog
-          } catch (_) {}
-        }
-      } else if (state is InternetConnected) {
-        if (_isPaused) {
-          _isPaused = false;
-          _showProgressDialog(); // re-show dialog
-        }
-      }
-    });
 
     try {
       log('Starting migration...');
@@ -190,7 +167,6 @@ class _Migration {
       }
       _showSnackBar('An error occurred during migration: $e', false);
     } finally {
-      await internetSub.cancel();
     }
   }
 

@@ -5,14 +5,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
 
 class AttendanceImport {
   final AttendanceRepository attendanceRepo;
   final BuildContext context;
   final int selectedYear;
   final int selectedMonth;
-  final InternetCubit internetCubit;
   final VoidCallback? onImportSuccess;
 
   AttendanceImport({
@@ -20,15 +18,12 @@ class AttendanceImport {
     required this.attendanceRepo,
     required this.selectedYear,
     required this.selectedMonth,
-    required this.internetCubit,
     this.onImportSuccess,
   });
 
   final ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
   final ValueNotifier<String> statusNotifier = ValueNotifier('Preparing...');
   late BuildContext dialogContext;
-  bool _isPaused = false;
-  late StreamSubscription internetSub;
 
   Future<void> pickAndImportFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -68,22 +63,6 @@ class AttendanceImport {
   }
 
   Future<void> _processBatch(List<String> initialLines) async {
-    internetSub = internetCubit.stream.listen((state) {
-      if (state is InternetDisconnected) {
-        _isPaused = true;
-        if (context.mounted) {
-          try {
-            Navigator.of(dialogContext).pop(); // hide dialog
-          } catch (_) {}
-        }
-      } else if (state is InternetConnected) {
-        if (_isPaused) {
-          _isPaused = false;
-          _showProgressDialog(); // re-show dialog
-        }
-      }
-    });
-
     if (!context.mounted) return;
 
     _showProgressDialog();
@@ -94,10 +73,6 @@ class AttendanceImport {
     final failedLog = <String>[];
 
     while (remaining.isNotEmpty) {
-      while (_isPaused) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
       final nextRetry = <String>[];
       for (int i = 0; i < remaining.length; i++) {
         final line = remaining[i];
@@ -143,7 +118,6 @@ class AttendanceImport {
       } catch (_) {}
     }
 
-    await internetSub.cancel();
     _showSnackBar(
       'Biometric logs for the selected month have been imported!',
       true,
@@ -151,8 +125,6 @@ class AttendanceImport {
 
     // ✅ call the callback if provided
     onImportSuccess?.call();
-
-    await internetSub.cancel();
   }
 
   void _showProgressDialog() {

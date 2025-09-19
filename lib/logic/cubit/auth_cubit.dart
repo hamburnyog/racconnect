@@ -88,11 +88,17 @@ class AuthCubit extends Cubit<AuthState> {
 
   void errorMessage(dynamic e) {
     if (e.runtimeType == ClientException) {
-      if (e.response['data'].isNotEmpty &&
-          e.response['data']['email']['code'] == 'validation_not_unique') {
+      if (e.response['data'] != null &&
+          e.response['data'].isNotEmpty &&
+          e.response['data']['email']?['code'] == 'validation_not_unique') {
         emit(AuthError('The email address is already taken.'));
       } else {
-        emit(AuthError(e.response['message'].toString()));
+        final message = e.response['message']?.toString();
+        if (message != null && message.isNotEmpty) {
+          emit(AuthError(message));
+        } else {
+          emit(AuthError('An unknown error occurred.'));
+        }
       }
     } else {
       emit(AuthError(e.toString()));

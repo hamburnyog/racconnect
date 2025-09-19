@@ -5,13 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PocketBaseClient {
   static final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
-
-  static final PocketBase _instance = PocketBase(
-    Uri.parse(serverUrl).toString(),
-    authStore: AppAuthStore(_asyncPrefs),
-  );
+  static PocketBase? _instance;
 
   PocketBaseClient._();
 
-  static PocketBase get instance => _instance;
+  static PocketBase get instance {
+    _instance ??= PocketBase(
+      Uri.parse(serverUrl).toString(),
+      authStore: AppAuthStore(_asyncPrefs),
+    );
+    return _instance!;
+  }
 }

@@ -2,7 +2,7 @@ name: racconnect
 description: "RACCONNECT App"
 
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.7.2
@@ -11,7 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  connectivity_plus: ^6.1.4
   cupertino_icons: ^1.0.8
   hydrated_bloc: ^10.0.0
   path_provider: ^2.1.5
@@ -71,3 +70,5 @@ flutter:
     - assets/images/orgchart2025/
     - assets/animations/
     - pubspec.yaml
+    - .env
+    - .env.development
