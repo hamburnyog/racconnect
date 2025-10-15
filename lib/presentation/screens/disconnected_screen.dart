@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +18,14 @@ class DisconnectedScreen extends StatefulWidget {
 }
 
 class _DisconnectedScreenState extends State<DisconnectedScreen> {
+  List<String> _messages = [];
+  String _currentMessage = 'Connecting';
+  int _messageIndex = 0;
+  String _ellipsis = '';
+  Timer? _messageTimer;
+  Timer? _ellipsisTimer;
+  late StreamSubscription _timeStateSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +34,69 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
       _closeAllDialogsAndBottomSheets();
       context.read<ServerCubit>().checkServerStatus();
     });
+    
+    // Listen to time state changes and navigate back when time is valid
+    _timeStateSubscription = context.read<TimeCheckCubit>().stream.listen((state) {
+      if (state is TimeValid) {
+        // Navigate back to the main route when time is valid again
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        });
+      }
+    });
+    
+    _loadMessages();
+    _startEllipsisAnimation();
+  }
+
+  Future<void> _loadMessages() async {
+    try {
+      final String response = await rootBundle.loadString('assets/messages/disconnected_messages.json');
+      final data = await json.decode(response);
+      setState(() {
+        _messages = List<String>.from(data['messages']);
+        _currentMessage = _messages.isNotEmpty ? _messages[0] : 'Connecting';
+      });
+      _startMessageRotation();
+    } catch (e) {
+      // Fallback to default message if JSON loading fails
+      setState(() {
+        _currentMessage = 'Connecting';
+      });
+    }
+  }
+
+  void _startEllipsisAnimation() {
+    _ellipsisTimer?.cancel();
+    _ellipsisTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        if (_ellipsis.length < 3) {
+          _ellipsis += '.';
+        } else {
+          _ellipsis = '';
+        }
+      });
+    });
+  }
+
+  void _startMessageRotation() {
+    if (_messages.isEmpty) return;
+    
+    _messageTimer?.cancel();
+    _messageTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      setState(() {
+        _messageIndex = (_messageIndex + 1) % _messages.length;
+        _currentMessage = _messages[_messageIndex];
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageTimer?.cancel();
+    _ellipsisTimer?.cancel();
+    _timeStateSubscription.cancel();
+    super.dispose();
   }
 
   void _closeAllDialogsAndBottomSheets() {
@@ -83,16 +157,14 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
 
     String title = 'Connection Error';
     String message = 'We\'re having trouble connecting to the server.';
-    String subMessage = 'Attempting to reconnect ...';
+    bool isTimeTampered = timeState is TimeTampered;
 
-    if (timeState is TimeTampered) {
+    if (isTimeTampered) {
       title = 'Time Tampering Detected';
       message = 'System time has been modified.';
-      subMessage = 'Please restore your system time to the correct time.';
     } else {
       title = 'Connection Error';
       message = 'We\'re having trouble connecting to the server.';
-      subMessage = 'Attempting to reconnect ...';
     }
 
     return Scaffold(
@@ -116,15 +188,32 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
                 frameRate: FrameRate.max,
               ),
               const SizedBox(height: 20),
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: isTimeTampered ? Colors.red : null,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 10),
               Text(message),
-              Text(subMessage),
-              if (timeState is TimeTampered) ...[
+              if (!isTimeTampered) ...[
+                const SizedBox(height: 5),
+                Text('$_currentMessage$_ellipsis'),
+              ] else ...[
+                const SizedBox(height: 10),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 30,
+                ),
                 const SizedBox(height: 20),
                 Text(
                   'Time difference: ${_formatDuration(timeState.timeDifference)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
                 ),
               ],
             ],

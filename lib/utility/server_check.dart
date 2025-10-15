@@ -9,6 +9,10 @@ Future<bool> isServerReachable() async {
 
   try {
     final response = await http.get(Uri.parse('$url/api/health'));
+    // If we get a 429 (Too Many Requests), treat as unreachable temporarily
+    if (response.statusCode == 429) {
+      return false;
+    }
     return response.statusCode == 200;
   } catch (e) {
     return false;

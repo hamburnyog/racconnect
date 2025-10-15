@@ -10,6 +10,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/presentation/widgets/wfh_badge.dart';
+import 'package:racconnect/utility/offline_mode_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
@@ -50,11 +51,18 @@ class _PersonnelPageState extends State<PersonnelPage> {
   }
 
   Future<void> _loadData() async {
+    final offlineMode = OfflineModeProvider.of(context)?.isOfflineMode ?? false;
+    
     setState(() {
       _isLoading = true;
     });
     await context.read<AuthCubit>().getUsers();
-    await _fetchTodayAttendance();
+    
+    // Only fetch attendance data if not in offline mode
+    if (!offlineMode) {
+      await _fetchTodayAttendance();
+    }
+    
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -126,13 +134,21 @@ class _PersonnelPageState extends State<PersonnelPage> {
                       Icons.people_alt_outlined,
                       color: Colors.white,
                     ),
-                    trailing: WfhBadge(
-                      onTap: () {
-                        setState(() {
-                          _isWfhFilterActive = !_isWfhFilterActive;
-                        });
-                      },
-                    ),
+                    trailing: offlineMode 
+                        ? Tooltip(
+                            message: 'WFH filter disabled in offline mode',
+                            child: Opacity(
+                              opacity: 0.5,
+                              child: WfhBadge(disabled: true),
+                            ),
+                          )
+                        : WfhBadge(
+                            onTap: () {
+                              setState(() {
+                                _isWfhFilterActive = !_isWfhFilterActive;
+                              });
+                            },
+                          ),
                   ),
                 ),
               ),
@@ -206,7 +222,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                       users = [];
                     }
 
-                    if (_isWfhFilterActive) {
+                    // Only apply WFH filter if not in offline mode and filter is active
+                    if (_isWfhFilterActive && !offlineMode) {
                       final wfhEmployeeNumbers =
                           _todayAttendance
                               .where((att) => att.type == 'WFH')
@@ -324,7 +341,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                       );
                                     },
                                     trailing:
-                                        hasAttendance
+                                        hasAttendance && !offlineMode
                                             ? Icon(
                                               Icons
                                                   .broadcast_on_personal_outlined,

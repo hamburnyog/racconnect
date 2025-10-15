@@ -5,7 +5,9 @@ import 'package:racconnect/presentation/widgets/mobile_button.dart';
 
 class WfhBadge extends StatelessWidget {
   final VoidCallback? onTap;
-  const WfhBadge({super.key, this.onTap});
+  final bool disabled;
+  
+  const WfhBadge({super.key, this.onTap, this.disabled = false});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class WfhBadge extends StatelessWidget {
             children: [
               MobileButton(
                 isSmallScreen: isSmallScreen,
-                onPressed: onTap,
+                onPressed: disabled ? null : onTap,
                 icon: const Icon(Icons.broadcast_on_personal_outlined),
                 label: 'WFH',
               ),

@@ -69,6 +69,6 @@ flutter:
     - assets/images/
     - assets/images/orgchart2025/
     - assets/animations/
+    - assets/messages/
     - pubspec.yaml
     - .env
-    - .env.development

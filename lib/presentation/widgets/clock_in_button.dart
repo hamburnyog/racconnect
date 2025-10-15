@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
+import 'package:racconnect/utility/offline_mode_provider.dart';
 
 class ClockInButton extends StatelessWidget {
   final bool lockClockIn;
@@ -16,6 +17,7 @@ class ClockInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 700;
+    final offlineMode = OfflineModeProvider.of(context)?.isOfflineMode ?? false;
 
     Widget icon;
     String label;
@@ -39,8 +41,9 @@ class ClockInButton extends StatelessWidget {
       label = 'WFH';
     }
 
-    final tooltipMessage =
-        lockClockIn
+    final tooltipMessage = offlineMode
+        ? 'WFH attendance is disabled in offline mode'
+        : lockClockIn
             ? 'Complete your profile to clock in.'
             : 'Click to clock in for WFH.';
 
@@ -48,7 +51,7 @@ class ClockInButton extends StatelessWidget {
       message: tooltipMessage,
       child: MobileButton(
         isSmallScreen: isSmallScreen,
-        onPressed: lockClockIn ? null : onPressed,
+        onPressed: offlineMode || lockClockIn ? null : onPressed,
         icon: icon,
         label: label,
         backgroundColor: backgroundColor,
