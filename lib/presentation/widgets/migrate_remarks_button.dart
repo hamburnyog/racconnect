@@ -133,7 +133,7 @@ class _Migration {
           logsForDay.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
           final existingAccomplishments = await accomplishmentRepo
-              .getEmployeeAccomplishments(user.profile!.employeeNumber!, day, day);
+              .getEmployeeAccomplishmentsForMonth(user.profile!.employeeNumber!, day, day);
 
           String target = logsForDay.first.remarks;
           String accomplishment =
