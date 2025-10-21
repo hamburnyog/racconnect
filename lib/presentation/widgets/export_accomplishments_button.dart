@@ -357,8 +357,8 @@ class _ExportAccomplishmentsButtonState
       footerImage = null;
     }
 
-    final garamond = await PdfGoogleFonts.cormorantGaramondRegular();
-    final garamondBold = await PdfGoogleFonts.cormorantGaramondBold();
+    final garamond = await PdfGoogleFonts.eBGaramondRegular();
+    final garamondBold = await PdfGoogleFonts.eBGaramondBold();
 
     final tableHeaders =
         isAnnexA
@@ -399,7 +399,7 @@ class _ExportAccomplishmentsButtonState
         } else if (leaveName != null) {
           nonWorkingDayText = leaveName;
         } else if (travelName != null) {
-          nonWorkingDayText = 'Special Order #$travelName';
+          nonWorkingDayText = 'Special Order No. $travelName';
         } else if (day.weekday == DateTime.saturday) {
           nonWorkingDayText = 'Saturday';
         } else if (day.weekday == DateTime.sunday) {
@@ -481,19 +481,18 @@ class _ExportAccomplishmentsButtonState
             (pw.Context context) => [
               if (isAnnexA) ...[
                 pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
                     pw.Text(
-                      'ANNEX A',
+                      'WFH ACCOMPLISHMENT REPORT (ANNEX A)',
                       style: pw.TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    pw.SizedBox(width: 20),
                   ],
                 ),
-                pw.SizedBox(height: 5),
+                pw.SizedBox(height: 10),
               ] else if (isCOS) ...[
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.center,
@@ -779,15 +778,17 @@ class _ExportAccomplishmentsButtonState
                 border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
                 columnWidths: {
                   0: pw.FractionColumnWidth(0.15), // First column (label)
-                  1: pw.FractionColumnWidth(0.85), // Merged columns 2-4 for name/designation
+                  1: pw.FractionColumnWidth(
+                    0.85,
+                  ), // Merged columns 2-4 for name/designation
                 },
                 children: [
                   pw.TableRow(
+                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
                     children: [
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 70,
+                        child: pw.Center(
                           child: pw.Text(
                             'Prepared by:',
                             style: pw.TextStyle(
@@ -799,19 +800,25 @@ class _ExportAccomplishmentsButtonState
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          userName,
-                          style: const pw.TextStyle(fontSize: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.SizedBox(height: 20), // Space for signature
+                            pw.Text(
+                              userName,
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                   pw.TableRow(
+                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
                     children: [
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 70,
+                        child: pw.Center(
                           child: pw.Text(
                             'Approved by:',
                             style: pw.TextStyle(
@@ -823,29 +830,24 @@ class _ExportAccomplishmentsButtonState
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          _getUnitHeadName(userOffice),
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ),
-                    ],
-                  ),
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          '',
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Text(
-                          userOffice == 'Office of the RACC Officer'
-                              ? 'Deputy Executive Director for Operations and Services'
-                              : 'Officer-in-charge, SWO IV',
-                          style: const pw.TextStyle(fontSize: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.SizedBox(height: 20), // Space for signature
+                            pw.Text(
+                              _getUnitHeadName(userOffice),
+                              style: pw.TextStyle(
+                                fontSize: 10,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.Text(
+                              userOffice == 'Office of the RACC Officer'
+                                  ? 'Deputy Executive Director for Operations and Services'
+                                  : 'Officer-in-charge, Social Welfare Officer IV',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ],
                         ),
                       ),
                     ],
