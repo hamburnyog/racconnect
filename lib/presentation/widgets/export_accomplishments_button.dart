@@ -793,7 +793,6 @@ class _ExportAccomplishmentsButtonState
                             'Prepared by:',
                             style: pw.TextStyle(
                               fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
                             ),
                           ),
                         ),
@@ -823,7 +822,6 @@ class _ExportAccomplishmentsButtonState
                             'Approved by:',
                             style: pw.TextStyle(
                               fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
                             ),
                           ),
                         ),
