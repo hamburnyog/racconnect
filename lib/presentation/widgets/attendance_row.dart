@@ -28,6 +28,9 @@ Widget buildAttendanceRow({
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
   final isToday = DateUtils.isSameDay(day, DateTime.now());
 
+  final isSuspension = suspensionMap.containsKey(day);
+  final suspensionModel = suspensionMap[day];
+  
   final rowColor =
       holidayName != null
           ? Colors.green.shade50
@@ -35,6 +38,8 @@ Widget buildAttendanceRow({
           ? Colors.purple.shade50
           : travelName != null
           ? Colors.teal.shade50
+          : isSuspension
+          ? Colors.orange.shade50  // Suspension uses orange, same as homepage calendar
           : isWeekend
           ? Colors.grey.shade200
           : isToday
@@ -42,14 +47,16 @@ Widget buildAttendanceRow({
           : null;
 
   final label =
-      holidayName ?? leaveName ?? travelName ?? (isWeekend ? 'Weekend' : '');
+      holidayName ?? 
+      leaveName ?? 
+      travelName ?? 
+      (isSuspension ? suspensionModel?.name ?? 'SUSPENSION' : (isWeekend ? 'Weekend' : ''));
   final isNonWorkingDay =
       holidayName != null ||
       leaveName != null ||
       travelName != null ||
-      isWeekend;
-  final isSuspension = suspensionMap.containsKey(day);
-  final suspensionModel = suspensionMap[day];
+      isWeekend ||
+      isSuspension;
 
   String? displayTimeIn = data?['timeIn'];
   String? displayLunchOut = data?['lunchOut'];
@@ -57,16 +64,24 @@ Widget buildAttendanceRow({
   String? displayTimeOut = data?['timeOut'];
   String? displayType = data?['type'];
 
-  if (isSuspension && suspensionModel?.isHalfday == true) {
-    if (displayTimeIn != null && displayTimeIn != '—') {
-      displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
-      displayLunchIn = '-';
-      displayTimeOut = '-';
+  if (isSuspension) {
+    if (suspensionModel?.isHalfday == true) {
+      if (displayTimeIn != null && displayTimeIn != '—') {
+        displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
+        displayLunchIn = '-';
+        displayTimeOut = '-';
+      } else {
+        displayTimeIn = '—';
+        displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
+        displayLunchIn = '-';
+        displayTimeOut = '-';
+      }
     } else {
+      // Full-day suspension
       displayTimeIn = '—';
-      displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
-      displayLunchIn = '-';
-      displayTimeOut = '-';
+      displayLunchOut = '—';
+      displayLunchIn = '—';
+      displayTimeOut = '—';
     }
     displayType = 'suspension';
   }
