@@ -776,21 +776,32 @@ class _ExportAccomplishmentsButtonState
                 ],
               ),
               pw.Table(
-                border: pw.TableBorder.all(),
+                border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
+                columnWidths: {
+                  0: pw.FractionColumnWidth(0.15), // First column (label)
+                  1: pw.FractionColumnWidth(0.85), // Merged columns 2-4 for name/designation
+                },
                 children: [
                   pw.TableRow(
                     children: [
                       pw.Padding(
-                        padding: const pw.EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 4.0,
-                        ),
-                        child: pw.Text(
-                          'Prepared by: $userName',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Container(
+                          width: 70,
+                          child: pw.Text(
+                            'Prepared by:',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
                           ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Text(
+                          userName,
+                          style: const pw.TextStyle(fontSize: 10),
                         ),
                       ),
                     ],
@@ -798,16 +809,43 @@ class _ExportAccomplishmentsButtonState
                   pw.TableRow(
                     children: [
                       pw.Padding(
-                        padding: const pw.EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 4.0,
-                        ),
-                        child: pw.Text(
-                          'Approved by: ${_getUnitHeadName(userOffice)}',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Container(
+                          width: 70,
+                          child: pw.Text(
+                            'Approved by:',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
                           ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Text(
+                          _getUnitHeadName(userOffice),
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Text(
+                          '',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Text(
+                          userOffice == 'Office of the RACC Officer'
+                              ? 'Deputy Executive Director for Operations and Services'
+                              : 'Officer-in-charge, SWO IV',
+                          style: const pw.TextStyle(fontSize: 10),
                         ),
                       ),
                     ],
@@ -881,7 +919,7 @@ class _ExportAccomplishmentsButtonState
   String _getUnitHeadName(userOffice) {
     String supervisor =
         userOffice == 'Office of the RACC Officer'
-            ? 'Hon. Rowena M. Macalintal, ASEC'
+            ? 'Rowena M. Macalintal, ASEC'
             : 'John S. Calidguid, RSW, MPA';
     return supervisor;
   }

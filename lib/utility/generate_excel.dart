@@ -46,7 +46,7 @@ Future<String?> generateExcel(
 
   supervisor =
       profile.sectionCode == 'OIC'
-          ? 'HON. ROWENA M. MACALINTAL, ASEC'
+          ? 'ROWENA M. MACALINTAL, ASEC'
           : 'JOHN S. CALIDGUID, RSW, MPA';
   supervisorDesignation =
       profile.sectionCode == 'OIC'
