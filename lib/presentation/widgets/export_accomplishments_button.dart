@@ -395,7 +395,19 @@ class _ExportAccomplishmentsButtonState
         if (holidayName != null) {
           nonWorkingDayText = holidayName;
         } else if (suspension != null) {
-          nonWorkingDayText = suspension.name;
+          if (suspension.isHalfday) {
+            // Format time as AM/PM in parentheses (e.g., "Morning Suspension (10:00 AM)" or "Afternoon Suspension (2:00 PM)")
+            String formattedTime = DateFormat('h:mm a').format(suspension.datetime);
+            if (suspension.name.contains('Morning')) {
+              nonWorkingDayText = 'Morning Suspension ($formattedTime)';
+            } else if (suspension.name.contains('Afternoon')) {
+              nonWorkingDayText = 'Afternoon Suspension ($formattedTime)';
+            } else {
+              nonWorkingDayText = '${suspension.name} ($formattedTime)';
+            }
+          } else {
+            nonWorkingDayText = suspension.name;
+          }
         } else if (leaveName != null) {
           nonWorkingDayText = leaveName;
         } else if (travelName != null) {
@@ -410,14 +422,30 @@ class _ExportAccomplishmentsButtonState
             .map((e) => e.accomplishment)
             .join('\n');
 
+        // Split the non-working day text to handle bolding properly
+        String mainText = nonWorkingDayText;
+        String timeText = '';
+        
+        if (nonWorkingDayText.contains('(')) {
+          int parenthesisIndex = nonWorkingDayText.indexOf('(');
+          mainText = nonWorkingDayText.substring(0, parenthesisIndex);
+          timeText = nonWorkingDayText.substring(parenthesisIndex);
+        }
+        
         final richText = pw.RichText(
           text: pw.TextSpan(
             children: [
-              if (nonWorkingDayText.isNotEmpty)
+              if (nonWorkingDayText.isNotEmpty) ...[
                 pw.TextSpan(
-                  text: '${nonWorkingDayText.toUpperCase()}\n',
+                  text: mainText,
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
+                if (timeText.isNotEmpty)
+                  pw.TextSpan(
+                    text: timeText,
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+                  ),
+              ],
               pw.TextSpan(text: accomplishmentText),
             ],
           ),

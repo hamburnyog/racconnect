@@ -11,6 +11,18 @@ import 'constants.dart';
 import 'excel_utils.dart';
 import 'excel_helpers.dart';
 
+String formatSuspensionName(String originalName, bool isHalfday) {
+  if (isHalfday) {
+    if (originalName.toLowerCase().contains('morning')) {
+      return 'AM Suspension';
+    } else if (originalName.toLowerCase().contains('afternoon')) {
+      return 'PM Suspension';
+    }
+  }
+  // For full-day suspensions, keep the original name
+  return originalName;
+}
+
 Future<String?> generateExcel(
   DateTime selectedDate,
   ProfileModel profile,
@@ -103,8 +115,8 @@ Future<String?> generateExcel(
           isHoliday
               ? holidayName
               : (isLeave
-                  ? "FILED - $leaveName"
-                  : (isTravel ? "TRAVEL - S.O. #$travelName" : null));
+                  ? leaveName
+                  : (isTravel ? travelName : null));
 
       final dayLogs =
           monthlyAttendance.where((log) {
@@ -305,7 +317,7 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
               CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
-              customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
             );
             for (var col in ['D', 'E']) {
               // Apply styles to merged cells
@@ -355,7 +367,7 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
               CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
-              customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
             );
             for (var col in ['D', 'E']) {
               // Apply styles to merged cells
@@ -371,7 +383,7 @@ Future<String?> generateExcel(
           sheet.merge(
             CellIndex.indexByString('B$currrentRowNumber'),
             CellIndex.indexByString('E$currrentRowNumber'), // Merges B, C, D, E
-            customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+            customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
           );
           for (var col in ['B', 'C', 'D', 'E']) {
             // Apply styles to merged cells
@@ -440,7 +452,7 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('L$currrentRowNumber'),
               CellIndex.indexByString('M$currrentRowNumber'),
-              customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
             );
             for (var col in ['L', 'M']) {
               cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -466,7 +478,7 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('L$currrentRowNumber'),
               CellIndex.indexByString('M$currrentRowNumber'),
-              customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
             );
             for (var col in ['L', 'M']) {
               cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -480,7 +492,7 @@ Future<String?> generateExcel(
           sheet.merge(
             CellIndex.indexByString('J$currrentRowNumber'),
             CellIndex.indexByString('M$currrentRowNumber'),
-            customValue: TextCellValue(suspensionModel.name.toUpperCase()),
+            customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
           );
           for (var col in ['J', 'K', 'L', 'M']) {
             cellList['$col$currrentRowNumber'] ??= sheet.cell(
