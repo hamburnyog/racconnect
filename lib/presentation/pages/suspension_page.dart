@@ -19,6 +19,8 @@ class SuspensionPage extends StatefulWidget {
 
 class _SuspensionPageState extends State<SuspensionPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = true;
 
   void _showSuspensionForm() {
@@ -54,6 +56,11 @@ class _SuspensionPageState extends State<SuspensionPage> {
   void initState() {
     super.initState();
     _loadSuspensions();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadSuspensions() async {
@@ -71,6 +78,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -123,6 +131,31 @@ class _SuspensionPageState extends State<SuspensionPage> {
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 3.0,
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by suspension name or date',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
                 BlocConsumer<SuspensionCubit, SuspensionState>(
                   listener: (context, state) {
                     if (state is SuspensionError) {
@@ -161,6 +194,25 @@ class _SuspensionPageState extends State<SuspensionPage> {
                   builder: (context, state) {
                     if (state is GetAllSuspensionSuccess) {
                       final suspensions = state.suspensionModels.toList();
+                      
+                      // Apply search filter
+                      if (_searchQuery.isNotEmpty) {
+                        suspensions.retainWhere((suspension) {
+                          final suspensionName = suspension.name.toLowerCase();
+                          final suspensionDate = DateFormat('MMMM d, yyyy').format(suspension.datetime).toLowerCase();
+                          final suspensionDateShort = DateFormat('MM/dd/yyyy').format(suspension.datetime).toLowerCase();
+                          final suspensionDateYear = suspension.datetime.year.toString();
+                          final suspensionDateMonth = DateFormat('MMMM').format(suspension.datetime).toLowerCase();
+                          final suspensionDateDay = suspension.datetime.day.toString();
+                          
+                          return suspensionName.contains(_searchQuery) || 
+                                 suspensionDate.contains(_searchQuery) ||
+                                 suspensionDateShort.contains(_searchQuery) ||
+                                 suspensionDateYear.contains(_searchQuery) ||
+                                 suspensionDateMonth.contains(_searchQuery) ||
+                                 suspensionDateDay.contains(_searchQuery);
+                        });
+                      }
 
                       if (suspensions.isEmpty) {
                         return Expanded(
@@ -174,7 +226,9 @@ class _SuspensionPageState extends State<SuspensionPage> {
                               ),
                               Center(
                                 child: Text(
-                                  'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty 
+                                    ? 'No suspensions found matching "$_searchQuery"' 
+                                    : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),

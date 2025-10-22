@@ -19,6 +19,8 @@ class HolidayPage extends StatefulWidget {
 
 class _HolidayPageState extends State<HolidayPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = true;
 
   void _showHolidayForm() {
@@ -54,6 +56,11 @@ class _HolidayPageState extends State<HolidayPage> {
   void initState() {
     super.initState();
     _loadHolidays();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadHolidays() async {
@@ -71,6 +78,7 @@ class _HolidayPageState extends State<HolidayPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -126,6 +134,31 @@ class _HolidayPageState extends State<HolidayPage> {
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 3.0,
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by holiday name or date',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
                 BlocConsumer<HolidayCubit, HolidayState>(
                   listener: (context, state) {
                     if (state is HolidayError) {
@@ -164,6 +197,25 @@ class _HolidayPageState extends State<HolidayPage> {
                   builder: (context, state) {
                     if (state is GetAllHolidaySuccess) {
                       final holidays = state.holidayModels.toList();
+                      
+                      // Apply search filter
+                      if (_searchQuery.isNotEmpty) {
+                        holidays.retainWhere((holiday) {
+                          final holidayName = holiday.name.toLowerCase();
+                          final holidayDate = DateFormat('MMMM d, yyyy').format(holiday.date).toLowerCase();
+                          final holidayDateShort = DateFormat('MM/dd/yyyy').format(holiday.date).toLowerCase();
+                          final holidayDateYear = holiday.date.year.toString();
+                          final holidayDateMonth = DateFormat('MMMM').format(holiday.date).toLowerCase();
+                          final holidayDateDay = holiday.date.day.toString();
+                          
+                          return holidayName.contains(_searchQuery) || 
+                                 holidayDate.contains(_searchQuery) ||
+                                 holidayDateShort.contains(_searchQuery) ||
+                                 holidayDateYear.contains(_searchQuery) ||
+                                 holidayDateMonth.contains(_searchQuery) ||
+                                 holidayDateDay.contains(_searchQuery);
+                        });
+                      }
 
                       if (holidays.isEmpty) {
                         return Expanded(
@@ -177,7 +229,9 @@ class _HolidayPageState extends State<HolidayPage> {
                               ),
                               Center(
                                 child: Text(
-                                  'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty 
+                                    ? 'No holidays found matching "$_searchQuery"' 
+                                    : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),

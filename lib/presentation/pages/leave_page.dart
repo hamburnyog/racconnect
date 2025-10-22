@@ -20,6 +20,8 @@ class LeavePage extends StatefulWidget {
 
 class _LeavePageState extends State<LeavePage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = true;
 
   void _showLeaveForm() {
@@ -69,6 +71,11 @@ class _LeavePageState extends State<LeavePage> {
   void initState() {
     super.initState();
     _loadLeaves();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadLeaves() async {
@@ -86,6 +93,7 @@ class _LeavePageState extends State<LeavePage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -149,6 +157,31 @@ class _LeavePageState extends State<LeavePage> {
                             ),
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8.0,
+                            horizontal: 3.0,
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search by leave type or date',
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[200],
+                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
                         BlocConsumer<LeaveCubit, LeaveState>(
                           listener: (context, state) {
                             if (state is LeaveError) {
@@ -187,6 +220,25 @@ class _LeavePageState extends State<LeavePage> {
                           builder: (context, state) {
                             if (state is GetAllLeaveSuccess) {
                               final leaves = state.leaveModels.toList();
+                              
+                              // Apply search filter
+                              if (_searchQuery.isNotEmpty) {
+                                leaves.retainWhere((leave) {
+                                  final leaveType = leave.type.toLowerCase();
+                                  final employeeNumbers = leave.employeeNumbers.join(' ').toLowerCase();
+                                  final leaveDates = leave.specificDates.map((date) => 
+                                      DateFormat('MMMM d, yyyy').format(date).toLowerCase()
+                                    ).join(' ');
+                                  final leaveDatesShort = leave.specificDates.map((date) => 
+                                      DateFormat('MM/dd/yyyy').format(date).toLowerCase()
+                                    ).join(' ');
+                                  
+                                  return leaveType.contains(_searchQuery) || 
+                                         employeeNumbers.contains(_searchQuery) ||
+                                         leaveDates.contains(_searchQuery) ||
+                                         leaveDatesShort.contains(_searchQuery);
+                                });
+                              }
 
                               if (leaves.isEmpty) {
                                 return Expanded(
@@ -198,9 +250,11 @@ class _LeavePageState extends State<LeavePage> {
                                         'assets/images/dog.svg',
                                         height: 100,
                                       ),
-                                      const Center(
+                                      Center(
                                         child: Text(
-                                          'Nothing is here yet. Add a leave to get started.',
+                                          _searchQuery.isNotEmpty 
+                                            ? 'No leaves found matching "$_searchQuery"' 
+                                            : 'Nothing is here yet. Add a leave to get started.',
                                           style: TextStyle(fontSize: 10),
                                         ),
                                       ),
