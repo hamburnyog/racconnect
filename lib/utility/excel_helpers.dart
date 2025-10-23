@@ -23,12 +23,23 @@ Map<String, String> extractLogTimes(List<dynamic> dayLogs) {
     };
   }
 
-  if (dayLogs.length == 2 || dayLogs.length == 3) {
+  if (dayLogs.length == 2) {
     return {
       'amIn': formatTime(dayLogs.first.timestamp),
       'amOut': '',
       'pmIn': '',
       'pmOut': formatTime(dayLogs.last.timestamp),
+    };
+  }
+
+  if (dayLogs.length == 3) {
+    // For 3 logs: amIn, lunchOut, pmOut - if no lunch in is recorded, 
+    // set the lunch out time as both amOut and pmIn
+    return {
+      'amIn': formatTime(dayLogs[0].timestamp),
+      'amOut': formatTime(dayLogs[1].timestamp),  // lunch out
+      'pmIn': formatTime(dayLogs[1].timestamp),   // lunch out becomes lunch in (automatically set)
+      'pmOut': formatTime(dayLogs[2].timestamp),
     };
   }
 

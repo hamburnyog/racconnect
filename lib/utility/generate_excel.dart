@@ -19,7 +19,6 @@ String formatSuspensionName(String originalName, bool isHalfday) {
       return 'PM Suspension';
     }
   }
-  // For full-day suspensions, keep the original name
   return originalName;
 }
 
@@ -63,7 +62,7 @@ Future<String?> generateExcel(
   supervisorDesignation =
       profile.sectionCode == 'OIC'
           ? 'Deputy Executive Director for Operations and Services'
-          : 'Officer-in-charge, SWO IV';
+          : 'Officer-in-charge, Social Welfare Officer IV-A';
 
   String monthYearText =
       'FOR THE MONTH OF ${monthName.toUpperCase()} ${currentYear.toString()}';
@@ -114,9 +113,7 @@ Future<String?> generateExcel(
       final effectiveHolidayName =
           isHoliday
               ? holidayName
-              : (isLeave
-                  ? leaveName
-                  : (isTravel ? travelName : null));
+              : (isLeave ? leaveName : (isTravel ? travelName : null));
 
       final dayLogs =
           monthlyAttendance.where((log) {
@@ -317,7 +314,12 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
               CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
-              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+              customValue: TextCellValue(
+                formatSuspensionName(
+                  suspensionModel.name,
+                  suspensionModel.isHalfday,
+                ).toUpperCase(),
+              ),
             );
             for (var col in ['D', 'E']) {
               // Apply styles to merged cells
@@ -329,8 +331,7 @@ Future<String?> generateExcel(
             }
           } else {
             // Half-day suspension with no time-in
-            final eightAm =
-                DateTime(currentYear, currentMonth, day, 8, 0);
+            final eightAm = DateTime(currentYear, currentMonth, day, 8, 0);
             final suspensionTime = DateTime(
               currentYear,
               currentMonth,
@@ -367,7 +368,12 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
               CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
-              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+              customValue: TextCellValue(
+                formatSuspensionName(
+                  suspensionModel.name,
+                  suspensionModel.isHalfday,
+                ).toUpperCase(),
+              ),
             );
             for (var col in ['D', 'E']) {
               // Apply styles to merged cells
@@ -383,7 +389,12 @@ Future<String?> generateExcel(
           sheet.merge(
             CellIndex.indexByString('B$currrentRowNumber'),
             CellIndex.indexByString('E$currrentRowNumber'), // Merges B, C, D, E
-            customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+            customValue: TextCellValue(
+              formatSuspensionName(
+                suspensionModel.name,
+                suspensionModel.isHalfday,
+              ).toUpperCase(),
+            ),
           );
           for (var col in ['B', 'C', 'D', 'E']) {
             // Apply styles to merged cells
@@ -415,17 +426,19 @@ Future<String?> generateExcel(
         cellList['F$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('F$currrentRowNumber'),
         );
-        cellList['F$currrentRowNumber'].value = totalDayHours > 0
-            ? TextCellValue(totalDayHours.toString())
-            : TextCellValue('');
+        cellList['F$currrentRowNumber'].value =
+            totalDayHours > 0
+                ? TextCellValue(totalDayHours.toString())
+                : TextCellValue('');
         cellList['F$currrentRowNumber'].cellStyle = borderedCellStyle;
 
         cellList['G$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('G$currrentRowNumber'),
         );
-        cellList['G$currrentRowNumber'].value = totalDayMinutes > 0
-            ? TextCellValue(totalDayMinutes.toString())
-            : TextCellValue('');
+        cellList['G$currrentRowNumber'].value =
+            totalDayMinutes > 0
+                ? TextCellValue(totalDayMinutes.toString())
+                : TextCellValue('');
         cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
 
         // Mirrored columns I to O (similar to holiday logic)
@@ -452,7 +465,12 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('L$currrentRowNumber'),
               CellIndex.indexByString('M$currrentRowNumber'),
-              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+              customValue: TextCellValue(
+                formatSuspensionName(
+                  suspensionModel.name,
+                  suspensionModel.isHalfday,
+                ).toUpperCase(),
+              ),
             );
             for (var col in ['L', 'M']) {
               cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -478,7 +496,12 @@ Future<String?> generateExcel(
             sheet.merge(
               CellIndex.indexByString('L$currrentRowNumber'),
               CellIndex.indexByString('M$currrentRowNumber'),
-              customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+              customValue: TextCellValue(
+                formatSuspensionName(
+                  suspensionModel.name,
+                  suspensionModel.isHalfday,
+                ).toUpperCase(),
+              ),
             );
             for (var col in ['L', 'M']) {
               cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -492,7 +515,12 @@ Future<String?> generateExcel(
           sheet.merge(
             CellIndex.indexByString('J$currrentRowNumber'),
             CellIndex.indexByString('M$currrentRowNumber'),
-            customValue: TextCellValue(formatSuspensionName(suspensionModel.name, suspensionModel.isHalfday).toUpperCase()),
+            customValue: TextCellValue(
+              formatSuspensionName(
+                suspensionModel.name,
+                suspensionModel.isHalfday,
+              ).toUpperCase(),
+            ),
           );
           for (var col in ['J', 'K', 'L', 'M']) {
             cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -506,17 +534,19 @@ Future<String?> generateExcel(
         cellList['N$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('N$currrentRowNumber'),
         );
-        cellList['N$currrentRowNumber'].value = totalDayHours > 0
-            ? TextCellValue(totalDayHours.toString())
-            : TextCellValue('');
+        cellList['N$currrentRowNumber'].value =
+            totalDayHours > 0
+                ? TextCellValue(totalDayHours.toString())
+                : TextCellValue('');
         cellList['N$currrentRowNumber'].cellStyle = borderedCellStyle;
 
         cellList['O$currrentRowNumber'] = sheet.cell(
           CellIndex.indexByString('O$currrentRowNumber'),
         );
-        cellList['O$currrentRowNumber'].value = totalDayMinutes > 0
-            ? TextCellValue(totalDayMinutes.toString())
-            : TextCellValue('');
+        cellList['O$currrentRowNumber'].value =
+            totalDayMinutes > 0
+                ? TextCellValue(totalDayMinutes.toString())
+                : TextCellValue('');
         cellList['O$currrentRowNumber'].cellStyle = borderedCellStyle;
       } else {
         // Weekday with actual attendance
@@ -557,10 +587,10 @@ Future<String?> generateExcel(
         int undertimeMinutes = 0;
 
         if (dayLogs.isEmpty) {
-          // No logs for the day - apply 8 hours undertime
+          // No logs for the day - apply 8 hours undertime (for net work hours)
           undertimeHours = 8;
         } else if (dayLogs.length == 1) {
-          // Only 1 time log for the day - apply 8 hours undertime
+          // Only 1 time log for the day - apply 8 hours undertime (for net work hours)
           undertimeHours = 8;
         } else if (amIn.isNotEmpty && pmOut.isNotEmpty) {
           final dateFormat = DateFormat('h:mm a');
@@ -619,34 +649,62 @@ Future<String?> generateExcel(
               13,
               0,
             );
-            final fivePm = DateTime(
+
+            // Determine grace period based on day of week
+            int graceHour = 9; // Default for non-Monday
+            int graceMinute = 30; // Default for non-Monday
+            if (currentDate.weekday == DateTime.monday) {
+              // Monday: No late until 9AM (work hours start at 7AM, but grace until 9AM)
+              graceHour = 9;
+              graceMinute = 0;
+            }
+
+            final graceTime = DateTime(
               currentDate.year,
               currentDate.month,
               currentDate.day,
-              17,
-              0,
+              graceHour,
+              graceMinute,
             );
 
+            // Calculate late minutes
+            int calculatedLateMinutes = 0;
+            if (amInTime.isAfter(graceTime)) {
+              calculatedLateMinutes = amInTime.difference(graceTime).inMinutes;
+            }
+
+            // Calculate undertime based on required hours vs actual hours worked
             int dailyUndertimeMinutes = 0;
-            int totalWorkMinutes = 0;
 
             // New rule: if login is at or after 12 PM
             if (amInTime.hour >= 12) {
               final effectivePmIn =
                   amInTime.isBefore(lunchEndTime) ? lunchEndTime : amInTime;
 
-              final effectivePmOut =
-                  pmOutTime.isAfter(fivePm) ? fivePm : pmOutTime;
+              final effectivePmOut = pmOutTime;
 
-              totalWorkMinutes =
+              int totalWorkMinutes =
                   effectivePmOut.difference(effectivePmIn).inMinutes;
 
-              final requiredWorkMinutes = 4 * 60;
+              final requiredWorkMinutes =
+                  4 * 60; // 4 hours PM work needed if arriving after lunch
               if (totalWorkMinutes < requiredWorkMinutes) {
                 dailyUndertimeMinutes = requiredWorkMinutes - totalWorkMinutes;
               }
+
+              if (calculatedLateMinutes > 0) {
+                lateHours = calculatedLateMinutes ~/ 60;
+                lateMinutes = calculatedLateMinutes % 60;
+              }
+
+              if (dailyUndertimeMinutes > 0) {
+                undertimeHours = dailyUndertimeMinutes ~/ 60;
+                undertimeMinutes = dailyUndertimeMinutes % 60;
+              }
             } else {
-              // Existing logic for morning login
+              // For morning login, calculate total work time
+              int totalWorkMinutes = 0;
+
               // Rule: Lunch break must be between 12 PM and 1 PM.
               if (amOutTime != null && amOutTime.isBefore(lunchStartTime)) {
                 dailyUndertimeMinutes +=
@@ -657,9 +715,9 @@ Future<String?> generateExcel(
                     pmInTime.difference(lunchEndTime).inMinutes;
               }
 
-              // Calculate rendered work hours, excluding the mandatory 1-hour lunch
+              // Calculate rendered work hours, handling lunch break properly
               if (amOutTime != null && pmInTime != null) {
-                // Has lunch break, calculate work minutes based on that.
+                // Has both lunch out and in records, calculate work minutes based on that.
                 final effectiveAmOut =
                     amOutTime.isAfter(lunchStartTime)
                         ? lunchStartTime
@@ -673,23 +731,82 @@ Future<String?> generateExcel(
                     pmOutTime.difference(effectivePmIn).inMinutes;
 
                 totalWorkMinutes = morningWork + afternoonWork;
+              } else if (amOutTime != null && pmInTime == null) {
+                // Only lunch out recorded, treat as lunch 12-1PM
+                final effectiveAmOut =
+                    amOutTime.isAfter(lunchStartTime)
+                        ? lunchStartTime
+                        : amOutTime;
+                final morningWork =
+                    effectiveAmOut.difference(amInTime).inMinutes;
+
+                // If logged out after 1PM but no PM in record, assume lunch 12-1PM
+                final effectivePmIn =
+                    pmOutTime.isAfter(lunchEndTime) ? lunchEndTime : pmOutTime;
+                final afternoonWork =
+                    pmOutTime.difference(effectivePmIn).inMinutes;
+
+                totalWorkMinutes = morningWork + afternoonWork;
+              } else if (amOutTime == null && pmInTime != null) {
+                // Only lunch in recorded, treat as lunch 12-1PM
+                // If logged out after 1PM, assume lunch 12-1PM
+                final effectiveAmOut =
+                    pmOutTime.isAfter(lunchStartTime)
+                        ? lunchStartTime
+                        : pmOutTime;
+                final morningWork =
+                    effectiveAmOut.difference(amInTime).inMinutes;
+
+                final effectivePmIn =
+                    pmInTime.isBefore(lunchEndTime) ? lunchEndTime : pmInTime;
+                final afternoonWork =
+                    pmOutTime.difference(effectivePmIn).inMinutes;
+
+                totalWorkMinutes = morningWork + afternoonWork;
               } else {
-                // No lunch break recorded, assume 1 hour was taken.
-                // Calculate total duration and subtract 1 hour lunch
-                totalWorkMinutes =
-                    pmOutTime.difference(amInTime).inMinutes - 60;
+                // No lunch break records at all
+                if (amInTime.isBefore(lunchStartTime) && pmOutTime.isAfter(lunchEndTime)) {
+                  // If employee arrived before 12PM and left after 1PM, 
+                  // automatically count standard lunch break from 12PM-1PM
+                  final morningWork = lunchStartTime.difference(amInTime).inMinutes;
+                  final afternoonWork = pmOutTime.difference(lunchEndTime).inMinutes;
+                  totalWorkMinutes = morningWork + afternoonWork;
+                } else if (amInTime.isBefore(lunchStartTime) && pmOutTime.isAfter(lunchStartTime) && pmOutTime.isBefore(lunchEndTime)) {
+                  // If employee arrived before 12PM and left between 12PM-1PM, 
+                  // they didn't take the full lunch break, so calculate accordingly
+                  totalWorkMinutes = pmOutTime.difference(amInTime).inMinutes;
+                } else if (amInTime.isAfter(lunchEndTime)) {
+                  // If employee arrived after 1PM, they missed the morning work and lunch
+                  final afternoonWork = pmOutTime.difference(amInTime).inMinutes;
+                  totalWorkMinutes = afternoonWork;
+                } else {
+                  // Other scenarios
+                  totalWorkMinutes = pmOutTime.difference(amInTime).inMinutes;
+                }
               }
 
-              // Total required work is 8 hours (480 minutes)
+              // Check against required 8 hours net work time
               final requiredWorkMinutes = 8 * 60;
               if (totalWorkMinutes < requiredWorkMinutes) {
-                dailyUndertimeMinutes += requiredWorkMinutes - totalWorkMinutes;
+                dailyUndertimeMinutes =
+                    (requiredWorkMinutes - totalWorkMinutes);
               }
-            }
 
-            if (dailyUndertimeMinutes > 0) {
-              undertimeHours = dailyUndertimeMinutes ~/ 60;
-              undertimeMinutes = dailyUndertimeMinutes % 60;
+              if (calculatedLateMinutes > 0) {
+                lateHours = calculatedLateMinutes ~/ 60;
+                lateMinutes = calculatedLateMinutes % 60;
+              } else {
+                lateHours = 0;
+                lateMinutes = 0;
+              }
+
+              if (dailyUndertimeMinutes > 0) {
+                undertimeHours = dailyUndertimeMinutes ~/ 60;
+                undertimeMinutes = dailyUndertimeMinutes % 60;
+              } else {
+                undertimeHours = 0;
+                undertimeMinutes = 0;
+              }
             }
           } catch (e) {
             // Handle parsing errors by leaving late/undertime as 0
