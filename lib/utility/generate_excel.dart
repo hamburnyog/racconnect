@@ -678,28 +678,50 @@ Future<String?> generateExcel(
 
             // New rule: if login is at or after 12 PM
             if (amInTime.hour >= 12) {
-              final effectivePmIn =
-                  amInTime.isBefore(lunchEndTime) ? lunchEndTime : amInTime;
-
-              final effectivePmOut = pmOutTime;
-
-              int totalWorkMinutes =
-                  effectivePmOut.difference(effectivePmIn).inMinutes;
-
-              final requiredWorkMinutes =
-                  4 * 60; // 4 hours PM work needed if arriving after lunch
-              if (totalWorkMinutes < requiredWorkMinutes) {
-                dailyUndertimeMinutes = requiredWorkMinutes - totalWorkMinutes;
+              // If arrival is at or after 12 PM, employee missed the morning shift (4 hours of work)
+              // Starting base undertime is 4 hours for missing morning shift
+              int baseUndertimeMinutes = 4 * 60; // 4 hours undertime for missing morning shift
+              
+              // For afternoon arrivals, don't count as late since they're not expected in the morning
+              calculatedLateMinutes = 0; // Reset late minutes to zero
+              
+              // Calculate afternoon work: from 1 PM to their departure time
+              // They need to work until 5 PM (4 hours) to fulfill afternoon requirement
+              final requiredEndTime = DateTime(currentDate.year, currentDate.month, currentDate.day, 17, 0); // 5:00 PM
+              
+              // Effective start time for afternoon work is 1 PM (regardless of when they actually arrived)
+              final effectiveWorkStart = DateTime(currentDate.year, currentDate.month, currentDate.day, 13, 0); // 1:00 PM
+              
+              if (pmOutTime.isBefore(requiredEndTime)) {
+                // If they left before 5 PM, calculate additional undertime
+                int actualAfternoonMinutes = pmOutTime.difference(effectiveWorkStart).inMinutes;
+                int requiredAfternoonMinutes = 4 * 60; // 4 hours afternoon work required
+                int additionalUndertimeMinutes = requiredAfternoonMinutes - actualAfternoonMinutes;
+                
+                if (additionalUndertimeMinutes > 0) {
+                  dailyUndertimeMinutes = baseUndertimeMinutes + additionalUndertimeMinutes;
+                } else {
+                  dailyUndertimeMinutes = baseUndertimeMinutes; // In case they somehow worked negative time
+                }
+              } else {
+                // If they left at or after 5 PM, no additional undertime for afternoon
+                dailyUndertimeMinutes = baseUndertimeMinutes;
               }
 
               if (calculatedLateMinutes > 0) {
                 lateHours = calculatedLateMinutes ~/ 60;
                 lateMinutes = calculatedLateMinutes % 60;
+              } else {
+                lateHours = 0;
+                lateMinutes = 0;
               }
 
               if (dailyUndertimeMinutes > 0) {
                 undertimeHours = dailyUndertimeMinutes ~/ 60;
                 undertimeMinutes = dailyUndertimeMinutes % 60;
+              } else {
+                undertimeHours = 0;
+                undertimeMinutes = 0;
               }
             } else {
               // For morning login, calculate total work time
