@@ -114,12 +114,29 @@ class _Migration {
         List<AttendanceModel> attendance = await attendanceRepo
             .getEmployeeAttendance(user.profile!.employeeNumber!);
 
-        List<AttendanceModel> wfhAttendance = attendance
-            .where((log) =>
-                log.type.toLowerCase().contains('wfh') &&
-                log.timestamp.year == selectedYear &&
-                log.timestamp.month == selectedMonth)
-            .toList();
+        // Group attendance by date to check for biometric vs WFH priority
+        var attendanceByDate = <DateTime, List<AttendanceModel>>{};
+        for (var log in attendance) {
+          if (log.timestamp.year == selectedYear && log.timestamp.month == selectedMonth) {
+            final day = DateTime(log.timestamp.year, log.timestamp.month, log.timestamp.day);
+            attendanceByDate.putIfAbsent(day, () => []).add(log);
+          }
+        }
+
+        // Only consider as WFH if the day has WFH logs and no biometric logs
+        List<AttendanceModel> wfhAttendance = [];
+        for (var entry in attendanceByDate.entries) {
+          final dayLogs = entry.value;
+          final hasBiometrics = dayLogs.any((log) => log.type.toLowerCase() == 'biometrics');
+          final hasWFH = dayLogs.any((log) => log.type.toLowerCase().contains('wfh'));
+          
+          if (hasWFH && !hasBiometrics) {
+            // Add all WFH logs for this date
+            wfhAttendance.addAll(
+              dayLogs.where((log) => log.type.toLowerCase().contains('wfh'))
+            );
+          }
+        }
         log('Found ${wfhAttendance.length} WFH attendance logs for ${user.name}.');
 
         var groupedByDay = <DateTime, List<AttendanceModel>>{};

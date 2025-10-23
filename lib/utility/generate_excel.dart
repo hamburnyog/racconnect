@@ -123,7 +123,10 @@ Future<String?> generateExcel(
           }).toList();
 
       final logTimes = extractLogTimes(dayLogs);
-      bool isWFH = dayLogs.any((log) => log.type.toLowerCase() == 'wfh');
+      // Check if day should be considered WFH: only if there are WFH logs and NO biometric logs
+      final hasBiometrics = dayLogs.any((log) => log.type.toLowerCase() == 'biometrics');
+      final hasWFH = dayLogs.any((log) => log.type.toLowerCase().contains('wfh'));
+      bool isWFH = hasWFH && !hasBiometrics; // For calculations only, biometrics take priority
       String amIn = logTimes['amIn'] ?? '';
       String pmOut = logTimes['pmOut'] ?? '';
 

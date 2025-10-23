@@ -21,16 +21,33 @@ Map<String, Map<String, String>> groupAttendance(
     final times = entries.map((e) => e.timestamp).toList();
     final remarks = entries.map((e) => e.remarks).toList();
 
-    String? type =
-        entries
-            .firstWhere((e) => e.type.isNotEmpty, orElse: () => entries.first)
-            .type;
+    // Determine the type for the day, considering presence of both biometrics and WFH
+    String? type;
+    final hasBiometrics = entries.any((e) => e.type.toLowerCase() == 'biometrics');
+    final hasWFH = entries.any((e) => e.type.toLowerCase().contains('wfh'));
+    
+    if (hasBiometrics && hasWFH) {
+      // If both biometrics and WFH logs exist, set type to indicate both
+      type = 'Biometrics+WFH';
+    } else if (hasBiometrics) {
+      // If only biometrics logs exist
+      type = 'Biometrics';
+    } else if (hasWFH) {
+      // If only WFH logs exist
+      type = 'WFH';
+    } else {
+      // Otherwise, use the first non-empty type or first entry's type
+      type = entries
+          .firstWhere((e) => e.type.isNotEmpty, orElse: () => entries.first)
+          .type;
+    }
 
     String amIn = '—', amOut = '—', pmIn = '—', pmOut = '—';
     String timeInRemarks = 'No targets specified';
     String timeOutRemarks = 'No accomplishments specified';
 
-    final isWFH = type.toLowerCase().contains('wfh');
+    // Check if the day should be considered WFH for calculations (only if NO biometric logs)
+    final isWFH = hasWFH && !hasBiometrics;
 
     final currentDate = DateTime.parse(date);
     final isSuspension = suspensionMap.containsKey(currentDate);

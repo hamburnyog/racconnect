@@ -207,19 +207,36 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     }
 
                     if (_isWfhFilterActive) {
-                      final wfhEmployeeNumbers =
-                          _todayAttendance
-                              .where((att) => att.type == 'WFH')
-                              .map((att) => att.employeeNumber)
-                              .toSet();
-                      users =
-                          users
-                              .where(
-                                (user) => wfhEmployeeNumbers.contains(
-                                  user.profile?.employeeNumber,
-                                ),
-                              )
-                              .toList();
+                      // Group attendance by employee and date to check for biometric vs WFH priority
+                      final attendanceByEmployeeDate = <String, Map<DateTime, List<AttendanceModel>>>{};
+                      for (var att in _todayAttendance) {
+                        final date = DateTime(att.timestamp.year, att.timestamp.month, att.timestamp.day);
+                        attendanceByEmployeeDate.putIfAbsent(att.employeeNumber, () => <DateTime, List<AttendanceModel>>{});
+                        attendanceByEmployeeDate[att.employeeNumber]!.putIfAbsent(date, () => []).add(att);
+                      }
+
+                      final wfhEmployeeNumbers = <String>{};
+                      for (var entry in attendanceByEmployeeDate.entries) {
+                        final employeeNumber = entry.key;
+                        for (var dateEntry in entry.value.entries) {
+                          final dayLogs = dateEntry.value;
+                          final hasBiometrics = dayLogs.any((att) => att.type.toLowerCase() == 'biometrics');
+                          final hasWFH = dayLogs.any((att) => att.type.toLowerCase().contains('wfh'));
+                          
+                          if (hasWFH && !hasBiometrics) {
+                            wfhEmployeeNumbers.add(employeeNumber);
+                            break; // Found at least one WFH day for this employee
+                          }
+                        }
+                      }
+
+                      users = users
+                          .where(
+                            (user) => wfhEmployeeNumbers.contains(
+                              user.profile?.employeeNumber,
+                            ),
+                          )
+                          .toList();
                     }
 
                     if (_searchQuery.isNotEmpty) {

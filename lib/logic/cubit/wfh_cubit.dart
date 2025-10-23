@@ -26,21 +26,43 @@ class WfhCubit extends Cubit<WfhState> {
         ).toUtc().toIso8601String();
 
     try {
-      // Get all WFH attendance records for today
-      final result = await _pb
+      // Get ALL attendance records for today (both biometrics and WFH)
+      final allAttendanceRecords = await _pb
           .collection('attendance')
           .getFullList(
-            filter:
-                'timestamp >= "$startOfDay" && timestamp <= "$endOfDay" && type = "WFH"',
+            filter: 'timestamp >= \"$startOfDay\" && timestamp <= \"$endOfDay\"',
           );
 
-      // Extract unique employee numbers to count employees, not logs
-      final uniqueEmployeeNumbers = <String>{};
-      for (var record in result) {
-        uniqueEmployeeNumbers.add(record.data['employeeNumber']);
+      // Group records by employee number and date to apply biometric priority
+      final recordsByEmployeeDate = <String, Map<DateTime, List<Map<String, dynamic>>>>{};
+      for (var record in allAttendanceRecords) {
+        final timestamp = DateTime.parse(record.data['timestamp']);
+        final date = DateTime(timestamp.year, timestamp.month, timestamp.day);
+        final empNum = record.data['employeeNumber'];
+        
+        recordsByEmployeeDate.putIfAbsent(empNum, () => <DateTime, List<Map<String, dynamic>>>{});
+        recordsByEmployeeDate[empNum]!.putIfAbsent(date, () => []).add(record.data);
       }
 
-      emit(WfhLoaded(uniqueEmployeeNumbers.length));
+      // Apply biometric priority: if both biometrics and WFH exist for same day, prioritize biometrics over WFH
+      final wfhEmployeeNumbers = <String>{};
+      for (var empEntry in recordsByEmployeeDate.entries) {
+        final employeeNumber = empEntry.key;
+        for (var dateEntry in empEntry.value.entries) {
+          final dayRecords = dateEntry.value;
+          final hasBiometrics = dayRecords.any((record) => 
+              (record['type'] as String?)?.toLowerCase() == 'biometrics');
+          final hasWFH = dayRecords.any((record) => 
+              (record['type'] as String?)?.toLowerCase().contains('wfh') ?? false);
+          
+          if (hasWFH && !hasBiometrics) {
+            wfhEmployeeNumbers.add(employeeNumber);
+            break; // Found at least one WFH day for this employee
+          }
+        }
+      }
+
+      emit(WfhLoaded(wfhEmployeeNumbers.length));
     } catch (e) {
       emit(WfhError(e.toString()));
     }

@@ -208,10 +208,31 @@ class _ExportAccomplishmentsButtonState
         final attendanceRecords = await attendanceRepository
             .getEmployeeAttendanceForMonth(employeeNumber, startDate);
 
-        final wfhAttendanceRecords =
-            attendanceRecords
-                .where((record) => record.type.toLowerCase().contains('wfh'))
-                .toList();
+        // Get all attendance records grouped by date to check for biometric vs WFH
+        final recordsByDate = <DateTime, List<dynamic>>{};
+        for (var record in attendanceRecords) {
+          final date = DateTime(
+            record.timestamp.year,
+            record.timestamp.month,
+            record.timestamp.day,
+          );
+          recordsByDate.putIfAbsent(date, () => []).add(record);
+        }
+
+        // Only consider as WFH if the day has WFH logs and no biometric logs
+        final wfhAttendanceRecords = <dynamic>[];
+        for (var entry in recordsByDate.entries) {
+          final dateRecords = entry.value;
+          final hasBiometrics = dateRecords.any((r) => r.type.toLowerCase() == 'biometrics');
+          final hasWFH = dateRecords.any((r) => r.type.toLowerCase().contains('wfh'));
+          
+          if (hasWFH && !hasBiometrics) {
+            // Add all WFH records for this date
+            wfhAttendanceRecords.addAll(
+              dateRecords.where((r) => r.type.toLowerCase().contains('wfh'))
+            );
+          }
+        }
 
         final wfhDates = <DateTime>{};
         for (var record in wfhAttendanceRecords) {
