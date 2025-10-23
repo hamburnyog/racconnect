@@ -30,7 +30,7 @@ class WfhCubit extends Cubit<WfhState> {
       final allAttendanceRecords = await _pb
           .collection('attendance')
           .getFullList(
-            filter: 'timestamp >= \"$startOfDay\" && timestamp <= \"$endOfDay\"',
+            filter: 'timestamp >= "$startOfDay" && timestamp <= "$endOfDay"',
           );
 
       // Group records by employee number and date to apply biometric priority
