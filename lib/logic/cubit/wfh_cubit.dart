@@ -34,14 +34,20 @@ class WfhCubit extends Cubit<WfhState> {
           );
 
       // Group records by employee number and date to apply biometric priority
-      final recordsByEmployeeDate = <String, Map<DateTime, List<Map<String, dynamic>>>>{};
+      final recordsByEmployeeDate =
+          <String, Map<DateTime, List<Map<String, dynamic>>>>{};
       for (var record in allAttendanceRecords) {
         final timestamp = DateTime.parse(record.data['timestamp']);
         final date = DateTime(timestamp.year, timestamp.month, timestamp.day);
         final empNum = record.data['employeeNumber'];
-        
-        recordsByEmployeeDate.putIfAbsent(empNum, () => <DateTime, List<Map<String, dynamic>>>{});
-        recordsByEmployeeDate[empNum]!.putIfAbsent(date, () => []).add(record.data);
+
+        recordsByEmployeeDate.putIfAbsent(
+          empNum,
+          () => <DateTime, List<Map<String, dynamic>>>{},
+        );
+        recordsByEmployeeDate[empNum]!
+            .putIfAbsent(date, () => [])
+            .add(record.data);
       }
 
       // Apply biometric priority: if both biometrics and WFH exist for same day, prioritize biometrics over WFH
@@ -50,11 +56,16 @@ class WfhCubit extends Cubit<WfhState> {
         final employeeNumber = empEntry.key;
         for (var dateEntry in empEntry.value.entries) {
           final dayRecords = dateEntry.value;
-          final hasBiometrics = dayRecords.any((record) => 
-              (record['type'] as String?)?.toLowerCase() == 'biometrics');
-          final hasWFH = dayRecords.any((record) => 
-              (record['type'] as String?)?.toLowerCase().contains('wfh') ?? false);
-          
+          final hasBiometrics = dayRecords.any(
+            (record) =>
+                (record['type'] as String?)?.toLowerCase() == 'biometrics',
+          );
+          final hasWFH = dayRecords.any(
+            (record) =>
+                (record['type'] as String?)?.toLowerCase().contains('wfh') ??
+                false,
+          );
+
           if (hasWFH && !hasBiometrics) {
             wfhEmployeeNumbers.add(employeeNumber);
             break; // Found at least one WFH day for this employee

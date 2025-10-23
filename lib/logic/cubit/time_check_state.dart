@@ -10,8 +10,5 @@ class TimeTampered extends TimeCheckState {
   final Duration timeDifference;
   final bool localTimeAhead;
 
-  TimeTampered({
-    required this.timeDifference,
-    required this.localTimeAhead,
-  });
+  TimeTampered({required this.timeDifference, required this.localTimeAhead});
 }

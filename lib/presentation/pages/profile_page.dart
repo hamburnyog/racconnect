@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -84,9 +83,10 @@ class _ProfilePageState extends State<ProfilePage> {
       final records = await pb.collection('sections').getFullList();
 
       setState(() {
-        sectionOptions = records.map<Map<String, String>>((e) {
-          return {'id': e.id, 'name': e.data['name']};
-        }).toList();
+        sectionOptions =
+            records.map<Map<String, String>>((e) {
+              return {'id': e.id, 'name': e.data['name']};
+            }).toList();
 
         if (profile?.section != null) {
           final match = sectionOptions.firstWhere(

@@ -22,7 +22,14 @@ class AccomplishmentRepository {
   ) async {
     try {
       final isoStart = startDate.toUtc().toIso8601String().split('.').first;
-      final endOfDay = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+      final endOfDay = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+        23,
+        59,
+        59,
+      );
       final isoEnd = endOfDay.toUtc().toIso8601String().split('.').first;
 
       final response = await pb

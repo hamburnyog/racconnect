@@ -1,63 +1,78 @@
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart'; // For error logging
 
 import 'constants.dart';
 
 Map<String, String> extractLogTimes(List<dynamic> dayLogs) {
-  dayLogs.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+  try {
+    debugPrint('Extracting log times for ${dayLogs.length} logs');
+    dayLogs.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-  String formatTime(DateTime dt) {
-    return DateFormat('h:mm a').format(dt);
-  }
+    String formatTime(DateTime dt) {
+      return DateFormat('h:mm a').format(dt);
+    }
 
-  if (dayLogs.isEmpty) {
-    return {'amIn': '', 'amOut': '', 'pmIn': '', 'pmOut': ''};
-  }
+    if (dayLogs.isEmpty) {
+      return {'amIn': '', 'amOut': '', 'pmIn': '', 'pmOut': ''};
+    }
 
-  if (dayLogs.length == 1) {
-    return {
-      'amIn': formatTime(dayLogs[0].timestamp),
-      'amOut': '',
-      'pmIn': '',
-      'pmOut': '',
-    };
-  }
+    if (dayLogs.length == 1) {
+      return {
+        'amIn': formatTime(dayLogs[0].timestamp),
+        'amOut': '',
+        'pmIn': '',
+        'pmOut': '',
+      };
+    }
 
-  if (dayLogs.length == 2) {
-    return {
-      'amIn': formatTime(dayLogs.first.timestamp),
-      'amOut': '',
-      'pmIn': '',
-      'pmOut': formatTime(dayLogs.last.timestamp),
-    };
-  }
+    if (dayLogs.length == 2) {
+      return {
+        'amIn': formatTime(dayLogs.first.timestamp),
+        'amOut': '',
+        'pmIn': '',
+        'pmOut': formatTime(dayLogs.last.timestamp),
+      };
+    }
 
-  if (dayLogs.length == 3) {
-    // For 3 logs: amIn, lunchOut, pmOut - if no lunch in is recorded, 
-    // set the lunch out time as both amOut and pmIn
-    return {
-      'amIn': formatTime(dayLogs[0].timestamp),
-      'amOut': formatTime(dayLogs[1].timestamp),  // lunch out
-      'pmIn': formatTime(dayLogs[1].timestamp),   // lunch out becomes lunch in (automatically set)
-      'pmOut': formatTime(dayLogs[2].timestamp),
-    };
-  }
+    if (dayLogs.length == 3) {
+      // For 3 logs: amIn, lunchOut, pmOut - if no lunch in is recorded,
+      // set the lunch out time as both amOut and pmIn
+      return {
+        'amIn': formatTime(dayLogs[0].timestamp),
+        'amOut': formatTime(dayLogs[1].timestamp), // lunch out
+        'pmIn': formatTime(
+          dayLogs[1].timestamp,
+        ), // lunch out becomes lunch in (automatically set)
+        'pmOut': formatTime(dayLogs[2].timestamp),
+      };
+    }
 
-  if (dayLogs.length == 4) {
+    if (dayLogs.length == 4) {
+      return {
+        'amIn': formatTime(dayLogs[0].timestamp),
+        'amOut': formatTime(dayLogs[1].timestamp),
+        'pmIn': formatTime(dayLogs[2].timestamp),
+        'pmOut': formatTime(dayLogs[3].timestamp),
+      };
+    }
+
     return {
       'amIn': formatTime(dayLogs[0].timestamp),
       'amOut': formatTime(dayLogs[1].timestamp),
       'pmIn': formatTime(dayLogs[2].timestamp),
-      'pmOut': formatTime(dayLogs[3].timestamp),
+      'pmOut': formatTime(dayLogs.last.timestamp),
     };
+  } catch (e, stack) {
+    debugPrint('ERROR in extractLogTimes: $e');
+    debugPrint('Stack trace: $stack');
+    if (kDebugMode) {
+      print('ERROR in extractLogTimes: $e');
+      print('Stack trace: $stack');
+    }
+    // Return empty values in case of error to prevent app crash
+    return {'amIn': '', 'amOut': '', 'pmIn': '', 'pmOut': ''};
   }
-
-  return {
-    'amIn': formatTime(dayLogs[0].timestamp),
-    'amOut': formatTime(dayLogs[1].timestamp),
-    'pmIn': formatTime(dayLogs[2].timestamp),
-    'pmOut': formatTime(dayLogs.last.timestamp),
-  };
 }
 
 void buildHeaderSection(Sheet sheet, String fullName, String monthYearText) {

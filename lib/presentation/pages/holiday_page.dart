@@ -197,23 +197,32 @@ class _HolidayPageState extends State<HolidayPage> {
                   builder: (context, state) {
                     if (state is GetAllHolidaySuccess) {
                       final holidays = state.holidayModels.toList();
-                      
+
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
                         holidays.retainWhere((holiday) {
                           final holidayName = holiday.name.toLowerCase();
-                          final holidayDate = DateFormat('MMMM d, yyyy').format(holiday.date).toLowerCase();
-                          final holidayDateShort = DateFormat('MM/dd/yyyy').format(holiday.date).toLowerCase();
+                          final holidayDate =
+                              DateFormat(
+                                'MMMM d, yyyy',
+                              ).format(holiday.date).toLowerCase();
+                          final holidayDateShort =
+                              DateFormat(
+                                'MM/dd/yyyy',
+                              ).format(holiday.date).toLowerCase();
                           final holidayDateYear = holiday.date.year.toString();
-                          final holidayDateMonth = DateFormat('MMMM').format(holiday.date).toLowerCase();
+                          final holidayDateMonth =
+                              DateFormat(
+                                'MMMM',
+                              ).format(holiday.date).toLowerCase();
                           final holidayDateDay = holiday.date.day.toString();
-                          
-                          return holidayName.contains(_searchQuery) || 
-                                 holidayDate.contains(_searchQuery) ||
-                                 holidayDateShort.contains(_searchQuery) ||
-                                 holidayDateYear.contains(_searchQuery) ||
-                                 holidayDateMonth.contains(_searchQuery) ||
-                                 holidayDateDay.contains(_searchQuery);
+
+                          return holidayName.contains(_searchQuery) ||
+                              holidayDate.contains(_searchQuery) ||
+                              holidayDateShort.contains(_searchQuery) ||
+                              holidayDateYear.contains(_searchQuery) ||
+                              holidayDateMonth.contains(_searchQuery) ||
+                              holidayDateDay.contains(_searchQuery);
                         });
                       }
 
@@ -229,9 +238,9 @@ class _HolidayPageState extends State<HolidayPage> {
                               ),
                               Center(
                                 child: Text(
-                                  _searchQuery.isNotEmpty 
-                                    ? 'No holidays found matching "$_searchQuery"' 
-                                    : 'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No holidays found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),
@@ -270,8 +279,10 @@ class _HolidayPageState extends State<HolidayPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(false),
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
@@ -311,9 +322,7 @@ class _HolidayPageState extends State<HolidayPage> {
                                     elevation: 3,
                                     child: ListTile(
                                       onTap: () {
-                                        _showHolidayFormWithEdit(
-                                          holidayModel,
-                                        );
+                                        _showHolidayFormWithEdit(holidayModel);
                                       },
                                       leading: CircleAvatar(
                                         backgroundColor:
@@ -363,9 +372,7 @@ class _HolidayPageState extends State<HolidayPage> {
                               leading: Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,

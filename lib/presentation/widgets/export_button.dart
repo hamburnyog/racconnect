@@ -9,6 +9,7 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/generate_excel.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart'; // For error logging
 
 class ExportButton extends StatefulWidget {
   final int selectedYear;
@@ -163,6 +164,9 @@ class _ExportButtonState extends State<ExportButton> {
       final monthlyLogs = await attendanceCubit.attendanceRepository
           .getEmployeeAttendanceForMonth(employeeNumber, selectedDate);
 
+      debugPrint(
+        'Starting DTR export process for employee: $employeeNumber, month: $selectedDate',
+      );
       final filePath = await generateExcel(
         selectedDate,
         profile,
@@ -185,13 +189,39 @@ class _ExportButtonState extends State<ExportButton> {
       if (filePath != null && (Platform.isAndroid || Platform.isIOS)) {
         final file = XFile(filePath);
 
-        final result = await SharePlus.instance.share(
-          ShareParams(
-            subject:
-                'DTR Excel file - ${DateFormat('MMMM yyyy').format(selectedDate)}',
-            files: [file],
-          ),
-        );
+        ShareResult result;
+        if (Platform.isIOS) {
+          // On iOS, we need to provide the sharePositionOrigin for the share sheet
+          final box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'DTR Excel file - ${DateFormat('MMMM yyyy').format(selectedDate)}',
+                files: [file],
+                sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+              ),
+            );
+          } else {
+            // Fallback if we can't get the context size
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'DTR Excel file - ${DateFormat('MMMM yyyy').format(selectedDate)}',
+                files: [file],
+              ),
+            );
+          }
+        } else {
+          // For Android, no special positioning needed
+          result = await SharePlus.instance.share(
+            ShareParams(
+              subject:
+                  'DTR Excel file - ${DateFormat('MMMM yyyy').format(selectedDate)}',
+              files: [file],
+            ),
+          );
+        }
 
         if (!mounted) {
           setState(() {
@@ -214,7 +244,13 @@ class _ExportButtonState extends State<ExportButton> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('ERROR in DTR export: $e');
+      debugPrint('Stack trace: $stack');
+      if (kDebugMode) {
+        print('ERROR in DTR export: $e');
+        print('Stack trace: $stack');
+      }
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(

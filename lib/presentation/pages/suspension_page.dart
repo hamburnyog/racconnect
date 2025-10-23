@@ -194,23 +194,34 @@ class _SuspensionPageState extends State<SuspensionPage> {
                   builder: (context, state) {
                     if (state is GetAllSuspensionSuccess) {
                       final suspensions = state.suspensionModels.toList();
-                      
+
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
                         suspensions.retainWhere((suspension) {
                           final suspensionName = suspension.name.toLowerCase();
-                          final suspensionDate = DateFormat('MMMM d, yyyy').format(suspension.datetime).toLowerCase();
-                          final suspensionDateShort = DateFormat('MM/dd/yyyy').format(suspension.datetime).toLowerCase();
-                          final suspensionDateYear = suspension.datetime.year.toString();
-                          final suspensionDateMonth = DateFormat('MMMM').format(suspension.datetime).toLowerCase();
-                          final suspensionDateDay = suspension.datetime.day.toString();
-                          
-                          return suspensionName.contains(_searchQuery) || 
-                                 suspensionDate.contains(_searchQuery) ||
-                                 suspensionDateShort.contains(_searchQuery) ||
-                                 suspensionDateYear.contains(_searchQuery) ||
-                                 suspensionDateMonth.contains(_searchQuery) ||
-                                 suspensionDateDay.contains(_searchQuery);
+                          final suspensionDate =
+                              DateFormat(
+                                'MMMM d, yyyy',
+                              ).format(suspension.datetime).toLowerCase();
+                          final suspensionDateShort =
+                              DateFormat(
+                                'MM/dd/yyyy',
+                              ).format(suspension.datetime).toLowerCase();
+                          final suspensionDateYear =
+                              suspension.datetime.year.toString();
+                          final suspensionDateMonth =
+                              DateFormat(
+                                'MMMM',
+                              ).format(suspension.datetime).toLowerCase();
+                          final suspensionDateDay =
+                              suspension.datetime.day.toString();
+
+                          return suspensionName.contains(_searchQuery) ||
+                              suspensionDate.contains(_searchQuery) ||
+                              suspensionDateShort.contains(_searchQuery) ||
+                              suspensionDateYear.contains(_searchQuery) ||
+                              suspensionDateMonth.contains(_searchQuery) ||
+                              suspensionDateDay.contains(_searchQuery);
                         });
                       }
 
@@ -226,9 +237,9 @@ class _SuspensionPageState extends State<SuspensionPage> {
                               ),
                               Center(
                                 child: Text(
-                                  _searchQuery.isNotEmpty 
-                                    ? 'No suspensions found matching "$_searchQuery"' 
-                                    : 'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No suspensions found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),
@@ -267,13 +278,16 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(false),
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                if (suspensionModel.id != null) {
+                                                if (suspensionModel.id !=
+                                                    null) {
                                                   _deleteSuspension(
                                                     suspensionModel.id!,
                                                   );
@@ -358,9 +372,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                               leading: Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,

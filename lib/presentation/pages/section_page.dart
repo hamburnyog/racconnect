@@ -193,14 +193,14 @@ class _SectionPageState extends State<SectionPage> {
                   builder: (context, state) {
                     if (state is GetAllSectionSuccess) {
                       final sections = state.sectionModels.toList();
-                      
+
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
                         sections.retainWhere((section) {
                           final sectionName = section.name.toLowerCase();
                           final sectionCode = section.code.toLowerCase();
-                          return sectionName.contains(_searchQuery) || 
-                                 sectionCode.contains(_searchQuery);
+                          return sectionName.contains(_searchQuery) ||
+                              sectionCode.contains(_searchQuery);
                         });
                       }
 
@@ -216,9 +216,9 @@ class _SectionPageState extends State<SectionPage> {
                               ),
                               Center(
                                 child: Text(
-                                  _searchQuery.isNotEmpty 
-                                    ? 'No sections found matching "$_searchQuery"' 
-                                    : 'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No sections found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),
@@ -257,8 +257,10 @@ class _SectionPageState extends State<SectionPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(false),
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
@@ -298,9 +300,7 @@ class _SectionPageState extends State<SectionPage> {
                                     elevation: 3,
                                     child: ListTile(
                                       onTap: () {
-                                        _showSectionFormWithEdit(
-                                          sectionModel,
-                                        );
+                                        _showSectionFormWithEdit(sectionModel);
                                       },
                                       leading: CircleAvatar(
                                         backgroundColor:
@@ -348,9 +348,7 @@ class _SectionPageState extends State<SectionPage> {
                               leading: Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,

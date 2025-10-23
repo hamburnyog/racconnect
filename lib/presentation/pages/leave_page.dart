@@ -119,7 +119,10 @@ class _LeavePageState extends State<LeavePage> {
                   },
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   child: Skeletonizer(
                     enabled: _isLoading,
                     child: Column(
@@ -178,7 +181,9 @@ class _LeavePageState extends State<LeavePage> {
                               ),
                               filled: true,
                               fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -220,30 +225,44 @@ class _LeavePageState extends State<LeavePage> {
                           builder: (context, state) {
                             if (state is GetAllLeaveSuccess) {
                               final leaves = state.leaveModels.toList();
-                              
+
                               // Apply search filter
                               if (_searchQuery.isNotEmpty) {
                                 leaves.retainWhere((leave) {
                                   final leaveType = leave.type.toLowerCase();
-                                  final employeeNumbers = leave.employeeNumbers.join(' ').toLowerCase();
-                                  final leaveDates = leave.specificDates.map((date) => 
-                                      DateFormat('MMMM d, yyyy').format(date).toLowerCase()
-                                    ).join(' ');
-                                  final leaveDatesShort = leave.specificDates.map((date) => 
-                                      DateFormat('MM/dd/yyyy').format(date).toLowerCase()
-                                    ).join(' ');
-                                  
-                                  return leaveType.contains(_searchQuery) || 
-                                         employeeNumbers.contains(_searchQuery) ||
-                                         leaveDates.contains(_searchQuery) ||
-                                         leaveDatesShort.contains(_searchQuery);
+                                  final employeeNumbers =
+                                      leave.employeeNumbers
+                                          .join(' ')
+                                          .toLowerCase();
+                                  final leaveDates = leave.specificDates
+                                      .map(
+                                        (date) =>
+                                            DateFormat(
+                                              'MMMM d, yyyy',
+                                            ).format(date).toLowerCase(),
+                                      )
+                                      .join(' ');
+                                  final leaveDatesShort = leave.specificDates
+                                      .map(
+                                        (date) =>
+                                            DateFormat(
+                                              'MM/dd/yyyy',
+                                            ).format(date).toLowerCase(),
+                                      )
+                                      .join(' ');
+
+                                  return leaveType.contains(_searchQuery) ||
+                                      employeeNumbers.contains(_searchQuery) ||
+                                      leaveDates.contains(_searchQuery) ||
+                                      leaveDatesShort.contains(_searchQuery);
                                 });
                               }
 
                               if (leaves.isEmpty) {
                                 return Expanded(
                                   child: ListView(
-                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
                                     children: [
                                       const SizedBox(height: 50),
                                       SvgPicture.asset(
@@ -252,9 +271,9 @@ class _LeavePageState extends State<LeavePage> {
                                       ),
                                       Center(
                                         child: Text(
-                                          _searchQuery.isNotEmpty 
-                                            ? 'No leaves found matching "$_searchQuery"' 
-                                            : 'Nothing is here yet. Add a leave to get started.',
+                                          _searchQuery.isNotEmpty
+                                              ? 'No leaves found matching "$_searchQuery"'
+                                              : 'Nothing is here yet. Add a leave to get started.',
                                           style: TextStyle(fontSize: 10),
                                         ),
                                       ),
@@ -269,7 +288,8 @@ class _LeavePageState extends State<LeavePage> {
                                   thumbVisibility: true,
                                   interactive: true,
                                   child: ListView.builder(
-                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
                                     scrollDirection: Axis.vertical,
                                     controller: _scrollController,
                                     itemCount: leaves.length,
@@ -278,7 +298,8 @@ class _LeavePageState extends State<LeavePage> {
                                       return ClipRect(
                                         child: Dismissible(
                                           key: ValueKey(leaveModel.id),
-                                          direction: DismissDirection.endToStart,
+                                          direction:
+                                              DismissDirection.endToStart,
                                           onDismissed: (direction) async {},
                                           confirmDismiss: (
                                             DismissDirection direction,
@@ -293,18 +314,26 @@ class _LeavePageState extends State<LeavePage> {
                                                   ),
                                                   actions: <Widget>[
                                                     TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.of(context).pop(false),
-                                                      child: const Text("Cancel"),
+                                                      onPressed:
+                                                          () => Navigator.of(
+                                                            context,
+                                                          ).pop(false),
+                                                      child: const Text(
+                                                        "Cancel",
+                                                      ),
                                                     ),
                                                     TextButton(
                                                       onPressed: () {
                                                         _deleteLeave(
                                                           leaveModel.id!,
                                                         );
-                                                        Navigator.of(context).pop(true);
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(true);
                                                       },
-                                                      child: const Text("Delete"),
+                                                      child: const Text(
+                                                        "Delete",
+                                                      ),
                                                     ),
                                                   ],
                                                 );
@@ -314,7 +343,8 @@ class _LeavePageState extends State<LeavePage> {
                                           background: Container(
                                             decoration: BoxDecoration(
                                               color: Colors.pink,
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             alignment: Alignment.centerRight,
                                             margin: const EdgeInsets.symmetric(
@@ -340,7 +370,9 @@ class _LeavePageState extends State<LeavePage> {
                                                   },
                                                   leading: CircleAvatar(
                                                     backgroundColor:
-                                                        Theme.of(context).primaryColor,
+                                                        Theme.of(
+                                                          context,
+                                                        ).primaryColor,
                                                     child: const Icon(
                                                       Icons.sick_outlined,
                                                       color: Colors.white,
@@ -350,12 +382,16 @@ class _LeavePageState extends State<LeavePage> {
                                                     leaveModel.type,
                                                     style: TextStyle(
                                                       fontSize: 16,
-                                                      color: Theme.of(context).primaryColor,
+                                                      color:
+                                                          Theme.of(
+                                                            context,
+                                                          ).primaryColor,
                                                     ),
                                                   ),
                                                   subtitle: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Text(
                                                         '${leaveModel.employeeNumbers.length} employee${leaveModel.employeeNumbers.length != 1 ? 's' : ''}, ${leaveModel.specificDates.length} date${leaveModel.specificDates.length != 1 ? 's' : ''}',
@@ -363,20 +399,27 @@ class _LeavePageState extends State<LeavePage> {
                                                           fontSize: 10,
                                                         ),
                                                       ),
-                                                      if (leaveModel.specificDates.isNotEmpty)
+                                                      if (leaveModel
+                                                          .specificDates
+                                                          .isNotEmpty)
                                                         Text(
                                                           _formatLeaveDates(
-                                                            leaveModel.specificDates,
+                                                            leaveModel
+                                                                .specificDates,
                                                           ),
-                                                          style: const TextStyle(
-                                                            fontSize: 10,
-                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 10,
+                                                              ),
                                                         ),
                                                     ],
                                                   ),
                                                   trailing: Icon(
                                                     Icons.edit_note,
-                                                    color: Theme.of(context).primaryColor,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).primaryColor,
                                                   ),
                                                 ),
                                               );
@@ -403,9 +446,7 @@ class _LeavePageState extends State<LeavePage> {
                                       leading: Bone.circle(size: 48),
                                       title: Bone.text(
                                         words: 2,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
+                                        style: TextStyle(fontSize: 16),
                                       ),
                                       subtitle: Bone.text(
                                         words: 4,

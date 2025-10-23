@@ -529,10 +529,12 @@ class _HomePageState extends State<HomePage> {
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
             // Hide FAB if user has no role or is not authenticated
-            if (authState is! AuthenticatedState || authState.user.role == null || authState.user.role!.isEmpty) {
+            if (authState is! AuthenticatedState ||
+                authState.user.role == null ||
+                authState.user.role!.isEmpty) {
               return const SizedBox.shrink();
             }
-            
+
             return Positioned(
               right: 16,
               bottom: 16,

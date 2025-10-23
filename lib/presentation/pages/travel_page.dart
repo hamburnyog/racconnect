@@ -214,23 +214,34 @@ class _TravelPageState extends State<TravelPage> {
                   builder: (context, state) {
                     if (state is GetAllTravelSuccess) {
                       final travels = state.travelModels.toList();
-                      
+
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
                         travels.retainWhere((travel) {
                           final soNumber = travel.soNumber.toLowerCase();
-                          final employeeNumbers = travel.employeeNumbers.join(' ').toLowerCase();
-                          final travelDates = travel.specificDates.map((date) => 
-                              DateFormat('MMMM d, yyyy').format(date).toLowerCase()
-                            ).join(' ');
-                          final travelDatesShort = travel.specificDates.map((date) => 
-                              DateFormat('MM/dd/yyyy').format(date).toLowerCase()
-                            ).join(' ');
-                          
-                          return soNumber.contains(_searchQuery) || 
-                                 employeeNumbers.contains(_searchQuery) ||
-                                 travelDates.contains(_searchQuery) ||
-                                 travelDatesShort.contains(_searchQuery);
+                          final employeeNumbers =
+                              travel.employeeNumbers.join(' ').toLowerCase();
+                          final travelDates = travel.specificDates
+                              .map(
+                                (date) =>
+                                    DateFormat(
+                                      'MMMM d, yyyy',
+                                    ).format(date).toLowerCase(),
+                              )
+                              .join(' ');
+                          final travelDatesShort = travel.specificDates
+                              .map(
+                                (date) =>
+                                    DateFormat(
+                                      'MM/dd/yyyy',
+                                    ).format(date).toLowerCase(),
+                              )
+                              .join(' ');
+
+                          return soNumber.contains(_searchQuery) ||
+                              employeeNumbers.contains(_searchQuery) ||
+                              travelDates.contains(_searchQuery) ||
+                              travelDatesShort.contains(_searchQuery);
                         });
                       }
 
@@ -246,9 +257,9 @@ class _TravelPageState extends State<TravelPage> {
                               ),
                               Center(
                                 child: Text(
-                                  _searchQuery.isNotEmpty 
-                                    ? 'No travel orders found matching "$_searchQuery"' 
-                                    : 'Nothing is here yet. Add a travel order to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No travel orders found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a travel order to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),

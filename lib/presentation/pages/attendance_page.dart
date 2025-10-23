@@ -119,7 +119,11 @@ class _AttendancePageState extends State<AttendancePage>
         ).subtract(const Duration(days: 1));
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
-            .getEmployeeAccomplishmentsForMonth(employeeNumber, startDate, endDate);
+            .getEmployeeAccomplishmentsForMonth(
+              employeeNumber,
+              startDate,
+              endDate,
+            );
 
         // Check if widget is still mounted
         if (!mounted) return;
@@ -223,7 +227,11 @@ class _AttendancePageState extends State<AttendancePage>
         ).subtract(const Duration(days: 1));
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
-            .getEmployeeAccomplishmentsForMonth(employeeNumber, startDate, endDate);
+            .getEmployeeAccomplishmentsForMonth(
+              employeeNumber,
+              startDate,
+              endDate,
+            );
 
         setState(() {
           // Update the accomplishment dates set

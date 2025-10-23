@@ -23,9 +23,11 @@ Map<String, Map<String, String>> groupAttendance(
 
     // Determine the type for the day, considering presence of both biometrics and WFH
     String? type;
-    final hasBiometrics = entries.any((e) => e.type.toLowerCase() == 'biometrics');
+    final hasBiometrics = entries.any(
+      (e) => e.type.toLowerCase() == 'biometrics',
+    );
     final hasWFH = entries.any((e) => e.type.toLowerCase().contains('wfh'));
-    
+
     if (hasBiometrics && hasWFH) {
       // If both biometrics and WFH logs exist, set type to indicate both
       type = 'Biometrics+WFH';
@@ -37,9 +39,10 @@ Map<String, Map<String, String>> groupAttendance(
       type = 'WFH';
     } else {
       // Otherwise, use the first non-empty type or first entry's type
-      type = entries
-          .firstWhere((e) => e.type.isNotEmpty, orElse: () => entries.first)
-          .type;
+      type =
+          entries
+              .firstWhere((e) => e.type.isNotEmpty, orElse: () => entries.first)
+              .type;
     }
 
     String amIn = '—', amOut = '—', pmIn = '—', pmOut = '—';

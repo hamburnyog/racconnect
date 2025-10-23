@@ -294,13 +294,13 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
                             ),
                             actions: <Widget>[
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
+                                onPressed:
+                                    () => Navigator.of(context).pop(false),
                                 child: const Text("Cancel"),
                               ),
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
+                                onPressed:
+                                    () => Navigator.of(context).pop(true),
                                 child: const Text("Delete"),
                               ),
                             ],
@@ -340,8 +340,9 @@ class _AccomplishmentBottomSheetState extends State<AccomplishmentBottomSheet> {
 
                           scaffoldMessenger.showSnackBar(
                             SnackBar(
-                              content:
-                                  Text('Error deleting accomplishment: $e'),
+                              content: Text(
+                                'Error deleting accomplishment: $e',
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );

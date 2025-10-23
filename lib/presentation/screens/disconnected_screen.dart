@@ -40,39 +40,39 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
     final int hours = duration.inHours.remainder(24);
     final int minutes = duration.inMinutes.remainder(60);
     final int seconds = duration.inSeconds.remainder(60);
-    
+
     final List<String> parts = [];
-    
+
     // Calculate approximate years and months
     final int years = (days / 365).floor();
     final int remainingDaysAfterYears = days % 365;
     final int months = (remainingDaysAfterYears / 30).floor();
     final int remainingDays = remainingDaysAfterYears % 30;
-    
+
     if (years > 0) {
       parts.add('${years}y');
     }
-    
+
     if (months > 0) {
       parts.add('${months}m');
     }
-    
+
     if (remainingDays > 0) {
       parts.add('${remainingDays}d');
     }
-    
+
     if (hours > 0) {
       parts.add('${hours}h');
     }
-    
+
     if (minutes > 0) {
       parts.add('${minutes}m');
     }
-    
+
     if (seconds > 0) {
       parts.add('${seconds}s');
     }
-    
+
     return parts.isNotEmpty ? parts.join(' ') : '0s';
   }
 
@@ -80,11 +80,11 @@ class _DisconnectedScreenState extends State<DisconnectedScreen> {
   Widget build(BuildContext context) {
     final internetState = context.watch<InternetCubit>().state;
     final timeState = context.watch<TimeCheckCubit>().state;
-    
+
     String title = 'Connection Error';
     String message = 'We\'re having trouble connecting to the server.';
     String subMessage = 'Attempting to reconnect ...';
-    
+
     if (timeState is TimeTampered) {
       title = 'Time Tampering Detected';
       message = 'System time has been modified.';

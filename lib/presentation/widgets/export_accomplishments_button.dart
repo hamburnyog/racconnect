@@ -223,13 +223,17 @@ class _ExportAccomplishmentsButtonState
         final wfhAttendanceRecords = <dynamic>[];
         for (var entry in recordsByDate.entries) {
           final dateRecords = entry.value;
-          final hasBiometrics = dateRecords.any((r) => r.type.toLowerCase() == 'biometrics');
-          final hasWFH = dateRecords.any((r) => r.type.toLowerCase().contains('wfh'));
-          
+          final hasBiometrics = dateRecords.any(
+            (r) => r.type.toLowerCase() == 'biometrics',
+          );
+          final hasWFH = dateRecords.any(
+            (r) => r.type.toLowerCase().contains('wfh'),
+          );
+
           if (hasWFH && !hasBiometrics) {
             // Add all WFH records for this date
             wfhAttendanceRecords.addAll(
-              dateRecords.where((r) => r.type.toLowerCase().contains('wfh'))
+              dateRecords.where((r) => r.type.toLowerCase().contains('wfh')),
             );
           }
         }
@@ -275,13 +279,39 @@ class _ExportAccomplishmentsButtonState
       if (!mounted) return;
 
       if (Platform.isAndroid || Platform.isIOS) {
-        final params = ShareParams(
-          subject:
-              'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
-          files: [XFile(pdfFile.path)],
-        );
-
-        final result = await SharePlus.instance.share(params);
+        ShareResult result;
+        if (Platform.isIOS) {
+          // On iOS, we need to provide the sharePositionOrigin for the share sheet
+          final box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+                files: [XFile(pdfFile.path)],
+                sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+              ),
+            );
+          } else {
+            // Fallback if we can't get the context size
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+                files: [XFile(pdfFile.path)],
+              ),
+            );
+          }
+        } else {
+          // For Android, no special positioning needed
+          result = await SharePlus.instance.share(
+            ShareParams(
+              subject:
+                  'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+              files: [XFile(pdfFile.path)],
+            ),
+          );
+        }
 
         if (!mounted) return;
 
@@ -418,7 +448,9 @@ class _ExportAccomplishmentsButtonState
         } else if (suspension != null) {
           if (suspension.isHalfday) {
             // Format time as AM/PM in parentheses (e.g., "Morning Suspension (10:00 AM)" or "Afternoon Suspension (2:00 PM)")
-            String formattedTime = DateFormat('h:mm a').format(suspension.datetime);
+            String formattedTime = DateFormat(
+              'h:mm a',
+            ).format(suspension.datetime);
             if (suspension.name.contains('Morning')) {
               nonWorkingDayText = 'Morning Suspension ($formattedTime)';
             } else if (suspension.name.contains('Afternoon')) {
@@ -446,13 +478,13 @@ class _ExportAccomplishmentsButtonState
         // Split the non-working day text to handle bolding properly
         String mainText = nonWorkingDayText;
         String timeText = '';
-        
+
         if (nonWorkingDayText.contains('(')) {
           int parenthesisIndex = nonWorkingDayText.indexOf('(');
           mainText = nonWorkingDayText.substring(0, parenthesisIndex);
           timeText = nonWorkingDayText.substring(parenthesisIndex);
         }
-        
+
         final richText = pw.RichText(
           text: pw.TextSpan(
             children: [
@@ -840,9 +872,7 @@ class _ExportAccomplishmentsButtonState
                         child: pw.Center(
                           child: pw.Text(
                             'Prepared by:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                            ),
+                            style: pw.TextStyle(fontSize: 10),
                           ),
                         ),
                       ),
@@ -869,9 +899,7 @@ class _ExportAccomplishmentsButtonState
                         child: pw.Center(
                           child: pw.Text(
                             'Approved by:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                            ),
+                            style: pw.TextStyle(fontSize: 10),
                           ),
                         ),
                       ),

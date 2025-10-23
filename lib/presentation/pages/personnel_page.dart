@@ -208,11 +208,21 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                     if (_isWfhFilterActive) {
                       // Group attendance by employee and date to check for biometric vs WFH priority
-                      final attendanceByEmployeeDate = <String, Map<DateTime, List<AttendanceModel>>>{};
+                      final attendanceByEmployeeDate =
+                          <String, Map<DateTime, List<AttendanceModel>>>{};
                       for (var att in _todayAttendance) {
-                        final date = DateTime(att.timestamp.year, att.timestamp.month, att.timestamp.day);
-                        attendanceByEmployeeDate.putIfAbsent(att.employeeNumber, () => <DateTime, List<AttendanceModel>>{});
-                        attendanceByEmployeeDate[att.employeeNumber]!.putIfAbsent(date, () => []).add(att);
+                        final date = DateTime(
+                          att.timestamp.year,
+                          att.timestamp.month,
+                          att.timestamp.day,
+                        );
+                        attendanceByEmployeeDate.putIfAbsent(
+                          att.employeeNumber,
+                          () => <DateTime, List<AttendanceModel>>{},
+                        );
+                        attendanceByEmployeeDate[att.employeeNumber]!
+                            .putIfAbsent(date, () => [])
+                            .add(att);
                       }
 
                       final wfhEmployeeNumbers = <String>{};
@@ -220,9 +230,13 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         final employeeNumber = entry.key;
                         for (var dateEntry in entry.value.entries) {
                           final dayLogs = dateEntry.value;
-                          final hasBiometrics = dayLogs.any((att) => att.type.toLowerCase() == 'biometrics');
-                          final hasWFH = dayLogs.any((att) => att.type.toLowerCase().contains('wfh'));
-                          
+                          final hasBiometrics = dayLogs.any(
+                            (att) => att.type.toLowerCase() == 'biometrics',
+                          );
+                          final hasWFH = dayLogs.any(
+                            (att) => att.type.toLowerCase().contains('wfh'),
+                          );
+
                           if (hasWFH && !hasBiometrics) {
                             wfhEmployeeNumbers.add(employeeNumber);
                             break; // Found at least one WFH day for this employee
@@ -230,17 +244,18 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         }
                       }
 
-                      users = users
-                          .where(
-                            (user) => wfhEmployeeNumbers.contains(
-                              user.profile?.employeeNumber,
-                            ),
-                          )
-                          .toList();
+                      users =
+                          users
+                              .where(
+                                (user) => wfhEmployeeNumbers.contains(
+                                  user.profile?.employeeNumber,
+                                ),
+                              )
+                              .toList();
                     }
 
                     if (_searchQuery.isNotEmpty) {
-                      users = 
+                      users =
                           users.where((user) {
                             final profile = user.profile;
                             if (profile == null) return false;
@@ -393,9 +408,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               leading: Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,

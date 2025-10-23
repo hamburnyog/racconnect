@@ -128,7 +128,7 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.transparent,
         scrolledUnderElevation: 0.0,
         surfaceTintColor: Colors.transparent,
-        leadingWidth: 150,
+        leadingWidth: isSmallScreen ? 70 : 150,
         leading: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             UserModel? user;
@@ -137,15 +137,25 @@ class _MainScreenState extends State<MainScreen> {
             }
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: AvatarHeader(
-                avatar: getAvatarWidget(context, user),
-                name: user?.name ?? 'User',
-                onTap: () {
-                  setState(() {
-                    _isProfilePageSelected = true;
-                  });
-                },
-              ),
+              child:
+                  isSmallScreen
+                      ? AvatarHover(
+                        avatar: getAvatarWidget(context, user),
+                        onTap: () {
+                          setState(() {
+                            _isProfilePageSelected = true;
+                          });
+                        },
+                      )
+                      : AvatarHeader(
+                        avatar: getAvatarWidget(context, user),
+                        name: user?.name ?? 'User',
+                        onTap: () {
+                          setState(() {
+                            _isProfilePageSelected = true;
+                          });
+                        },
+                      ),
             );
           },
         ),

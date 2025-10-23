@@ -19,8 +19,12 @@ class UserMultiSelect extends StatefulWidget {
   final List<ProfileModel> selectedEmployees;
   final List<String>? initialEmployeeNumbers; // Add this parameter
 
-  const UserMultiSelect(
-      {super.key, required this.onSelectionChanged, required this.selectedEmployees, this.initialEmployeeNumbers});
+  const UserMultiSelect({
+    super.key,
+    required this.onSelectionChanged,
+    required this.selectedEmployees,
+    this.initialEmployeeNumbers,
+  });
 
   @override
   State<UserMultiSelect> createState() => _UserMultiSelectState();
@@ -45,17 +49,18 @@ class _UserMultiSelectState extends State<UserMultiSelect> {
   void filterProfiles() {
     final query = searchController.text.toLowerCase();
     setState(() {
-      filteredProfiles = allProfiles.where((profile) {
-        final fullName =
-            '${profile.firstName} ${profile.middleName ?? ''} ${profile.lastName}'
-                .toLowerCase();
-        final sectionCode = profile.sectionCode?.toLowerCase() ?? '';
-        final employeeNumber = profile.employeeNumber?.toLowerCase() ?? '';
+      filteredProfiles =
+          allProfiles.where((profile) {
+            final fullName =
+                '${profile.firstName} ${profile.middleName ?? ''} ${profile.lastName}'
+                    .toLowerCase();
+            final sectionCode = profile.sectionCode?.toLowerCase() ?? '';
+            final employeeNumber = profile.employeeNumber?.toLowerCase() ?? '';
 
-        return fullName.contains(query) ||
-            sectionCode.contains(query) ||
-            employeeNumber.contains(query);
-      }).toList();
+            return fullName.contains(query) ||
+                sectionCode.contains(query) ||
+                employeeNumber.contains(query);
+          }).toList();
     });
   }
 
@@ -69,31 +74,34 @@ class _UserMultiSelectState extends State<UserMultiSelect> {
       final users = await authRepository.getUsers();
 
       // Filter profiles to only include those with a role (not null)
-      allUsers = users
-          .where(
-            (user) =>
-                user.role != null &&
-                user.role!.isNotEmpty &&
-                user.profile != null &&
-                user.profile!.employmentStatus != 'Resigned' &&
-                user.profile!.employmentStatus != 'Retired' &&
-                user.profile!.employeeNumber != null &&
-                user.profile!.employeeNumber!.isNotEmpty,
-          )
-          .toList();
+      allUsers =
+          users
+              .where(
+                (user) =>
+                    user.role != null &&
+                    user.role!.isNotEmpty &&
+                    user.profile != null &&
+                    user.profile!.employmentStatus != 'Resigned' &&
+                    user.profile!.employmentStatus != 'Retired' &&
+                    user.profile!.employeeNumber != null &&
+                    user.profile!.employeeNumber!.isNotEmpty,
+              )
+              .toList();
 
       allProfiles = allUsers.map((user) => user.profile!).toList();
 
       // If initial employee numbers are provided, pre-select matching profiles
       if (widget.initialEmployeeNumbers != null) {
-        final initialProfiles = allProfiles
-            .where(
-              (profile) =>
-                  profile.employeeNumber != null &&
-                  widget.initialEmployeeNumbers!
-                      .contains(profile.employeeNumber),
-            )
-            .toList();
+        final initialProfiles =
+            allProfiles
+                .where(
+                  (profile) =>
+                      profile.employeeNumber != null &&
+                      widget.initialEmployeeNumbers!.contains(
+                        profile.employeeNumber,
+                      ),
+                )
+                .toList();
         widget.selectedEmployees.clear();
         widget.selectedEmployees.addAll(initialProfiles);
         widget.onSelectionChanged(widget.selectedEmployees);
@@ -146,22 +154,21 @@ class _UserMultiSelectState extends State<UserMultiSelect> {
                   spacing: 8.0,
                   runSpacing: 4.0,
                   alignment: WrapAlignment.start,
-                  children: widget.selectedEmployees.map((employee) {
-                    return Chip(
-                      label: Text(
-                        '${employee.lastName}, ${employee.firstName.isNotEmpty ? employee.firstName[0] : ''}.'
-                            .toUpperCase(),
-                      ),
-                      backgroundColor: Theme.of(context).primaryColor,
-                      labelStyle: const TextStyle(
-                        color: Colors.white,
-                      ),
-                      deleteIconColor: Colors.white,
-                      onDeleted: () {
-                        _toggleEmployeeSelection(employee);
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      widget.selectedEmployees.map((employee) {
+                        return Chip(
+                          label: Text(
+                            '${employee.lastName}, ${employee.firstName.isNotEmpty ? employee.firstName[0] : ''}.'
+                                .toUpperCase(),
+                          ),
+                          backgroundColor: Theme.of(context).primaryColor,
+                          labelStyle: const TextStyle(color: Colors.white),
+                          deleteIconColor: Colors.white,
+                          onDeleted: () {
+                            _toggleEmployeeSelection(employee);
+                          },
+                        );
+                      }).toList(),
                 ),
               ),
             ],
@@ -188,25 +195,24 @@ class _UserMultiSelectState extends State<UserMultiSelect> {
                 final user = allUsers.firstWhere(
                   (user) => user.profile == profile,
                 );
-                final isSelected = widget.selectedEmployees.contains(
-                  profile,
-                );
-                final avatarUrl = getPocketBaseFileUrl(
-                  user.avatar,
-                  user.id,
-                );
+                final isSelected = widget.selectedEmployees.contains(profile);
+                final avatarUrl = getPocketBaseFileUrl(user.avatar, user.id);
                 return CheckboxListTile(
                   value: isSelected,
                   onChanged: (value) {
                     _toggleEmployeeSelection(profile);
                   },
                   secondary: CircleAvatar(
-                    backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                    child: avatarUrl == null
-                        ? Text(
-                            profile.firstName.isNotEmpty ? profile.firstName[0] : ' ',
-                          )
-                        : null,
+                    backgroundImage:
+                        avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                    child:
+                        avatarUrl == null
+                            ? Text(
+                              profile.firstName.isNotEmpty
+                                  ? profile.firstName[0]
+                                  : ' ',
+                            )
+                            : null,
                   ),
                   title: Text(
                     '${profile.employeeNumber} - ${profile.lastName}, ${profile.firstName.isNotEmpty ? profile.firstName[0] : ''}.'

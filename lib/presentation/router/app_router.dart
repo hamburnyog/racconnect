@@ -15,10 +15,10 @@ class AppRouter {
       builder: (context) {
         final internetState = context.watch<InternetCubit>().state;
         final timeState = context.watch<TimeCheckCubit>().state;
-        
+
         bool internetConnected = internetState is InternetConnected;
         bool timeTampered = timeState is TimeTampered;
-        
+
         if (!internetConnected || timeTampered) {
           return DisconnectedScreen();
         } else {

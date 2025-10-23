@@ -47,7 +47,7 @@ Widget buildBadge(String type, {bool smallScreen = false}) {
   final hasBiometrics = normalized.contains('biometrics');
   final hasWFH = normalized.contains('wfh');
   final isSuspension = normalized.contains('suspension');
-  
+
   // Check for combined type
   final isCombined = normalized.contains('biometrics+wfh');
   final isWFH = hasWFH && !hasBiometrics; // Standard WFH (no biometrics)
