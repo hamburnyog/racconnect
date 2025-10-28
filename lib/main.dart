@@ -15,7 +15,9 @@ import 'package:racconnect/logic/cubit/section_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/logic/cubit/time_check_cubit.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:racconnect/logic/cubit/version_check_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
+import 'package:racconnect/services/version_check_service.dart';
 // import 'package:racconnect/utility/app_bloc_observer.dart';
 
 Future<void> main() async {
@@ -61,6 +63,12 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<LeaveCubit>(create: (_) => LeaveCubit()),
         BlocProvider<TravelCubit>(create: (_) => TravelCubit()),
         BlocProvider<TimeCheckCubit>(create: (_) => TimeCheckCubit()),
+        BlocProvider<VersionCheckCubit>(
+          create:
+              (context) =>
+                  VersionCheckCubit(versionCheckService: VersionCheckService())
+                    ..checkVersion(), // Run version check on app boot
+        ),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',

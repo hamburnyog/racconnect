@@ -73,7 +73,7 @@ Future<String?> generateExcel(
     supervisorDesignation =
         profile.sectionCode == 'OIC'
             ? 'Deputy Executive Director for Operations and Services'
-            : 'Officer-in-charge, Social Welfare Officer IV-A';
+            : 'Officer-in-charge, Social Welfare Officer IV';
 
     String monthYearText =
         'FOR THE MONTH OF ${monthName.toUpperCase()} ${currentYear.toString()}';

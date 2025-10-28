@@ -9,9 +9,10 @@ import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
-import 'package:racconnect/presentation/widgets/orgchart_dialog.dart';
+
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -538,20 +539,130 @@ class _HomePageState extends State<HomePage> {
             return Positioned(
               right: 16,
               bottom: 16,
-              child: FloatingActionButton(
-                backgroundColor: Colors.white,
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const OrgChartDialog(),
-                      fullscreenDialog: true,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'orgChartFab',
+                    backgroundColor: Colors.white,
+                    onPressed: () async {
+                      final Uri url = Uri.parse(
+                        'https://www.canva.com/design/DAGv8fq8d3Y/256t5FyYa77CQs3cmNpFTw/view?utm_content=DAGv8fq8d3Y&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hd98961ff75',
+                      );
+                      try {
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not open org chart link'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: Icon(
+                      Icons.account_tree,
+                      color: Theme.of(context).primaryColor,
                     ),
-                  );
-                },
-                child: Icon(
-                  Icons.account_tree,
-                  color: Theme.of(context).primaryColor,
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  FloatingActionButton(
+                    heroTag: 'uniformFab',
+                    backgroundColor: Colors.white,
+                    onPressed: () {
+                      final authState = context.read<AuthCubit>().state;
+                      if (authState is AuthenticatedState) {
+                        final gender = authState.user.profile?.gender ?? '';
+                        showDialog(
+                          context: context,
+                          builder:
+                              (context) => Dialog(
+                                backgroundColor: Colors.white,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).primaryColor,
+                                          borderRadius: BorderRadius.circular(
+                                            20.0,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons
+                                                  .checkroom, // Using the same icon as the FAB
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'RACCO IV-A Calabarzon Dress Code'
+                                                  .toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (gender.toLowerCase() == 'male')
+                                        Image.asset(
+                                          'assets/images/boys-uniform-nobg.png',
+                                        )
+                                      else
+                                        Image.asset(
+                                          'assets/images/girls-uniform-nobg.png',
+                                        ),
+                                      RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black,
+                                          ),
+                                          children: [
+                                            const TextSpan(
+                                              text:
+                                                  'First Working Day of Month: ASEAN-Inspired',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const TextSpan(
+                                              text:
+                                                  '\nMonday: Barong/Filipiniana, Other Weekdays: At Least Smart Casual \n(Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
+                                            ),
+                                          ],
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                        );
+                      }
+                    },
+                    child: Icon(
+                      Icons.checkroom,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ],
               ),
             );
           },

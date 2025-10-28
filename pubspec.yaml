@@ -67,6 +67,5 @@ flutter:
   assets:
     - assets/
     - assets/images/
-    - assets/images/orgchart2025/
     - assets/animations/
     - pubspec.yaml
