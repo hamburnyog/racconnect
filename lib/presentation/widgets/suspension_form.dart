@@ -13,18 +13,28 @@ class SuspensionForm extends StatefulWidget {
 }
 
 class _SuspensionFormState extends State<SuspensionForm> {
-  TextEditingController nameController = TextEditingController();
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   bool isHalfday = false;
   TimeOfDay selectedTime = TimeOfDay.now();
 
+  String get suspensionName {
+    if (isHalfday) {
+      if (selectedTime.hour < 12) {
+        return 'Morning Suspension';
+      } else {
+        return 'Afternoon Suspension';
+      }
+    } else {
+      return 'Work Suspension';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     if (widget.suspensionModel != null) {
-      nameController.text = widget.suspensionModel!.name;
       dateController.text =
           widget.suspensionModel!.datetime.toIso8601String().split('T').first;
       isHalfday = widget.suspensionModel!.isHalfday;
@@ -50,7 +60,7 @@ class _SuspensionFormState extends State<SuspensionForm> {
         finalDateTime = date;
       }
       context.read<SuspensionCubit>().addSuspension(
-        name: nameController.text,
+        name: suspensionName,
         datetime: finalDateTime,
         isHalfday: isHalfday,
       );
@@ -75,7 +85,7 @@ class _SuspensionFormState extends State<SuspensionForm> {
       }
       context.read<SuspensionCubit>().updateSuspension(
         id: widget.suspensionModel!.id!,
-        name: nameController.text,
+        name: suspensionName,
         datetime: finalDateTime,
         isHalfday: isHalfday,
       );
@@ -85,7 +95,6 @@ class _SuspensionFormState extends State<SuspensionForm> {
 
   @override
   void dispose() {
-    nameController.dispose();
     dateController.dispose();
     timeController.dispose();
     formKey.currentState?.dispose();
@@ -147,27 +156,6 @@ class _SuspensionFormState extends State<SuspensionForm> {
                 ],
               ),
               SizedBox(height: 30),
-              TextFormField(
-                maxLength: 50,
-                controller: nameController,
-                keyboardType: TextInputType.name,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'This field is required';
-                  }
-                  return null;
-                },
-                onFieldSubmitted:
-                    (_) =>
-                        (widget.suspensionModel == null)
-                            ? addSuspension
-                            : saveSuspension,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Enter a name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
               SizedBox(height: 20),
               TextFormField(
                 controller: dateController,

@@ -130,8 +130,8 @@ class _OrgChartDialogState extends State<OrgChartDialog> {
                               _currentIndex == index
                                   ? Colors.white
                                   : const Color(
-                                      0x80FFFFFF,
-                                    ), // White with 50% opacity
+                                    0x80FFFFFF,
+                                  ), // White with 50% opacity
                         ),
                       ),
                     );

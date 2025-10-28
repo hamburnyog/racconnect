@@ -446,7 +446,8 @@ class _AttendanceFormState extends State<AttendanceForm> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    onPressed: attendanceToday.length >= 2 ? null : addAttendance,
+                    onPressed:
+                        attendanceToday.length >= 2 ? null : addAttendance,
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Row(
@@ -463,8 +464,8 @@ class _AttendanceFormState extends State<AttendanceForm> {
                             attendanceToday.length >= 2
                                 ? 'WFH Recorded'
                                 : (attendanceToday.isEmpty)
-                                    ? 'Time In'
-                                    : 'Time Out',
+                                ? 'Time In'
+                                : 'Time Out',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.white,

@@ -19,6 +19,8 @@ class TravelPage extends StatefulWidget {
 
 class _TravelPageState extends State<TravelPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = true;
 
   void _showTravelForm() {
@@ -68,6 +70,11 @@ class _TravelPageState extends State<TravelPage> {
   void initState() {
     super.initState();
     _loadTravels();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadTravels() async {
@@ -85,6 +92,7 @@ class _TravelPageState extends State<TravelPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -143,6 +151,31 @@ class _TravelPageState extends State<TravelPage> {
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 3.0,
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by SO number or travel date',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
                 BlocConsumer<TravelCubit, TravelState>(
                   listener: (context, state) {
                     if (state is TravelError) {
@@ -182,6 +215,36 @@ class _TravelPageState extends State<TravelPage> {
                     if (state is GetAllTravelSuccess) {
                       final travels = state.travelModels.toList();
 
+                      // Apply search filter
+                      if (_searchQuery.isNotEmpty) {
+                        travels.retainWhere((travel) {
+                          final soNumber = travel.soNumber.toLowerCase();
+                          final employeeNumbers =
+                              travel.employeeNumbers.join(' ').toLowerCase();
+                          final travelDates = travel.specificDates
+                              .map(
+                                (date) =>
+                                    DateFormat(
+                                      'MMMM d, yyyy',
+                                    ).format(date).toLowerCase(),
+                              )
+                              .join(' ');
+                          final travelDatesShort = travel.specificDates
+                              .map(
+                                (date) =>
+                                    DateFormat(
+                                      'MM/dd/yyyy',
+                                    ).format(date).toLowerCase(),
+                              )
+                              .join(' ');
+
+                          return soNumber.contains(_searchQuery) ||
+                              employeeNumbers.contains(_searchQuery) ||
+                              travelDates.contains(_searchQuery) ||
+                              travelDatesShort.contains(_searchQuery);
+                        });
+                      }
+
                       if (travels.isEmpty) {
                         return Expanded(
                           child: ListView(
@@ -192,9 +255,11 @@ class _TravelPageState extends State<TravelPage> {
                                 'assets/images/dog.svg',
                                 height: 100,
                               ),
-                              const Center(
+                              Center(
                                 child: Text(
-                                  'Nothing is here yet. Add a travel order to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No travel orders found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a travel order to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),

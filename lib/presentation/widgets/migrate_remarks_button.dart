@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:developer';
 
@@ -59,7 +58,8 @@ class _Migration {
   final VoidCallback? onImportSuccess;
   final AuthRepository authRepo = AuthRepository();
   final AttendanceRepository attendanceRepo = AttendanceRepository();
-  final AccomplishmentRepository accomplishmentRepo = AccomplishmentRepository();
+  final AccomplishmentRepository accomplishmentRepo =
+      AccomplishmentRepository();
 
   _Migration({
     required this.context,
@@ -98,7 +98,9 @@ class _Migration {
       log('Starting migration...');
       List<UserModel> users = await authRepo.getUsers();
       List<UserModel> usersWithRole =
-          users.where((user) => user.role != null && user.role!.isNotEmpty).toList();
+          users
+              .where((user) => user.role != null && user.role!.isNotEmpty)
+              .toList();
       log('Found ${usersWithRole.length} users with roles.');
 
       int totalUsers = usersWithRole.length;
@@ -114,17 +116,49 @@ class _Migration {
         List<AttendanceModel> attendance = await attendanceRepo
             .getEmployeeAttendance(user.profile!.employeeNumber!);
 
-        List<AttendanceModel> wfhAttendance = attendance
-            .where((log) =>
-                log.type.toLowerCase().contains('wfh') &&
-                log.timestamp.year == selectedYear &&
-                log.timestamp.month == selectedMonth)
-            .toList();
-        log('Found ${wfhAttendance.length} WFH attendance logs for ${user.name}.');
+        // Group attendance by date to check for biometric vs WFH priority
+        var attendanceByDate = <DateTime, List<AttendanceModel>>{};
+        for (var log in attendance) {
+          if (log.timestamp.year == selectedYear &&
+              log.timestamp.month == selectedMonth) {
+            final day = DateTime(
+              log.timestamp.year,
+              log.timestamp.month,
+              log.timestamp.day,
+            );
+            attendanceByDate.putIfAbsent(day, () => []).add(log);
+          }
+        }
+
+        // Only consider as WFH if the day has WFH logs and no biometric logs
+        List<AttendanceModel> wfhAttendance = [];
+        for (var entry in attendanceByDate.entries) {
+          final dayLogs = entry.value;
+          final hasBiometrics = dayLogs.any(
+            (log) => log.type.toLowerCase() == 'biometrics',
+          );
+          final hasWFH = dayLogs.any(
+            (log) => log.type.toLowerCase().contains('wfh'),
+          );
+
+          if (hasWFH && !hasBiometrics) {
+            // Add all WFH logs for this date
+            wfhAttendance.addAll(
+              dayLogs.where((log) => log.type.toLowerCase().contains('wfh')),
+            );
+          }
+        }
+        log(
+          'Found ${wfhAttendance.length} WFH attendance logs for ${user.name}.',
+        );
 
         var groupedByDay = <DateTime, List<AttendanceModel>>{};
         for (var log in wfhAttendance) {
-          final day = DateTime(log.timestamp.year, log.timestamp.month, log.timestamp.day);
+          final day = DateTime(
+            log.timestamp.year,
+            log.timestamp.month,
+            log.timestamp.day,
+          );
           groupedByDay.putIfAbsent(day, () => []).add(log);
         }
 
@@ -133,7 +167,11 @@ class _Migration {
           logsForDay.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
           final existingAccomplishments = await accomplishmentRepo
-              .getEmployeeAccomplishments(user.profile!.employeeNumber!, day, day);
+              .getEmployeeAccomplishmentsForMonth(
+                user.profile!.employeeNumber!,
+                day,
+                day,
+              );
 
           String target = logsForDay.first.remarks;
           String accomplishment =
@@ -152,7 +190,9 @@ class _Migration {
                   accomplishment: accomplishment,
                 );
               } catch (e) {
-                log('Error creating accomplishment for ${user.name} on $day: $e');
+                log(
+                  'Error creating accomplishment for ${user.name} on $day: $e',
+                );
               }
             } else {
               log('Updating accomplishment for ${user.name} on $day');
@@ -167,7 +207,9 @@ class _Migration {
                   accomplishment: accomplishment,
                 );
               } catch (e) {
-                log('Error updating accomplishment for ${user.name} on $day: $e');
+                log(
+                  'Error updating accomplishment for ${user.name} on $day: $e',
+                );
               }
             }
           }

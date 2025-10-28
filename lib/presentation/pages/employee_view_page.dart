@@ -194,7 +194,8 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
                         return Center(child: Text('Error: ${snapshot.error}'));
                       } else {
                         final attendance =
-                            snapshot.data!['attendance'] as List<AttendanceModel>;
+                            snapshot.data!['attendance']
+                                as List<AttendanceModel>;
                         final accomplishment =
                             snapshot.data!['accomplishment']
                                 as AccomplishmentModel?;

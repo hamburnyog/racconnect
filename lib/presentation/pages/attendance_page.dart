@@ -10,7 +10,7 @@ import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
-import 'package:racconnect/presentation/widgets/migrate_remarks_button.dart';
+/* import 'package:racconnect/presentation/widgets/migrate_remarks_button.dart'; */
 import 'package:racconnect/presentation/widgets/export_accomplishments_button.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
@@ -119,7 +119,11 @@ class _AttendancePageState extends State<AttendancePage>
         ).subtract(const Duration(days: 1));
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
-            .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
+            .getEmployeeAccomplishmentsForMonth(
+              employeeNumber,
+              startDate,
+              endDate,
+            );
 
         // Check if widget is still mounted
         if (!mounted) return;
@@ -223,7 +227,11 @@ class _AttendancePageState extends State<AttendancePage>
         ).subtract(const Duration(days: 1));
         final accomplishmentRepository = AccomplishmentRepository();
         final accomplishments = await accomplishmentRepository
-            .getEmployeeAccomplishments(employeeNumber, startDate, endDate);
+            .getEmployeeAccomplishmentsForMonth(
+              employeeNumber,
+              startDate,
+              endDate,
+            );
 
         setState(() {
           // Update the accomplishment dates set
@@ -440,12 +448,12 @@ class _AttendancePageState extends State<AttendancePage>
                             selectedMonth: selectedMonth,
                             onRefresh: _loadInitialData,
                           ),
-                        if (showImportButton)
+                        /* if (showImportButton)
                           MigrateRemarksButton(
                             selectedYear: selectedYear,
                             selectedMonth: selectedMonth,
                             onRefresh: _loadInitialData,
-                          ),
+                          ), */
                       ],
                     );
                   },

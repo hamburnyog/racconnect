@@ -28,6 +28,9 @@ Widget buildAttendanceRow({
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
   final isToday = DateUtils.isSameDay(day, DateTime.now());
 
+  final isSuspension = suspensionMap.containsKey(day);
+  final suspensionModel = suspensionMap[day];
+
   final rowColor =
       holidayName != null
           ? Colors.green.shade50
@@ -35,6 +38,10 @@ Widget buildAttendanceRow({
           ? Colors.purple.shade50
           : travelName != null
           ? Colors.teal.shade50
+          : isSuspension
+          ? Colors
+              .orange
+              .shade50 // Suspension uses orange, same as homepage calendar
           : isWeekend
           ? Colors.grey.shade200
           : isToday
@@ -42,14 +49,18 @@ Widget buildAttendanceRow({
           : null;
 
   final label =
-      holidayName ?? leaveName ?? travelName ?? (isWeekend ? 'Weekend' : '');
+      holidayName ??
+      leaveName ??
+      travelName ??
+      (isSuspension
+          ? suspensionModel?.name ?? 'SUSPENSION'
+          : (isWeekend ? 'Weekend' : ''));
   final isNonWorkingDay =
       holidayName != null ||
       leaveName != null ||
       travelName != null ||
-      isWeekend;
-  final isSuspension = suspensionMap.containsKey(day);
-  final suspensionModel = suspensionMap[day];
+      isWeekend ||
+      isSuspension;
 
   String? displayTimeIn = data?['timeIn'];
   String? displayLunchOut = data?['lunchOut'];
@@ -57,16 +68,28 @@ Widget buildAttendanceRow({
   String? displayTimeOut = data?['timeOut'];
   String? displayType = data?['type'];
 
-  if (isSuspension && suspensionModel?.isHalfday == true) {
-    if (displayTimeIn != null && displayTimeIn != '—') {
-      displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
-      displayLunchIn = '-';
-      displayTimeOut = '-';
+  if (isSuspension) {
+    if (suspensionModel?.isHalfday == true) {
+      if (displayTimeIn != null && displayTimeIn != '—') {
+        displayLunchOut = DateFormat(
+          'h:mm a',
+        ).format(suspensionModel!.datetime);
+        displayLunchIn = '-';
+        displayTimeOut = '-';
+      } else {
+        displayTimeIn = '—';
+        displayLunchOut = DateFormat(
+          'h:mm a',
+        ).format(suspensionModel!.datetime);
+        displayLunchIn = '-';
+        displayTimeOut = '-';
+      }
     } else {
+      // Full-day suspension
       displayTimeIn = '—';
-      displayLunchOut = DateFormat('h:mm a').format(suspensionModel!.datetime);
-      displayLunchIn = '-';
-      displayTimeOut = '-';
+      displayLunchOut = '—';
+      displayLunchIn = '—';
+      displayTimeOut = '—';
     }
     displayType = 'suspension';
   }
@@ -75,112 +98,118 @@ Widget buildAttendanceRow({
     padding: const EdgeInsets.symmetric(vertical: 1.0),
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        scrollControlDisabledMaxHeightRatio: 0.75,
-        showDragHandle: true,
-        useSafeArea: true,
-        builder: (BuildContext builder) {
-          return AccomplishmentBottomSheet(
-            day: day,
-            onAccomplishmentSaved: onRefreshAccomplishments,
-          );
-        },
-      ),
+      onTap:
+          () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            scrollControlDisabledMaxHeightRatio: 0.75,
+            showDragHandle: true,
+            useSafeArea: true,
+            builder: (BuildContext builder) {
+              return AccomplishmentBottomSheet(
+                day: day,
+                onAccomplishmentSaved: onRefreshAccomplishments,
+              );
+            },
+          ),
       child: AnimatedBuilder(
         animation: greenGlowAnimation,
         builder: (context, child) {
           return Container(
-            decoration: hasAccomplishments
-                ? BoxDecoration(
-                    color: rowColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: greenGlowAnimation.value ?? Colors.lightGreen,
-                      width: 2.0,
+            decoration:
+                hasAccomplishments
+                    ? BoxDecoration(
+                      color: rowColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: greenGlowAnimation.value ?? Colors.lightGreen,
+                        width: 2.0,
+                      ),
+                    )
+                    : BoxDecoration(
+                      color: rowColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.grey.shade100,
+                        width: 1.5,
+                      ),
                     ),
-                  )
-                : BoxDecoration(
-                    color: rowColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.grey.shade100,
-                      width: 1.5,
-                    ),
-                  ),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: isNonWorkingDay
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          DateFormat('MMM dd (E)').format(day),
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 12 : 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
+            child:
+                isNonWorkingDay
+                    ? Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DateFormat('MMM dd (E)').format(day),
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 12 : 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 5,
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: isSmallScreen ? 12 : 14,
-                            color: Colors.grey.shade600,
+                        Expanded(
+                          flex: 5,
+                          child: Text(
+                            label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: isSmallScreen ? 12 : 14,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          DateFormat('MMM dd (E)').format(day),
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 12 : 14,
-                            color: Colors.teal,
-                            fontWeight: FontWeight.bold,
+                      ],
+                    )
+                    : Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DateFormat('MMM dd (E)').format(day),
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 12 : 14,
+                              color: Colors.teal,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: buildTimeCell(
-                          displayTimeIn,
-                          isSmallScreen: isSmallScreen,
+                        Expanded(
+                          child: buildTimeCell(
+                            displayTimeIn,
+                            isSmallScreen: isSmallScreen,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: buildTimeCell(
-                          displayLunchOut,
-                          isSmallScreen: isSmallScreen,
+                        Expanded(
+                          child: buildTimeCell(
+                            displayLunchOut,
+                            isSmallScreen: isSmallScreen,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: buildTimeCell(
-                          displayLunchIn,
-                          isSmallScreen: isSmallScreen,
+                        Expanded(
+                          child: buildTimeCell(
+                            displayLunchIn,
+                            isSmallScreen: isSmallScreen,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: buildTimeCell(
-                          displayTimeOut,
-                          isSmallScreen: isSmallScreen,
+                        Expanded(
+                          child: buildTimeCell(
+                            displayTimeOut,
+                            isSmallScreen: isSmallScreen,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: displayType != null
-                            ? buildBadge(displayType,
-                                smallScreen: isSmallScreen)
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
-                  ),
+                        Expanded(
+                          child:
+                              displayType != null
+                                  ? buildBadge(
+                                    displayType,
+                                    smallScreen: isSmallScreen,
+                                  )
+                                  : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
           );
         },
       ),

@@ -44,8 +44,13 @@ Widget buildTimeCell(String? timeString, {required bool isSmallScreen}) {
 
 Widget buildBadge(String type, {bool smallScreen = false}) {
   final normalized = type.toLowerCase();
-  final isWFH = normalized.contains('wfh');
+  final hasBiometrics = normalized.contains('biometrics');
+  final hasWFH = normalized.contains('wfh');
   final isSuspension = normalized.contains('suspension');
+
+  // Check for combined type
+  final isCombined = normalized.contains('biometrics+wfh');
+  final isWFH = hasWFH && !hasBiometrics; // Standard WFH (no biometrics)
 
   Color color;
   String text;
@@ -53,6 +58,9 @@ Widget buildBadge(String type, {bool smallScreen = false}) {
   if (isSuspension) {
     color = Colors.orange;
     text = 'SUSP.';
+  } else if (isCombined) {
+    color = Colors.blue; // Different color for combined
+    text = 'BIO + WFH';
   } else if (isWFH) {
     color = Colors.purple;
     text = 'WFH';

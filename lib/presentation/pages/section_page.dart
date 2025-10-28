@@ -18,6 +18,8 @@ class SectionPage extends StatefulWidget {
 
 class _SectionPageState extends State<SectionPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = true;
 
   void _showSectionForm() {
@@ -53,6 +55,11 @@ class _SectionPageState extends State<SectionPage> {
   void initState() {
     super.initState();
     _loadSections();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadSections() async {
@@ -70,6 +77,7 @@ class _SectionPageState extends State<SectionPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -122,6 +130,31 @@ class _SectionPageState extends State<SectionPage> {
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 3.0,
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by section name or code',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
                 BlocConsumer<SectionCubit, SectionState>(
                   listener: (context, state) {
                     if (state is SectionError) {
@@ -161,6 +194,16 @@ class _SectionPageState extends State<SectionPage> {
                     if (state is GetAllSectionSuccess) {
                       final sections = state.sectionModels.toList();
 
+                      // Apply search filter
+                      if (_searchQuery.isNotEmpty) {
+                        sections.retainWhere((section) {
+                          final sectionName = section.name.toLowerCase();
+                          final sectionCode = section.code.toLowerCase();
+                          return sectionName.contains(_searchQuery) ||
+                              sectionCode.contains(_searchQuery);
+                        });
+                      }
+
                       if (sections.isEmpty) {
                         return Expanded(
                           child: ListView(
@@ -173,7 +216,9 @@ class _SectionPageState extends State<SectionPage> {
                               ),
                               Center(
                                 child: Text(
-                                  'Nothing is here yet. Add a record to get started.',
+                                  _searchQuery.isNotEmpty
+                                      ? 'No sections found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a record to get started.',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ),
@@ -212,8 +257,10 @@ class _SectionPageState extends State<SectionPage> {
                                           ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(false),
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
                                               child: const Text("Cancel"),
                                             ),
                                             TextButton(
@@ -253,9 +300,7 @@ class _SectionPageState extends State<SectionPage> {
                                     elevation: 3,
                                     child: ListTile(
                                       onTap: () {
-                                        _showSectionFormWithEdit(
-                                          sectionModel,
-                                        );
+                                        _showSectionFormWithEdit(sectionModel);
                                       },
                                       leading: CircleAvatar(
                                         backgroundColor:
@@ -303,9 +348,7 @@ class _SectionPageState extends State<SectionPage> {
                               leading: Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,

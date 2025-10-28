@@ -208,10 +208,35 @@ class _ExportAccomplishmentsButtonState
         final attendanceRecords = await attendanceRepository
             .getEmployeeAttendanceForMonth(employeeNumber, startDate);
 
-        final wfhAttendanceRecords =
-            attendanceRecords
-                .where((record) => record.type.toLowerCase().contains('wfh'))
-                .toList();
+        // Get all attendance records grouped by date to check for biometric vs WFH
+        final recordsByDate = <DateTime, List<dynamic>>{};
+        for (var record in attendanceRecords) {
+          final date = DateTime(
+            record.timestamp.year,
+            record.timestamp.month,
+            record.timestamp.day,
+          );
+          recordsByDate.putIfAbsent(date, () => []).add(record);
+        }
+
+        // Only consider as WFH if the day has WFH logs and no biometric logs
+        final wfhAttendanceRecords = <dynamic>[];
+        for (var entry in recordsByDate.entries) {
+          final dateRecords = entry.value;
+          final hasBiometrics = dateRecords.any(
+            (r) => r.type.toLowerCase() == 'biometrics',
+          );
+          final hasWFH = dateRecords.any(
+            (r) => r.type.toLowerCase().contains('wfh'),
+          );
+
+          if (hasWFH && !hasBiometrics) {
+            // Add all WFH records for this date
+            wfhAttendanceRecords.addAll(
+              dateRecords.where((r) => r.type.toLowerCase().contains('wfh')),
+            );
+          }
+        }
 
         final wfhDates = <DateTime>{};
         for (var record in wfhAttendanceRecords) {
@@ -254,13 +279,39 @@ class _ExportAccomplishmentsButtonState
       if (!mounted) return;
 
       if (Platform.isAndroid || Platform.isIOS) {
-        final params = ShareParams(
-          subject:
-              'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
-          files: [XFile(pdfFile.path)],
-        );
-
-        final result = await SharePlus.instance.share(params);
+        ShareResult result;
+        if (Platform.isIOS) {
+          // On iOS, we need to provide the sharePositionOrigin for the share sheet
+          final box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+                files: [XFile(pdfFile.path)],
+                sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+              ),
+            );
+          } else {
+            // Fallback if we can't get the context size
+            result = await SharePlus.instance.share(
+              ShareParams(
+                subject:
+                    'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+                files: [XFile(pdfFile.path)],
+              ),
+            );
+          }
+        } else {
+          // For Android, no special positioning needed
+          result = await SharePlus.instance.share(
+            ShareParams(
+              subject:
+                  'Accomplishments Report - ${DateFormat('MMMM yyyy').format(startDate)}',
+              files: [XFile(pdfFile.path)],
+            ),
+          );
+        }
 
         if (!mounted) return;
 
@@ -357,8 +408,8 @@ class _ExportAccomplishmentsButtonState
       footerImage = null;
     }
 
-    final garamond = await PdfGoogleFonts.cormorantGaramondRegular();
-    final garamondBold = await PdfGoogleFonts.cormorantGaramondBold();
+    final garamond = await PdfGoogleFonts.eBGaramondRegular();
+    final garamondBold = await PdfGoogleFonts.eBGaramondBold();
 
     final tableHeaders =
         isAnnexA
@@ -395,11 +446,25 @@ class _ExportAccomplishmentsButtonState
         if (holidayName != null) {
           nonWorkingDayText = holidayName;
         } else if (suspension != null) {
-          nonWorkingDayText = suspension.name;
+          if (suspension.isHalfday) {
+            // Format time as AM/PM in parentheses (e.g., "Morning Suspension (10:00 AM)" or "Afternoon Suspension (2:00 PM)")
+            String formattedTime = DateFormat(
+              'h:mm a',
+            ).format(suspension.datetime);
+            if (suspension.name.contains('Morning')) {
+              nonWorkingDayText = 'Morning Suspension ($formattedTime)';
+            } else if (suspension.name.contains('Afternoon')) {
+              nonWorkingDayText = 'Afternoon Suspension ($formattedTime)';
+            } else {
+              nonWorkingDayText = '${suspension.name} ($formattedTime)';
+            }
+          } else {
+            nonWorkingDayText = suspension.name;
+          }
         } else if (leaveName != null) {
           nonWorkingDayText = leaveName;
         } else if (travelName != null) {
-          nonWorkingDayText = 'Special Order #$travelName';
+          nonWorkingDayText = 'Special Order No. $travelName';
         } else if (day.weekday == DateTime.saturday) {
           nonWorkingDayText = 'Saturday';
         } else if (day.weekday == DateTime.sunday) {
@@ -410,14 +475,30 @@ class _ExportAccomplishmentsButtonState
             .map((e) => e.accomplishment)
             .join('\n');
 
+        // Split the non-working day text to handle bolding properly
+        String mainText = nonWorkingDayText;
+        String timeText = '';
+
+        if (nonWorkingDayText.contains('(')) {
+          int parenthesisIndex = nonWorkingDayText.indexOf('(');
+          mainText = nonWorkingDayText.substring(0, parenthesisIndex);
+          timeText = nonWorkingDayText.substring(parenthesisIndex);
+        }
+
         final richText = pw.RichText(
           text: pw.TextSpan(
             children: [
-              if (nonWorkingDayText.isNotEmpty)
+              if (nonWorkingDayText.isNotEmpty) ...[
                 pw.TextSpan(
-                  text: '${nonWorkingDayText.toUpperCase()}\n',
+                  text: mainText,
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
+                if (timeText.isNotEmpty)
+                  pw.TextSpan(
+                    text: timeText,
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+                  ),
+              ],
               pw.TextSpan(text: accomplishmentText),
             ],
           ),
@@ -481,19 +562,18 @@ class _ExportAccomplishmentsButtonState
             (pw.Context context) => [
               if (isAnnexA) ...[
                 pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
                     pw.Text(
-                      'ANNEX A',
+                      'WFH ACCOMPLISHMENT REPORT (ANNEX A)',
                       style: pw.TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    pw.SizedBox(width: 20),
                   ],
                 ),
-                pw.SizedBox(height: 5),
+                pw.SizedBox(height: 10),
               ] else if (isCOS) ...[
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.center,
@@ -776,38 +856,73 @@ class _ExportAccomplishmentsButtonState
                 ],
               ),
               pw.Table(
-                border: pw.TableBorder.all(),
+                border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
+                columnWidths: {
+                  0: pw.FractionColumnWidth(0.15), // First column (label)
+                  1: pw.FractionColumnWidth(
+                    0.85,
+                  ), // Merged columns 2-4 for name/designation
+                },
                 children: [
                   pw.TableRow(
+                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
                     children: [
                       pw.Padding(
-                        padding: const pw.EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 4.0,
-                        ),
-                        child: pw.Text(
-                          'Prepared by: $userName',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Center(
+                          child: pw.Text(
+                            'Prepared by:',
+                            style: pw.TextStyle(fontSize: 10),
                           ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.SizedBox(height: 20), // Space for signature
+                            pw.Text(
+                              userName,
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                   pw.TableRow(
+                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
                     children: [
                       pw.Padding(
-                        padding: const pw.EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 4.0,
-                        ),
-                        child: pw.Text(
-                          'Approved by: ${_getUnitHeadName(userOffice)}',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Center(
+                          child: pw.Text(
+                            'Approved by:',
+                            style: pw.TextStyle(fontSize: 10),
                           ),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.SizedBox(height: 20), // Space for signature
+                            pw.Text(
+                              _getUnitHeadName(userOffice),
+                              style: pw.TextStyle(
+                                fontSize: 10,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.Text(
+                              userOffice == 'Office of the RACC Officer'
+                                  ? 'Deputy Executive Director for Operations and Services'
+                                  : 'Officer-in-charge, Social Welfare Officer IV',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -881,7 +996,7 @@ class _ExportAccomplishmentsButtonState
   String _getUnitHeadName(userOffice) {
     String supervisor =
         userOffice == 'Office of the RACC Officer'
-            ? 'Hon. Rowena M. Macalintal, ASEC'
+            ? 'Rowena M. Macalintal, ASEC'
             : 'John S. Calidguid, RSW, MPA';
     return supervisor;
   }
