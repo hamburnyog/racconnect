@@ -21,7 +21,10 @@ class VersionCheckCubit extends Cubit<VersionCheckState> {
         emit(
           VersionCheckOutdated(
             publishedVersion: result.publishedVersion,
-            driveLink: result.driveLink,
+            iosLink: result.iosLink,
+            androidLink: result.androidLink,
+            macLink: result.macLink,
+            windowsLink: result.windowsLink,
           ),
         );
       } else {

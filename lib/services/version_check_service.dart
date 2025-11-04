@@ -6,11 +6,11 @@ class VersionCheckService {
   final PocketBase _pb = PocketBaseClient.instance;
 
   /// Check if the current app version is outdated compared to the published version in PocketBase
-  /// Returns a tuple of (isOutdated, publishedVersion, driveLink) where:
+  /// Returns a tuple of (isOutdated, publishedVersion, iosLink, androidLink, macLink, windowsLink) where:
   /// - isOutdated: true if current app version is less than published version
   /// - publishedVersion: the latest version from PocketBase
-  /// - driveLink: the Google Drive link for the installer
-  Future<({bool isOutdated, String publishedVersion, String? driveLink})>
+  /// - platform-specific links: links for each platform
+  Future<({bool isOutdated, String publishedVersion, String? iosLink, String? androidLink, String? macLink, String? windowsLink})>
   checkVersion() async {
     try {
       // Get current app version
@@ -19,10 +19,13 @@ class VersionCheckService {
       // Get the system flags from PocketBase
       final systemFlagsRecords = await _pb
           .collection('systemFlags')
-          .getFullList(filter: "key = 'publishedVersion' || key = 'driveLink'");
+          .getFullList(filter: "key = 'publishedVersion' || key = 'iosLink' || key = 'androidLink' || key = 'macLink' || key = 'windowsLink'");
 
       String? publishedVersion;
-      String? driveLink;
+      String? iosLink;
+      String? androidLink;
+      String? macLink;
+      String? windowsLink;
 
       // Parse the system flags
       for (final record in systemFlagsRecords) {
@@ -31,8 +34,14 @@ class VersionCheckService {
 
         if (key == 'publishedVersion') {
           publishedVersion = value;
-        } else if (key == 'driveLink') {
-          driveLink = value;
+        } else if (key == 'iosLink') {
+          iosLink = value;
+        } else if (key == 'androidLink') {
+          androidLink = value;
+        } else if (key == 'macLink') {
+          macLink = value;
+        } else if (key == 'windowsLink') {
+          windowsLink = value;
         }
       }
 
@@ -41,7 +50,10 @@ class VersionCheckService {
         return (
           isOutdated: false,
           publishedVersion: currentVersion,
-          driveLink: null,
+          iosLink: null,
+          androidLink: null,
+          macLink: null,
+          windowsLink: null,
         );
       }
 
@@ -51,12 +63,22 @@ class VersionCheckService {
       return (
         isOutdated: isOutdated,
         publishedVersion: publishedVersion,
-        driveLink: driveLink,
+        iosLink: iosLink,
+        androidLink: androidLink,
+        macLink: macLink,
+        windowsLink: windowsLink,
       );
     } catch (e) {
       // If there's an error (e.g., network issue, collection doesn't exist),
       // assume the app is up to date to avoid blocking the user
-      return (isOutdated: false, publishedVersion: 'unknown', driveLink: null);
+      return (
+        isOutdated: false, 
+        publishedVersion: 'unknown', 
+        iosLink: null, 
+        androidLink: null, 
+        macLink: null, 
+        windowsLink: null
+      );
     }
   }
 

@@ -130,33 +130,60 @@ class _UniformReminderCardState extends State<UniformReminderCard> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.white,
-                                        ),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const TextSpan(
-                                            text:
-                                                'First Working Day of Month: ASEAN-Inspired, Monday: Barong/Filipiniana',
-                                            style: TextStyle(
+                                          Text(
+                                            'First Working Day of Month:',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
                                               fontWeight: FontWeight.bold,
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
-                                          const TextSpan(
-                                            text:
-                                                ', Other Weekdays: At Least Smart Casual (Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
+                                          Text(
+                                            'ASEAN-Inspired',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            'Monday: Barong/Filipiniana',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            'Other Weekdays: At Least Smart Casual',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            '(Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
                                           ),
                                         ],
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

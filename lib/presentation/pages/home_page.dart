@@ -572,73 +572,103 @@ class _HomePageState extends State<HomePage> {
                                 backgroundColor: Colors.white,
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12.0,
-                                          vertical: 6.0,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).primaryColor,
-                                          borderRadius: BorderRadius.circular(
-                                            20.0,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12.0,
+                                            vertical: 6.0,
                                           ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons
-                                                  .checkroom, // Using the same icon as the FAB
-                                              color: Colors.white,
-                                              size: 18,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).primaryColor,
+                                            borderRadius: BorderRadius.circular(
+                                              20.0,
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'RACCO IV-A Calabarzon Dress Code'
-                                                  .toUpperCase(),
-                                              style: const TextStyle(
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons
+                                                    .checkroom, // Using the same icon as the FAB
                                                 color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                                size: 18,
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (gender.toLowerCase() == 'male')
-                                        Image.asset(
-                                          'assets/images/boys-uniform-nobg.png',
-                                        )
-                                      else
-                                        Image.asset(
-                                          'assets/images/girls-uniform-nobg.png',
-                                        ),
-                                      RichText(
-                                        text: TextSpan(
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.black,
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'RACCO IV-A Calabarzon Dress Code'
+                                                    .toUpperCase(),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          children: [
-                                            const TextSpan(
-                                              text:
-                                                  'First Working Day of Month: ASEAN-Inspired',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const TextSpan(
-                                              text:
-                                                  '\nMonday: Barong/Filipiniana, Other Weekdays: At Least Smart Casual \n(Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
-                                            ),
-                                          ],
                                         ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
+                                        if (gender.toLowerCase() == 'male')
+                                          Image.asset(
+                                            'assets/images/boys-uniform-nobg.png',
+                                          )
+                                        else
+                                          Image.asset(
+                                            'assets/images/girls-uniform-nobg.png',
+                                          ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'First Working Day of Month:',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              Text(
+                                                'ASEAN-Inspired',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              Text(
+                                                'Monday: Barong/Filipiniana',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              Text(
+                                                'Other Weekdays: At Least Smart Casual',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              Text(
+                                                '(Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

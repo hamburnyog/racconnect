@@ -18,10 +18,12 @@ class LeaveForm extends StatefulWidget {
 
 class _LeaveFormState extends State<LeaveForm> {
   TextEditingController leaveTypeController = TextEditingController();
+  TextEditingController customLeaveTypeController = TextEditingController();
   final List<ProfileModel> _selectedEmployees = [];
   DateTime _focusedDay = DateTime.now();
   final Set<DateTime> _selectedDates = <DateTime>{};
   final formKey = GlobalKey<FormState>();
+  bool _showCustomLeaveField = false;
 
   final List<String> leaveTypes = [
     'Sick Leave',
@@ -37,13 +39,24 @@ class _LeaveFormState extends State<LeaveForm> {
     'Rehabilitation Privilege',
     'Leave Benefits for Women',
     'Emergency (Calamity) Leave',
+    'Compensatory Time-off',
     'Others',
   ];
 
   void addLeave() {
     if (formKey.currentState!.validate()) {
+      String leaveType = leaveTypeController.text.trim();
+      
+      // Handle custom leave type when 'Others' is selected
+      if (leaveType == 'Others' && customLeaveTypeController.text.trim().isNotEmpty) {
+        leaveType = customLeaveTypeController.text.trim();
+      } else if (leaveType == 'Compensatory Time-off') {
+        // Map display text to storage value for CTO
+        leaveType = 'CTO';
+      }
+      
       context.read<LeaveCubit>().addLeave(
-        type: leaveTypeController.text.trim(),
+        type: leaveType,
         specificDates: _selectedDates.toList(),
         employeeNumbers:
             _selectedEmployees.map((e) => e.employeeNumber!).toList(),
@@ -55,9 +68,19 @@ class _LeaveFormState extends State<LeaveForm> {
   void saveLeave() {
     if (formKey.currentState!.validate()) {
       final leaveId = widget.leaveModel?.id ?? '';
+      String leaveType = leaveTypeController.text.trim();
+      
+      // Handle custom leave type when 'Others' is selected
+      if (leaveType == 'Others' && customLeaveTypeController.text.trim().isNotEmpty) {
+        leaveType = customLeaveTypeController.text.trim();
+      } else if (leaveType == 'Compensatory Time-off') {
+        // Map display text to storage value for CTO
+        leaveType = 'CTO';
+      }
+      
       context.read<LeaveCubit>().updateLeave(
         id: leaveId,
-        type: leaveTypeController.text.trim(),
+        type: leaveType,
         specificDates: _selectedDates.toList(),
         employeeNumbers:
             _selectedEmployees.map((e) => e.employeeNumber!).toList(),
@@ -70,7 +93,20 @@ class _LeaveFormState extends State<LeaveForm> {
   void initState() {
     super.initState();
     if (widget.leaveModel != null) {
-      leaveTypeController.text = widget.leaveModel!.type;
+      String leaveType = widget.leaveModel!.type;
+      // Check if this is a custom leave type (not in our predefined list)
+      if (!leaveTypes.contains(leaveType) && leaveType != 'CTO') {
+        // This is a custom leave type saved as "Others"
+        customLeaveTypeController.text = leaveType; // Store the custom type in the text field
+        _showCustomLeaveField = true;
+        leaveTypeController.text = 'Others';
+      } else {
+        // Map stored CTO value to display value
+        leaveTypeController.text = widget.leaveModel!.type == 'CTO' 
+            ? 'Compensatory Time-off' 
+            : widget.leaveModel!.type;
+        _showCustomLeaveField = (leaveTypeController.text == 'Others');
+      }
       _selectedDates.addAll(widget.leaveModel!.specificDates);
       if (widget.leaveModel!.specificDates.isNotEmpty) {
         _focusedDay = widget.leaveModel!.specificDates.first;
@@ -156,6 +192,11 @@ class _LeaveFormState extends State<LeaveForm> {
                   if (value != null) {
                     setState(() {
                       leaveTypeController.text = value;
+                      _showCustomLeaveField = (value == 'Others');
+                      // Clear custom text if switching away from Others
+                      if (value != 'Others') {
+                        customLeaveTypeController.clear();
+                      }
                     });
                   }
                 },
@@ -165,6 +206,24 @@ class _LeaveFormState extends State<LeaveForm> {
                   border: OutlineInputBorder(),
                 ),
               ),
+              if (_showCustomLeaveField)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: TextFormField(
+                    controller: customLeaveTypeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Specify Leave Type',
+                      hintText: 'Enter custom leave type',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (_showCustomLeaveField && (value == null || value.isEmpty)) {
+                        return 'Please specify the leave type';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
               const SizedBox(height: 20),
               FormField<Set<DateTime>>(
                 validator: (value) {
