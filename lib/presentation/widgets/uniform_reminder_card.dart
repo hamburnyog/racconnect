@@ -132,23 +132,15 @@ class _UniformReminderCardState extends State<UniformReminderCard> {
                                 padding: const EdgeInsets.all(12.0),
                                 child: SingleChildScrollView(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            'First Working Day of Month:',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          Text(
-                                            'ASEAN-Inspired',
+                                            'First Working Day of Month: ASEAN-Inspired',
                                             style: const TextStyle(
                                               fontSize: 11,
                                               color: Colors.white,

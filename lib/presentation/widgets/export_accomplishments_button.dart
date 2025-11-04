@@ -89,7 +89,9 @@ class _ExportAccomplishmentsButtonState
     );
   }
 
-  Future<void> _showPermanentAccomplishmentOptions(AuthenticatedState authState) async {
+  Future<void> _showPermanentAccomplishmentOptions(
+    AuthenticatedState authState,
+  ) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -454,16 +456,23 @@ class _ExportAccomplishmentsButtonState
             final List<pw.TextSpan> targetTextSpans = [];
             final targetLines = acc.target.split('\n');
             for (int i = 0; i < targetLines.length; i++) {
-              if (i > 0) targetTextSpans.add(pw.TextSpan(text: '\n')); // Add newline between lines
-              
+              if (i > 0)
+                targetTextSpans.add(
+                  pw.TextSpan(text: '\n'),
+                ); // Add newline between lines
+
               String line = targetLines[i].trim();
               if (line.startsWith('- ') || line.startsWith('* ')) {
                 // Handle bullet points
-                targetTextSpans.add(pw.TextSpan(
-                  text: '• ',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ));
-                targetTextSpans.add(pw.TextSpan(text: line.substring(2))); // Remove bullet marker
+                targetTextSpans.add(
+                  pw.TextSpan(
+                    text: '• ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                );
+                targetTextSpans.add(
+                  pw.TextSpan(text: line.substring(2)),
+                ); // Remove bullet marker
               } else {
                 targetTextSpans.add(pw.TextSpan(text: line));
               }
@@ -473,23 +482,34 @@ class _ExportAccomplishmentsButtonState
             final List<pw.TextSpan> accomplishmentTextSpans = [];
             final accomplishmentLines = acc.accomplishment.split('\n');
             for (int i = 0; i < accomplishmentLines.length; i++) {
-              if (i > 0) accomplishmentTextSpans.add(pw.TextSpan(text: '\n')); // Add newline between lines
-              
+              if (i > 0)
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(text: '\n'),
+                ); // Add newline between lines
+
               String line = accomplishmentLines[i].trim();
               if (line.startsWith('- ') || line.startsWith('* ')) {
                 // Handle bullet points
-                accomplishmentTextSpans.add(pw.TextSpan(
-                  text: '• ',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ));
-                accomplishmentTextSpans.add(pw.TextSpan(text: line.substring(2))); // Remove bullet marker
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(
+                    text: '• ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                );
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(text: line.substring(2)),
+                ); // Remove bullet marker
               } else {
                 accomplishmentTextSpans.add(pw.TextSpan(text: line));
               }
             }
 
-            final targetRichText = pw.RichText(text: pw.TextSpan(children: targetTextSpans));
-            final accomplishmentRichText = pw.RichText(text: pw.TextSpan(children: accomplishmentTextSpans));
+            final targetRichText = pw.RichText(
+              text: pw.TextSpan(children: targetTextSpans),
+            );
+            final accomplishmentRichText = pw.RichText(
+              text: pw.TextSpan(children: accomplishmentTextSpans),
+            );
             final dateStr = DateFormat('MMM dd, yyyy').format(acc.date);
             final remarksStr = '';
 
@@ -560,38 +580,51 @@ class _ExportAccomplishmentsButtonState
 
         // Create a rich text with proper formatting to handle newlines and bullets in accomplishment text
         final List<pw.TextSpan> textSpans = [];
-        
+
         if (nonWorkingDayText.isNotEmpty) {
-          textSpans.add(pw.TextSpan(
-            text: mainText,
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-          ));
+          textSpans.add(
+            pw.TextSpan(
+              text: mainText,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          );
           if (timeText.isNotEmpty) {
-            textSpans.add(pw.TextSpan(
-              text: timeText,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
-            ));
+            textSpans.add(
+              pw.TextSpan(
+                text: timeText,
+                style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+              ),
+            );
           }
           if (accomplishmentText.isNotEmpty) {
-            textSpans.add(pw.TextSpan(text: '\n')); // Add a newline between non-working day text and accomplishment
+            textSpans.add(
+              pw.TextSpan(text: '\n'),
+            ); // Add a newline between non-working day text and accomplishment
           }
         }
-        
+
         // Process the accomplishment text to handle formatting (newlines, bullets)
         if (accomplishmentText.isNotEmpty) {
           // Split by newline and process each line
           final lines = accomplishmentText.split('\n');
           for (int i = 0; i < lines.length; i++) {
-            if (i > 0) textSpans.add(pw.TextSpan(text: '\n')); // Add newline between lines
-            
+            if (i > 0)
+              textSpans.add(
+                pw.TextSpan(text: '\n'),
+              ); // Add newline between lines
+
             String line = lines[i].trim();
             if (line.startsWith('- ') || line.startsWith('* ')) {
               // Handle bullet points
-              textSpans.add(pw.TextSpan(
-                text: '• ',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ));
-              textSpans.add(pw.TextSpan(text: line.substring(2))); // Remove bullet marker
+              textSpans.add(
+                pw.TextSpan(
+                  text: '• ',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
+              );
+              textSpans.add(
+                pw.TextSpan(text: line.substring(2)),
+              ); // Remove bullet marker
             } else {
               textSpans.add(pw.TextSpan(text: line));
             }
@@ -600,7 +633,8 @@ class _ExportAccomplishmentsButtonState
 
         final richText = pw.RichText(
           text: pw.TextSpan(
-            children: textSpans.isNotEmpty ? textSpans : [pw.TextSpan(text: '')],
+            children:
+                textSpans.isNotEmpty ? textSpans : [pw.TextSpan(text: '')],
           ),
         );
 
@@ -902,19 +936,19 @@ class _ExportAccomplishmentsButtonState
                                       index,
                                       pw.Padding(
                                         padding: const pw.EdgeInsets.all(4),
-                                        child: 
-                                          index == 1 || index == 2
-                                            ? cell as pw.RichText
-                                            : pw.Text(
-                                                cell as String,
-                                                textAlign:
-                                                    index == 0 || index == 3
-                                                        ? pw.TextAlign.center
-                                                        : pw.TextAlign.left,
-                                                style: const pw.TextStyle(
-                                                  fontSize: 10,
+                                        child:
+                                            index == 1 || index == 2
+                                                ? cell as pw.RichText
+                                                : pw.Text(
+                                                  cell as String,
+                                                  textAlign:
+                                                      index == 0 || index == 3
+                                                          ? pw.TextAlign.center
+                                                          : pw.TextAlign.left,
+                                                  style: const pw.TextStyle(
+                                                    fontSize: 10,
+                                                  ),
                                                 ),
-                                              ),
                                       ),
                                     ),
                                   )
@@ -1079,7 +1113,7 @@ class _ExportAccomplishmentsButtonState
   String _getUnitHeadName(userOffice) {
     String supervisor =
         userOffice == 'Office of the RACC Officer'
-            ? 'Rowena M. Macalintal, ASEC'
+            ? 'ASEC Rowena M. Macalintal'
             : 'John S. Calidguid, RSW, MPA';
     return supervisor;
   }
