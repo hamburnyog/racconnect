@@ -126,10 +126,9 @@ class _UpdateNotificationBannerState extends State<UpdateNotificationBanner>
                   TextButton(
                     onPressed: () async {
                       String? link = _getPlatformLink();
-                      if (link != null && await canLaunchUrl(Uri.parse(link))) {
+                      if (link != null) {
                         await launchUrl(
                           Uri.parse(link),
-                          mode: LaunchMode.externalApplication,
                         );
                       }
                     },
