@@ -433,11 +433,26 @@ Future<String?> generateExcel(
           }
 
           // Total late/undertime for the day
-          int totalDayHours = lateHours + undertimeHours;
-          int totalDayMinutes = lateMinutes + undertimeMinutes;
-          if (totalDayMinutes >= 60) {
-            totalDayHours += totalDayMinutes ~/ 60;
-            totalDayMinutes = totalDayMinutes % 60;
+          // For flexitime system, we use max of late or undertime rather than sum
+          // since arriving late in flexitime system might be offset by working required hours
+          int totalDayHours;
+          int totalDayMinutes;
+          
+          // For flexitime, use the maximum of late or undertime, not sum
+          if (lateHours > 0 || lateMinutes > 0) {
+            // Convert both to minutes for comparison
+            int lateTotalMinutes = lateHours * 60 + lateMinutes;
+            int undertimeTotalMinutes = undertimeHours * 60 + undertimeMinutes;
+            
+            // Use the maximum of the two to avoid double-penalizing in flexitime
+            int maxMinutes = lateTotalMinutes > undertimeTotalMinutes ? lateTotalMinutes : undertimeTotalMinutes;
+            
+            totalDayHours = maxMinutes ~/ 60;
+            totalDayMinutes = maxMinutes % 60;
+          } else {
+            // If no late time, use undertime as-is
+            totalDayHours = undertimeHours;
+            totalDayMinutes = undertimeMinutes;
           }
 
           // Update running total (only for days with data)
@@ -889,11 +904,26 @@ Future<String?> generateExcel(
           }
 
           // Total late/undertime for the day
-          int totalDayHours = lateHours + undertimeHours;
-          int totalDayMinutes = lateMinutes + undertimeMinutes;
-          if (totalDayMinutes >= 60) {
-            totalDayHours += totalDayMinutes ~/ 60;
-            totalDayMinutes = totalDayMinutes % 60;
+          // For flexitime system, we use max of late or undertime rather than sum
+          // since arriving late in flexitime system might be offset by working required hours
+          int totalDayHours;
+          int totalDayMinutes;
+          
+          // For flexitime, use the maximum of late or undertime, not sum
+          if (lateHours > 0 || lateMinutes > 0) {
+            // Convert both to minutes for comparison
+            int lateTotalMinutes = lateHours * 60 + lateMinutes;
+            int undertimeTotalMinutes = undertimeHours * 60 + undertimeMinutes;
+            
+            // Use the maximum of the two to avoid double-penalizing in flexitime
+            int maxMinutes = lateTotalMinutes > undertimeTotalMinutes ? lateTotalMinutes : undertimeTotalMinutes;
+            
+            totalDayHours = maxMinutes ~/ 60;
+            totalDayMinutes = maxMinutes % 60;
+          } else {
+            // If no late time, use undertime as-is
+            totalDayHours = undertimeHours;
+            totalDayMinutes = undertimeMinutes;
           }
 
           // Update running total (only for days with data)
