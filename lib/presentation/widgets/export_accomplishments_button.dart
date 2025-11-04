@@ -456,10 +456,11 @@ class _ExportAccomplishmentsButtonState
             final List<pw.TextSpan> targetTextSpans = [];
             final targetLines = acc.target.split('\n');
             for (int i = 0; i < targetLines.length; i++) {
-              if (i > 0)
+              if (i > 0) {
                 targetTextSpans.add(
                   pw.TextSpan(text: '\n'),
                 ); // Add newline between lines
+              }
 
               String line = targetLines[i].trim();
               if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -482,10 +483,11 @@ class _ExportAccomplishmentsButtonState
             final List<pw.TextSpan> accomplishmentTextSpans = [];
             final accomplishmentLines = acc.accomplishment.split('\n');
             for (int i = 0; i < accomplishmentLines.length; i++) {
-              if (i > 0)
+              if (i > 0) {
                 accomplishmentTextSpans.add(
                   pw.TextSpan(text: '\n'),
                 ); // Add newline between lines
+              }
 
               String line = accomplishmentLines[i].trim();
               if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -608,10 +610,11 @@ class _ExportAccomplishmentsButtonState
           // Split by newline and process each line
           final lines = accomplishmentText.split('\n');
           for (int i = 0; i < lines.length; i++) {
-            if (i > 0)
+            if (i > 0) {
               textSpans.add(
                 pw.TextSpan(text: '\n'),
               ); // Add newline between lines
+            }
 
             String line = lines[i].trim();
             if (line.startsWith('- ') || line.startsWith('* ')) {
