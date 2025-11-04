@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -5,12 +6,18 @@ class UpdateNotificationBanner extends StatefulWidget {
   const UpdateNotificationBanner({
     super.key,
     required this.publishedVersion,
-    this.driveLink,
+    this.iosLink,
+    this.androidLink,
+    this.macLink,
+    this.windowsLink,
     required this.onDismiss,
   });
 
   final String publishedVersion;
-  final String? driveLink;
+  final String? iosLink;
+  final String? androidLink;
+  final String? macLink;
+  final String? windowsLink;
   final VoidCallback onDismiss;
 
   @override
@@ -115,13 +122,13 @@ class _UpdateNotificationBannerState extends State<UpdateNotificationBanner>
                     ],
                   ),
                 ),
-                if (widget.driveLink != null) ...[
+                if (_getPlatformLink() != null) ...[
                   TextButton(
                     onPressed: () async {
-                      if (await canLaunchUrl(Uri.parse(widget.driveLink!))) {
+                      String? link = _getPlatformLink();
+                      if (link != null) {
                         await launchUrl(
-                          Uri.parse(widget.driveLink!),
-                          mode: LaunchMode.externalApplication,
+                          Uri.parse(link),
                         );
                       }
                     },
@@ -146,5 +153,19 @@ class _UpdateNotificationBannerState extends State<UpdateNotificationBanner>
         ),
       ),
     );
+  }
+
+  String? _getPlatformLink() {
+    if (Platform.isIOS) {
+      return widget.iosLink;
+    } else if (Platform.isAndroid) {
+      return widget.androidLink;
+    } else if (Platform.isMacOS) {
+      return widget.macLink;
+    } else if (Platform.isWindows) {
+      return widget.windowsLink;
+    }
+    // Fallback to any available link if we can't determine the platform
+    return widget.androidLink ?? widget.iosLink ?? widget.macLink ?? widget.windowsLink;
   }
 }

@@ -6,7 +6,6 @@ import 'constants.dart';
 
 Map<String, String> extractLogTimes(List<dynamic> dayLogs) {
   try {
-    debugPrint('Extracting log times for ${dayLogs.length} logs');
     dayLogs.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     String formatTime(DateTime dt) {
@@ -63,12 +62,8 @@ Map<String, String> extractLogTimes(List<dynamic> dayLogs) {
       'pmIn': formatTime(dayLogs[2].timestamp),
       'pmOut': formatTime(dayLogs.last.timestamp),
     };
-  } catch (e, stack) {
-    debugPrint('ERROR in extractLogTimes: $e');
-    debugPrint('Stack trace: $stack');
+  } catch (e) {
     if (kDebugMode) {
-      print('ERROR in extractLogTimes: $e');
-      print('Stack trace: $stack');
     }
     // Return empty values in case of error to prevent app crash
     return {'amIn': '', 'amOut': '', 'pmIn': '', 'pmOut': ''};

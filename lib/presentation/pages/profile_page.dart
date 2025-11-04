@@ -97,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       });
     } catch (e) {
-      debugPrint('Error fetching sections: $e');
+      // Silently handle the error or log if needed
     }
   }
 

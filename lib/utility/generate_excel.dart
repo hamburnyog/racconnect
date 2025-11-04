@@ -35,14 +35,6 @@ Future<String?> generateExcel(
   DateTime? endDate,
 }) async {
   try {
-    debugPrint('Starting DTR export for date: ${selectedDate.toString()}');
-    debugPrint('Profile: ${profile.firstName} ${profile.lastName}');
-    debugPrint('Number of attendance records: ${monthlyAttendance.length}');
-    debugPrint('Number of holidays: ${holidayMap.length}');
-    debugPrint('Number of suspensions: ${suspensionMap.length}');
-    debugPrint('Number of leaves: ${leaveMap.length}');
-    debugPrint('Number of travel orders: ${travelMap.length}');
-
     bool fileExists = false;
 
     var excel = Excel.createExcel();
@@ -68,7 +60,7 @@ Future<String?> generateExcel(
 
     supervisor =
         profile.sectionCode == 'OIC'
-            ? 'ROWENA M. MACALINTAL, ASEC'
+            ? 'ASEC ROWENA M. MACALINTAL'
             : 'JOHN S. CALIDGUID, RSW, MPA';
     supervisorDesignation =
         profile.sectionCode == 'OIC'
@@ -144,13 +136,14 @@ Future<String?> generateExcel(
         bool isWFH =
             hasWFH &&
             !hasBiometrics; // For calculations only, biometrics take priority
+
+        // Use original extracted values for both computation and initial display
         String amIn = logTimes['amIn'] ?? '';
         String pmOut = logTimes['pmOut'] ?? '';
-
-        final dateFormat = DateFormat('h:mm a');
-
         String amOut = logTimes['amOut'] ?? '';
         String pmIn = logTimes['pmIn'] ?? '';
+
+        final dateFormat = DateFormat('h:mm a');
 
         final isSuspension = suspensionMap.containsKey(currentDate);
         final suspensionModel = suspensionMap[currentDate];
@@ -433,11 +426,29 @@ Future<String?> generateExcel(
           }
 
           // Total late/undertime for the day
-          int totalDayHours = lateHours + undertimeHours;
-          int totalDayMinutes = lateMinutes + undertimeMinutes;
-          if (totalDayMinutes >= 60) {
-            totalDayHours += totalDayMinutes ~/ 60;
-            totalDayMinutes = totalDayMinutes % 60;
+          // For flexitime system, we use max of late or undertime rather than sum
+          // since arriving late in flexitime system might be offset by working required hours
+          int totalDayHours;
+          int totalDayMinutes;
+
+          // For flexitime, use the maximum of late or undertime, not sum
+          if (lateHours > 0 || lateMinutes > 0) {
+            // Convert both to minutes for comparison
+            int lateTotalMinutes = lateHours * 60 + lateMinutes;
+            int undertimeTotalMinutes = undertimeHours * 60 + undertimeMinutes;
+
+            // Use the maximum of the two to avoid double-penalizing in flexitime
+            int maxMinutes =
+                lateTotalMinutes > undertimeTotalMinutes
+                    ? lateTotalMinutes
+                    : undertimeTotalMinutes;
+
+            totalDayHours = maxMinutes ~/ 60;
+            totalDayMinutes = maxMinutes % 60;
+          } else {
+            // If no late time, use undertime as-is
+            totalDayHours = undertimeHours;
+            totalDayMinutes = undertimeMinutes;
           }
 
           // Update running total (only for days with data)
@@ -582,29 +593,179 @@ Future<String?> generateExcel(
           cellList['A$currrentRowNumber'].value = IntCellValue(day);
           cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          cellList['B$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('B$currrentRowNumber'),
-          );
-          cellList['B$currrentRowNumber'].value = TextCellValue(amIn);
-          cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+          // Check if this should be treated as an afternoon half-day for visual display
+          // (first arrival at or after 12 PM, but preserve original values for calculations)
+          bool displayAsAfternoonHalfDay = false;
+          if (amIn.isNotEmpty) {
+            try {
+              final firstArrivalTime = dateFormat.parse(amIn);
+              if (firstArrivalTime.hour >= 12) {
+                // 12 PM or later
+                displayAsAfternoonHalfDay = true;
+              }
+            } catch (e) {
+              // If parsing fails, continue with normal display
+            }
+          }
 
-          cellList['C$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('C$currrentRowNumber'),
-          );
-          cellList['C$currrentRowNumber'].value = TextCellValue(amOut);
-          cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+          // Check for visual transformation: if there are 2 logs, first in morning, second during lunch
+          bool needLunchBreakVisualTransform = false;
+          String visualAmIn = amIn;
+          String visualAmOut = amOut;
+          String visualPmIn = pmIn;
+          String visualPmOut = pmOut;
 
-          cellList['D$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('D$currrentRowNumber'),
-          );
-          cellList['D$currrentRowNumber'].value = TextCellValue(pmIn);
-          cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+          if (dayLogs.length == 2 && amIn.isNotEmpty && pmOut.isNotEmpty) {
+            DateTime? firstTime;
+            DateTime? secondTime;
 
-          cellList['E$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('E$currrentRowNumber'),
-          );
-          cellList['E$currrentRowNumber'].value = TextCellValue(pmOut);
-          cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+            try {
+              firstTime = dateFormat
+                  .parse(amIn)
+                  .copyWith(
+                    year: currentDate.year,
+                    month: currentDate.month,
+                    day: currentDate.day,
+                  );
+              secondTime = dateFormat
+                  .parse(pmOut)
+                  .copyWith(
+                    year: currentDate.year,
+                    month: currentDate.month,
+                    day: currentDate.day,
+                  );
+
+              // Define lunch break boundaries
+              final lunchStartTime = DateTime(
+                currentDate.year,
+                currentDate.month,
+                currentDate.day,
+                12,
+                0,
+              ); // 12:00 PM
+              final lunchEndTime = DateTime(
+                currentDate.year,
+                currentDate.month,
+                currentDate.day,
+                13,
+                0,
+              ); // 1:00 PM
+
+              // Check if first log is in the morning and second log is during lunch break
+              if (firstTime.hour < 12 && // First log is morning arrival
+                  ((secondTime.isAtSameMomentAs(
+                            lunchStartTime,
+                          ) || // Exactly 12:00 PM
+                          secondTime.isAfter(
+                            lunchStartTime,
+                          )) && // After 12:00 PM
+                      (secondTime.isAtSameMomentAs(
+                            lunchEndTime,
+                          ) || // Exactly 1:00 PM
+                          secondTime.isBefore(lunchEndTime)))) {
+                // Or before 1:00 PM
+
+                needLunchBreakVisualTransform = true;
+                // Visual change: put the second log (lunch break time) in AM departure for display
+                visualAmOut =
+                    pmOut; // Second log becomes AM departure for visual display
+                visualPmOut =
+                    ''; // PM departure is now empty for visual display
+              }
+            } catch (e) {
+              // If parsing fails, keep original display values
+            }
+          }
+
+          if (displayAsAfternoonHalfDay) {
+            // For visual display, if first arrival is at or after 12 PM,
+            // show it in PM Arrival (D) instead of AM Arrival (B)
+            cellList['B$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('B$currrentRowNumber'),
+            );
+            cellList['B$currrentRowNumber'].value = TextCellValue(
+              '',
+            ); // No AM arrival
+            cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['C$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('C$currrentRowNumber'),
+            );
+            cellList['C$currrentRowNumber'].value = TextCellValue(
+              '',
+            ); // No AM departure
+            cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['D$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('D$currrentRowNumber'),
+            );
+            cellList['D$currrentRowNumber'].value = TextCellValue(
+              visualAmIn,
+            ); // First arrival in PM Arrival
+            cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['E$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('E$currrentRowNumber'),
+            );
+            cellList['E$currrentRowNumber'].value = TextCellValue(
+              visualPmOut,
+            ); // PM departure
+            cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else if (needLunchBreakVisualTransform) {
+            // Apply visual transformation for lunch break scenario
+            cellList['B$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('B$currrentRowNumber'),
+            );
+            cellList['B$currrentRowNumber'].value = TextCellValue(visualAmIn);
+            cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['C$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('C$currrentRowNumber'),
+            );
+            cellList['C$currrentRowNumber'].value = TextCellValue(
+              visualAmOut,
+            ); // Lunch break in AM Out
+            cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['D$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('D$currrentRowNumber'),
+            );
+            cellList['D$currrentRowNumber'].value = TextCellValue(visualPmIn);
+            cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['E$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('E$currrentRowNumber'),
+            );
+            cellList['E$currrentRowNumber'].value = TextCellValue(
+              visualPmOut,
+            ); // Empty for lunch break
+            cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else {
+            // Normal display for regular days
+            cellList['B$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('B$currrentRowNumber'),
+            );
+            cellList['B$currrentRowNumber'].value = TextCellValue(visualAmIn);
+            cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['C$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('C$currrentRowNumber'),
+            );
+            cellList['C$currrentRowNumber'].value = TextCellValue(visualAmOut);
+            cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['D$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('D$currrentRowNumber'),
+            );
+            cellList['D$currrentRowNumber'].value = TextCellValue(visualPmIn);
+            cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['E$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('E$currrentRowNumber'),
+            );
+            cellList['E$currrentRowNumber'].value = TextCellValue(visualPmOut);
+            cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+          }
 
           // Calculate late/undertime
           int lateHours = 0;
@@ -889,11 +1050,29 @@ Future<String?> generateExcel(
           }
 
           // Total late/undertime for the day
-          int totalDayHours = lateHours + undertimeHours;
-          int totalDayMinutes = lateMinutes + undertimeMinutes;
-          if (totalDayMinutes >= 60) {
-            totalDayHours += totalDayMinutes ~/ 60;
-            totalDayMinutes = totalDayMinutes % 60;
+          // For flexitime system, we use max of late or undertime rather than sum
+          // since arriving late in flexitime system might be offset by working required hours
+          int totalDayHours;
+          int totalDayMinutes;
+
+          // For flexitime, use the maximum of late or undertime, not sum
+          if (lateHours > 0 || lateMinutes > 0) {
+            // Convert both to minutes for comparison
+            int lateTotalMinutes = lateHours * 60 + lateMinutes;
+            int undertimeTotalMinutes = undertimeHours * 60 + undertimeMinutes;
+
+            // Use the maximum of the two to avoid double-penalizing in flexitime
+            int maxMinutes =
+                lateTotalMinutes > undertimeTotalMinutes
+                    ? lateTotalMinutes
+                    : undertimeTotalMinutes;
+
+            totalDayHours = maxMinutes ~/ 60;
+            totalDayMinutes = maxMinutes % 60;
+          } else {
+            // If no late time, use undertime as-is
+            totalDayHours = undertimeHours;
+            totalDayMinutes = undertimeMinutes;
           }
 
           // Update running total (only for days with data)
@@ -930,15 +1109,96 @@ Future<String?> generateExcel(
           cellList2['I$currrentRowNumber'].value = IntCellValue(day);
           cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          final mirrorCols = {'J': amIn, 'K': amOut, 'L': pmIn, 'M': pmOut};
-
-          mirrorCols.forEach((col, val) {
-            cellList['$col$currrentRowNumber'] = sheet.cell(
-              CellIndex.indexByString('$col$currrentRowNumber'),
+          // Apply same visual display logic to mirrored section
+          if (displayAsAfternoonHalfDay) {
+            // For visual display, if first arrival is at or after 12 PM,
+            // show it in PM Arrival (L) instead of AM Arrival (J)
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
             );
-            cellList['$col$currrentRowNumber'].value = TextCellValue(val);
-            cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-          });
+            cellList['J$currrentRowNumber'].value = TextCellValue(
+              '',
+            ); // No AM arrival
+            cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['K$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('K$currrentRowNumber'),
+            );
+            cellList['K$currrentRowNumber'].value = TextCellValue(
+              '',
+            ); // No AM departure
+            cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['L$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('L$currrentRowNumber'),
+            );
+            cellList['L$currrentRowNumber'].value = TextCellValue(
+              visualAmIn,
+            ); // First arrival in PM Arrival
+            cellList['L$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['M$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('M$currrentRowNumber'),
+            );
+            cellList['M$currrentRowNumber'].value = TextCellValue(
+              visualPmOut,
+            ); // PM departure
+            cellList['M$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else if (needLunchBreakVisualTransform) {
+            // Apply visual transformation for lunch break scenario to mirrored section
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
+            );
+            cellList['J$currrentRowNumber'].value = TextCellValue(visualAmIn);
+            cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['K$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('K$currrentRowNumber'),
+            );
+            cellList['K$currrentRowNumber'].value = TextCellValue(
+              visualAmOut,
+            ); // Lunch break in AM Out
+            cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['L$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('L$currrentRowNumber'),
+            );
+            cellList['L$currrentRowNumber'].value = TextCellValue(visualPmIn);
+            cellList['L$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['M$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('M$currrentRowNumber'),
+            );
+            cellList['M$currrentRowNumber'].value = TextCellValue(
+              visualPmOut,
+            ); // Empty for lunch break
+            cellList['M$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else {
+            // Normal display for regular days
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
+            );
+            cellList['J$currrentRowNumber'].value = TextCellValue(visualAmIn);
+            cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['K$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('K$currrentRowNumber'),
+            );
+            cellList['K$currrentRowNumber'].value = TextCellValue(visualAmOut);
+            cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['L$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('L$currrentRowNumber'),
+            );
+            cellList['L$currrentRowNumber'].value = TextCellValue(visualPmIn);
+            cellList['L$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['M$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('M$currrentRowNumber'),
+            );
+            cellList['M$currrentRowNumber'].value = TextCellValue(visualPmOut);
+            cellList['M$currrentRowNumber'].cellStyle = borderedCellStyle;
+          }
 
           cellList['N$currrentRowNumber'] = sheet.cell(
             CellIndex.indexByString('N$currrentRowNumber'),
@@ -1176,18 +1436,13 @@ Future<String?> generateExcel(
             ..writeAsBytesSync(bytes);
 
       fileExists = await file.exists();
-      debugPrint('iOS/Android file created: $fileExists at path: $filePath');
+
       return fileExists ? file.path : null;
     }
-    debugPrint('DTR export completed successfully on desktop');
+
     return null;
-  } catch (e, stack) {
-    debugPrint('ERROR in generateExcel: $e');
-    debugPrint('Stack trace: $stack');
-    if (kDebugMode) {
-      print('ERROR in generateExcel: $e');
-      print('Stack trace: $stack');
-    }
+  } catch (e) {
+    if (kDebugMode) {}
     rethrow; // Re-throw to be handled by calling function
   }
 }

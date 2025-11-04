@@ -54,7 +54,7 @@ class _ExportAccomplishmentsButtonState
       if (isCOS) {
         _showCOSExportOptions(authState);
       } else {
-        _performExport(authState, 'whole', true, isCOS);
+        _showPermanentAccomplishmentOptions(authState);
       }
     }
   }
@@ -81,6 +81,38 @@ class _ExportAccomplishmentsButtonState
               onPressed: () {
                 Navigator.of(context).pop();
                 _showPeriodSelection(authState, false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showPermanentAccomplishmentOptions(
+    AuthenticatedState authState,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Report Type'),
+          content: const Text(
+            'Choose the type of accomplishment report to generate:',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annex A (WFH)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'whole', true, false);
+              },
+            ),
+            TextButton(
+              child: const Text('Accomplishment Report'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'whole', false, false);
               },
             ),
           ],
@@ -414,17 +446,80 @@ class _ExportAccomplishmentsButtonState
     final tableHeaders =
         isAnnexA
             ? ['Date', 'Activity / Deliverables', 'Accomplishment', 'Remarks']
-            : ['Date', 'Accomplishment', 'Remarks'];
+            : ['Date', 'Accomplishment'];
 
     final List<List<dynamic>> tableData;
     if (isAnnexA) {
       tableData =
           accomplishments.map((acc) {
-            return [
-              DateFormat('MMM dd, yyyy').format(acc.date),
-              acc.target.replaceAll('\n', ' ').replaceAll('\r', ' '),
-              acc.accomplishment.replaceAll('\n', ' ').replaceAll('\r', ' '),
-              '',
+            // Process target text with formatting (newlines, bullets)
+            final List<pw.TextSpan> targetTextSpans = [];
+            final targetLines = acc.target.split('\n');
+            for (int i = 0; i < targetLines.length; i++) {
+              if (i > 0) {
+                targetTextSpans.add(
+                  pw.TextSpan(text: '\n'),
+                ); // Add newline between lines
+              }
+
+              String line = targetLines[i].trim();
+              if (line.startsWith('- ') || line.startsWith('* ')) {
+                // Handle bullet points
+                targetTextSpans.add(
+                  pw.TextSpan(
+                    text: '• ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                );
+                targetTextSpans.add(
+                  pw.TextSpan(text: line.substring(2)),
+                ); // Remove bullet marker
+              } else {
+                targetTextSpans.add(pw.TextSpan(text: line));
+              }
+            }
+
+            // Process accomplishment text with formatting (newlines, bullets)
+            final List<pw.TextSpan> accomplishmentTextSpans = [];
+            final accomplishmentLines = acc.accomplishment.split('\n');
+            for (int i = 0; i < accomplishmentLines.length; i++) {
+              if (i > 0) {
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(text: '\n'),
+                ); // Add newline between lines
+              }
+
+              String line = accomplishmentLines[i].trim();
+              if (line.startsWith('- ') || line.startsWith('* ')) {
+                // Handle bullet points
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(
+                    text: '• ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                );
+                accomplishmentTextSpans.add(
+                  pw.TextSpan(text: line.substring(2)),
+                ); // Remove bullet marker
+              } else {
+                accomplishmentTextSpans.add(pw.TextSpan(text: line));
+              }
+            }
+
+            final targetRichText = pw.RichText(
+              text: pw.TextSpan(children: targetTextSpans),
+            );
+            final accomplishmentRichText = pw.RichText(
+              text: pw.TextSpan(children: accomplishmentTextSpans),
+            );
+            final dateStr = DateFormat('MMM dd, yyyy').format(acc.date);
+            final remarksStr = '';
+
+            return <dynamic>[
+              dateStr,
+              targetRichText,
+              accomplishmentRichText,
+              remarksStr,
             ];
           }).toList();
     } else {
@@ -485,26 +580,68 @@ class _ExportAccomplishmentsButtonState
           timeText = nonWorkingDayText.substring(parenthesisIndex);
         }
 
-        final richText = pw.RichText(
-          text: pw.TextSpan(
-            children: [
-              if (nonWorkingDayText.isNotEmpty) ...[
+        // Create a rich text with proper formatting to handle newlines and bullets in accomplishment text
+        final List<pw.TextSpan> textSpans = [];
+
+        if (nonWorkingDayText.isNotEmpty) {
+          textSpans.add(
+            pw.TextSpan(
+              text: mainText,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          );
+          if (timeText.isNotEmpty) {
+            textSpans.add(
+              pw.TextSpan(
+                text: timeText,
+                style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
+              ),
+            );
+          }
+          if (accomplishmentText.isNotEmpty) {
+            textSpans.add(
+              pw.TextSpan(text: '\n'),
+            ); // Add a newline between non-working day text and accomplishment
+          }
+        }
+
+        // Process the accomplishment text to handle formatting (newlines, bullets)
+        if (accomplishmentText.isNotEmpty) {
+          // Split by newline and process each line
+          final lines = accomplishmentText.split('\n');
+          for (int i = 0; i < lines.length; i++) {
+            if (i > 0) {
+              textSpans.add(
+                pw.TextSpan(text: '\n'),
+              ); // Add newline between lines
+            }
+
+            String line = lines[i].trim();
+            if (line.startsWith('- ') || line.startsWith('* ')) {
+              // Handle bullet points
+              textSpans.add(
                 pw.TextSpan(
-                  text: mainText,
+                  text: '• ',
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
-                if (timeText.isNotEmpty)
-                  pw.TextSpan(
-                    text: timeText,
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
-                  ),
-              ],
-              pw.TextSpan(text: accomplishmentText),
-            ],
+              );
+              textSpans.add(
+                pw.TextSpan(text: line.substring(2)),
+              ); // Remove bullet marker
+            } else {
+              textSpans.add(pw.TextSpan(text: line));
+            }
+          }
+        }
+
+        final richText = pw.RichText(
+          text: pw.TextSpan(
+            children:
+                textSpans.isNotEmpty ? textSpans : [pw.TextSpan(text: '')],
           ),
         );
 
-        tableData.add([DateFormat('MMM dd, yyyy').format(day), richText, '']);
+        tableData.add([DateFormat('MMM dd, yyyy').format(day), richText]);
       }
     }
 
@@ -540,7 +677,7 @@ class _ExportAccomplishmentsButtonState
             children: [
               pw.Text(
                 'Page ${context.pageNumber} of ${context.pagesCount}',
-                style: const pw.TextStyle(fontSize: 12),
+                style: const pw.TextStyle(fontSize: 8),
                 textAlign: pw.TextAlign.center,
               ),
               pw.SizedBox(height: 5),
@@ -574,7 +711,7 @@ class _ExportAccomplishmentsButtonState
                   ],
                 ),
                 pw.SizedBox(height: 10),
-              ] else if (isCOS) ...[
+              ] else ...[
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
@@ -714,8 +851,7 @@ class _ExportAccomplishmentsButtonState
                         }
                         : {
                           0: pw.FractionColumnWidth(0.15),
-                          1: pw.FractionColumnWidth(0.50),
-                          2: pw.FractionColumnWidth(0.35),
+                          1: pw.FractionColumnWidth(0.85),
                         },
                 children: [
                   pw.TableRow(
@@ -790,40 +926,32 @@ class _ExportAccomplishmentsButtonState
                                   ),
                                 ),
                               ),
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[2],
-                                  textAlign: pw.TextAlign.center,
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
                             ],
                   ),
                   ...tableData.map(
                     (row) => pw.TableRow(
                       children:
                           isAnnexA
-                              ? (row as List<String>)
+                              ? row
                                   .asMap()
                                   .map(
                                     (index, cell) => MapEntry(
                                       index,
                                       pw.Padding(
                                         padding: const pw.EdgeInsets.all(4),
-                                        child: pw.Text(
-                                          cell,
-                                          textAlign:
-                                              index == 0 || index == 3
-                                                  ? pw.TextAlign.center
-                                                  : pw.TextAlign.left,
-                                          style: const pw.TextStyle(
-                                            fontSize: 10,
-                                          ),
-                                        ),
+                                        child:
+                                            index == 1 || index == 2
+                                                ? cell as pw.RichText
+                                                : pw.Text(
+                                                  cell as String,
+                                                  textAlign:
+                                                      index == 0 || index == 3
+                                                          ? pw.TextAlign.center
+                                                          : pw.TextAlign.left,
+                                                  style: const pw.TextStyle(
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
                                       ),
                                     ),
                                   )
@@ -841,14 +969,6 @@ class _ExportAccomplishmentsButtonState
                                 pw.Padding(
                                   padding: const pw.EdgeInsets.all(4),
                                   child: row[1] as pw.RichText,
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[2] as String,
-                                    textAlign: pw.TextAlign.center,
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
                                 ),
                               ],
                     ),
@@ -996,7 +1116,7 @@ class _ExportAccomplishmentsButtonState
   String _getUnitHeadName(userOffice) {
     String supervisor =
         userOffice == 'Office of the RACC Officer'
-            ? 'Rowena M. Macalintal, ASEC'
+            ? 'ASEC Rowena M. Macalintal'
             : 'John S. Calidguid, RSW, MPA';
     return supervisor;
   }

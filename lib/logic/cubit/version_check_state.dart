@@ -15,12 +15,27 @@ class VersionCheckUpToDate extends VersionCheckState {}
 
 class VersionCheckOutdated extends VersionCheckState {
   final String publishedVersion;
-  final String? driveLink;
+  final String? iosLink;
+  final String? androidLink;
+  final String? macLink;
+  final String? windowsLink;
 
-  const VersionCheckOutdated({required this.publishedVersion, this.driveLink});
+  const VersionCheckOutdated({
+    required this.publishedVersion,
+    this.iosLink,
+    this.androidLink,
+    this.macLink,
+    this.windowsLink,
+  });
 
   @override
-  List<Object> get props => [publishedVersion, driveLink ?? ''];
+  List<Object> get props => [
+    publishedVersion,
+    iosLink ?? '',
+    androidLink ?? '',
+    macLink ?? '',
+    windowsLink ?? ''
+  ];
 }
 
 class VersionCheckError extends VersionCheckState {

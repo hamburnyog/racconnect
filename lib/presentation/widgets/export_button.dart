@@ -164,9 +164,7 @@ class _ExportButtonState extends State<ExportButton> {
       final monthlyLogs = await attendanceCubit.attendanceRepository
           .getEmployeeAttendanceForMonth(employeeNumber, selectedDate);
 
-      debugPrint(
-        'Starting DTR export process for employee: $employeeNumber, month: $selectedDate',
-      );
+
       final filePath = await generateExcel(
         selectedDate,
         profile,
@@ -244,12 +242,8 @@ class _ExportButtonState extends State<ExportButton> {
           ),
         );
       }
-    } catch (e, stack) {
-      debugPrint('ERROR in DTR export: $e');
-      debugPrint('Stack trace: $stack');
+    } catch (e) {
       if (kDebugMode) {
-        print('ERROR in DTR export: $e');
-        print('Stack trace: $stack');
       }
       if (mounted) {
         scaffoldMessenger.showSnackBar(
