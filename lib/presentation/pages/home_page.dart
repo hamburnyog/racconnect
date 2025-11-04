@@ -545,24 +545,12 @@ class _HomePageState extends State<HomePage> {
                   FloatingActionButton(
                     heroTag: 'orgChartFab',
                     backgroundColor: Colors.white,
-                    onPressed: () async {
-                      final Uri url = Uri.parse(
-                        'https://www.canva.com/design/DAGv8fq8d3Y/256t5FyYa77CQs3cmNpFTw/view?utm_content=DAGv8fq8d3Y&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hd98961ff75',
+                    onPressed: () {
+                      launchUrl(
+                        Uri.parse(
+                          'https://www.canva.com/design/DAGv8fq8d3Y/256t5FyYa77CQs3cmNpFTw/view?utm_content=DAGv8fq8d3Y&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hd98961ff75',
+                        ),
                       );
-                      try {
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not open org chart link'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
                     },
                     child: Icon(
                       Icons.account_tree,

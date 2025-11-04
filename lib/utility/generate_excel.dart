@@ -35,13 +35,7 @@ Future<String?> generateExcel(
   DateTime? endDate,
 }) async {
   try {
-    debugPrint('Starting DTR export for date: ${selectedDate.toString()}');
-    debugPrint('Profile: ${profile.firstName} ${profile.lastName}');
-    debugPrint('Number of attendance records: ${monthlyAttendance.length}');
-    debugPrint('Number of holidays: ${holidayMap.length}');
-    debugPrint('Number of suspensions: ${suspensionMap.length}');
-    debugPrint('Number of leaves: ${leaveMap.length}');
-    debugPrint('Number of travel orders: ${travelMap.length}');
+
 
     bool fileExists = false;
 
@@ -597,29 +591,72 @@ Future<String?> generateExcel(
           cellList['A$currrentRowNumber'].value = IntCellValue(day);
           cellList['A$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          cellList['B$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('B$currrentRowNumber'),
-          );
-          cellList['B$currrentRowNumber'].value = TextCellValue(amIn);
-          cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+          // Check if this should be treated as an afternoon half-day for visual display
+          // (first arrival at or after 12 PM, but preserve original values for calculations)
+          bool displayAsAfternoonHalfDay = false;
+          if (amIn.isNotEmpty) {
+            try {
+              final firstArrivalTime = dateFormat.parse(amIn);
+              if (firstArrivalTime.hour >= 12) { // 12 PM or later
+                displayAsAfternoonHalfDay = true;
+              }
+            } catch (e) {
+              // If parsing fails, continue with normal display
+            }
+          }
+          
+          if (displayAsAfternoonHalfDay) {
+            // For visual display, if first arrival is at or after 12 PM, 
+            // show it in PM Arrival (D) instead of AM Arrival (B)
+            cellList['B$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('B$currrentRowNumber'),
+            );
+            cellList['B$currrentRowNumber'].value = TextCellValue(''); // No AM arrival
+            cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          cellList['C$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('C$currrentRowNumber'),
-          );
-          cellList['C$currrentRowNumber'].value = TextCellValue(amOut);
-          cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+            cellList['C$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('C$currrentRowNumber'),
+            );
+            cellList['C$currrentRowNumber'].value = TextCellValue(''); // No AM departure
+            cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          cellList['D$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('D$currrentRowNumber'),
-          );
-          cellList['D$currrentRowNumber'].value = TextCellValue(pmIn);
-          cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+            cellList['D$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('D$currrentRowNumber'),
+            );
+            cellList['D$currrentRowNumber'].value = TextCellValue(amIn); // First arrival in PM Arrival
+            cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          cellList['E$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('E$currrentRowNumber'),
-          );
-          cellList['E$currrentRowNumber'].value = TextCellValue(pmOut);
-          cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+            cellList['E$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('E$currrentRowNumber'),
+            );
+            cellList['E$currrentRowNumber'].value = TextCellValue(pmOut); // PM departure
+            cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else {
+            // Normal display for regular days
+            cellList['B$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('B$currrentRowNumber'),
+            );
+            cellList['B$currrentRowNumber'].value = TextCellValue(amIn);
+            cellList['B$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['C$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('C$currrentRowNumber'),
+            );
+            cellList['C$currrentRowNumber'].value = TextCellValue(amOut);
+            cellList['C$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['D$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('D$currrentRowNumber'),
+            );
+            cellList['D$currrentRowNumber'].value = TextCellValue(pmIn);
+            cellList['D$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['E$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('E$currrentRowNumber'),
+            );
+            cellList['E$currrentRowNumber'].value = TextCellValue(pmOut);
+            cellList['E$currrentRowNumber'].cellStyle = borderedCellStyle;
+          }
 
           // Calculate late/undertime
           int lateHours = 0;
@@ -960,15 +997,59 @@ Future<String?> generateExcel(
           cellList2['I$currrentRowNumber'].value = IntCellValue(day);
           cellList2['I$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-          final mirrorCols = {'J': amIn, 'K': amOut, 'L': pmIn, 'M': pmOut};
-
-          mirrorCols.forEach((col, val) {
-            cellList['$col$currrentRowNumber'] = sheet.cell(
-              CellIndex.indexByString('$col$currrentRowNumber'),
+          // Apply same visual display logic to mirrored section
+          if (displayAsAfternoonHalfDay) {
+            // For visual display, if first arrival is at or after 12 PM, 
+            // show it in PM Arrival (L) instead of AM Arrival (J)
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
             );
-            cellList['$col$currrentRowNumber'].value = TextCellValue(val);
-            cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-          });
+            cellList['J$currrentRowNumber'].value = TextCellValue(''); // No AM arrival
+            cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['K$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('K$currrentRowNumber'),
+            );
+            cellList['K$currrentRowNumber'].value = TextCellValue(''); // No AM departure
+            cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['L$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('L$currrentRowNumber'),
+            );
+            cellList['L$currrentRowNumber'].value = TextCellValue(amIn); // First arrival in PM Arrival
+            cellList['L$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['M$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('M$currrentRowNumber'),
+            );
+            cellList['M$currrentRowNumber'].value = TextCellValue(pmOut); // PM departure
+            cellList['M$currrentRowNumber'].cellStyle = borderedCellStyle;
+          } else {
+            // Normal display for regular days
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
+            );
+            cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
+            cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['K$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('K$currrentRowNumber'),
+            );
+            cellList['K$currrentRowNumber'].value = TextCellValue(amOut);
+            cellList['K$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['L$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('L$currrentRowNumber'),
+            );
+            cellList['L$currrentRowNumber'].value = TextCellValue(pmIn);
+            cellList['L$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+            cellList['M$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('M$currrentRowNumber'),
+            );
+            cellList['M$currrentRowNumber'].value = TextCellValue(pmOut);
+            cellList['M$currrentRowNumber'].cellStyle = borderedCellStyle;
+          }
 
           cellList['N$currrentRowNumber'] = sheet.cell(
             CellIndex.indexByString('N$currrentRowNumber'),
@@ -1206,17 +1287,13 @@ Future<String?> generateExcel(
             ..writeAsBytesSync(bytes);
 
       fileExists = await file.exists();
-      debugPrint('iOS/Android file created: $fileExists at path: $filePath');
+
       return fileExists ? file.path : null;
     }
-    debugPrint('DTR export completed successfully on desktop');
+
     return null;
-  } catch (e, stack) {
-    debugPrint('ERROR in generateExcel: $e');
-    debugPrint('Stack trace: $stack');
+  } catch (e) {
     if (kDebugMode) {
-      print('ERROR in generateExcel: $e');
-      print('Stack trace: $stack');
     }
     rethrow; // Re-throw to be handled by calling function
   }
