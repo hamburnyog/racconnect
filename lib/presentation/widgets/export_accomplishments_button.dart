@@ -54,7 +54,7 @@ class _ExportAccomplishmentsButtonState
       if (isCOS) {
         _showCOSExportOptions(authState);
       } else {
-        _performExport(authState, 'whole', true, isCOS);
+        _showPermanentAccomplishmentOptions(authState);
       }
     }
   }
@@ -81,6 +81,36 @@ class _ExportAccomplishmentsButtonState
               onPressed: () {
                 Navigator.of(context).pop();
                 _showPeriodSelection(authState, false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showPermanentAccomplishmentOptions(AuthenticatedState authState) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Report Type'),
+          content: const Text(
+            'Choose the type of accomplishment report to generate:',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annex A (WFH)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'whole', true, false);
+              },
+            ),
+            TextButton(
+              child: const Text('Accomplishment Report'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(authState, 'whole', false, false);
               },
             ),
           ],
