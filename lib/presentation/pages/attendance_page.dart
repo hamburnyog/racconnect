@@ -45,7 +45,7 @@ class _AttendancePageState extends State<AttendancePage>
   late Animation<Color?> _greenGlowAnimation;
   bool _isLoading = false; // Add loading state
 
-  List<int> getYears() => List.generate(1, (i) => DateTime.now().year - i);
+  List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
   List<DateTime> getDaysInMonth(int year, int month) {
     final lastDay = DateTime(year, month + 1, 0);
     return List.generate(lastDay.day, (i) => DateTime(year, month, i + 1));
