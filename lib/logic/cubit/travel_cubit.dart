@@ -57,13 +57,30 @@ class TravelCubit extends Cubit<TravelState> {
     }
   }
 
-  Future<void> getAllTravels() async {
+  Future<void> getAllTravels({int? year}) async {
     try {
       emit(TravelLoading());
       final travelModels = await travelRepository.getAllTravels();
-      emit(GetAllTravelSuccess(travelModels));
+      final selectedYear = year ?? DateTime.now().year;
+      final filteredTravels = travelModels
+          .where((travel) =>
+              travel.specificDates.any((date) => date.year == selectedYear))
+          .toList();
+      emit(GetAllTravelSuccess(travelModels, filteredTravels, selectedYear));
     } catch (e) {
       errorMessage(e);
+    }
+  }
+
+  void filterTravelsByYear(int year) {
+    if (state is GetAllTravelSuccess) {
+      final currentState = state as GetAllTravelSuccess;
+      final filteredTravels = currentState.travelModels
+          .where((travel) =>
+              travel.specificDates.any((date) => date.year == year))
+          .toList();
+      emit(GetAllTravelSuccess(
+          currentState.travelModels, filteredTravels, year));
     }
   }
 

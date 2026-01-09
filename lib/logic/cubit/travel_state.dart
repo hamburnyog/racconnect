@@ -15,7 +15,10 @@ final class TravelError extends TravelState {
 
 final class GetAllTravelSuccess extends TravelState {
   final List<TravelModel> travelModels;
-  const GetAllTravelSuccess(this.travelModels);
+  final List<TravelModel> filteredTravelModels;
+  final int selectedYear;
+  const GetAllTravelSuccess(
+      this.travelModels, this.filteredTravelModels, this.selectedYear);
 }
 
 final class TravelAddSuccess extends TravelState {

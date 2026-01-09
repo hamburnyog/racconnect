@@ -15,7 +15,10 @@ final class HolidayError extends HolidayState {
 
 final class GetAllHolidaySuccess extends HolidayState {
   final List<HolidayModel> holidayModels;
-  const GetAllHolidaySuccess(this.holidayModels);
+  final List<HolidayModel> filteredHolidayModels;
+  final int selectedYear;
+  const GetAllHolidaySuccess(
+      this.holidayModels, this.filteredHolidayModels, this.selectedYear);
 }
 
 final class HolidayAddSuccess extends HolidayState {

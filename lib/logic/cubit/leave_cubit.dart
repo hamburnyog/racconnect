@@ -58,13 +58,30 @@ class LeaveCubit extends Cubit<LeaveState> {
     }
   }
 
-  Future<void> getAllLeaves() async {
+  Future<void> getAllLeaves({int? year}) async {
     try {
       emit(LeaveLoading());
       final leaveModels = await leaveRepository.getAllLeaves();
-      emit(GetAllLeaveSuccess(leaveModels));
+      final selectedYear = year ?? DateTime.now().year;
+      final filteredLeaves = leaveModels
+          .where((leave) =>
+              leave.specificDates.any((date) => date.year == selectedYear))
+          .toList();
+      emit(GetAllLeaveSuccess(leaveModels, filteredLeaves, selectedYear));
     } catch (e) {
       errorMessage(e);
+    }
+  }
+
+  void filterLeavesByYear(int year) {
+    if (state is GetAllLeaveSuccess) {
+      final currentState = state as GetAllLeaveSuccess;
+      final filteredLeaves = currentState.leaveModels
+          .where((leave) =>
+              leave.specificDates.any((date) => date.year == year))
+          .toList();
+      emit(GetAllLeaveSuccess(
+          currentState.leaveModels, filteredLeaves, year));
     }
   }
 

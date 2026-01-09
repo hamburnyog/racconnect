@@ -3,7 +3,7 @@ import 'package:racconnect/utility/pocketbase_client.dart';
 
 class HolidayRepository {
   final pb = PocketBaseClient.instance;
-  Future<List<HolidayModel>> getAllHolidays(employeeNumber) async {
+  Future<List<HolidayModel>> getAllHolidays() async {
     try {
       final response = await pb
           .collection('holidays')

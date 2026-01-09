@@ -89,8 +89,8 @@ class _AttendancePageState extends State<AttendancePage>
       _isLoading = true;
     });
 
-    context.read<HolidayCubit>().getAllHolidays();
-    context.read<SuspensionCubit>().getAllSuspensions();
+    context.read<HolidayCubit>().getAllHolidays(year: selectedYear);
+    context.read<SuspensionCubit>().getAllSuspensions(year: selectedYear);
 
     // Load leaves
     final leaveCubit = context.read<LeaveCubit>();
@@ -99,7 +99,7 @@ class _AttendancePageState extends State<AttendancePage>
     if (authState is AuthenticatedState) {
       final employeeNumber = authState.user.profile?.employeeNumber ?? '';
       if (employeeNumber.isNotEmpty) {
-        await leaveCubit.getAllLeaves();
+        await leaveCubit.getAllLeaves(year: selectedYear);
 
         // Check if widget is still mounted
         if (!mounted) return;
@@ -182,7 +182,7 @@ class _AttendancePageState extends State<AttendancePage>
 
         // Handle travel state
         final travelCubit = context.read<TravelCubit>();
-        await travelCubit.getAllTravels();
+        await travelCubit.getAllTravels(year: selectedYear);
         final travelState = travelCubit.state;
         if (travelState is GetAllTravelSuccess) {
           if (mounted) {
@@ -260,7 +260,7 @@ class _AttendancePageState extends State<AttendancePage>
           builder: (context, suspensionState) {
             if (suspensionState is GetAllSuspensionSuccess) {
               suspensionMap = {
-                for (var s in suspensionState.suspensionModels)
+                for (var s in suspensionState.filteredSuspensionModels)
                   DateTime(s.datetime.year, s.datetime.month, s.datetime.day):
                       s,
               };
@@ -321,6 +321,82 @@ class _AttendancePageState extends State<AttendancePage>
                           ),
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                          horizontal: 3.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<int>(
+                                isExpanded: true,
+                                initialValue: selectedMonth,
+                                decoration: InputDecoration(
+                                  labelText: 'Month',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[200],
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 12,
+                                  ),
+                                ),
+                                items: List.generate(12, (i) {
+                                  return DropdownMenuItem(
+                                    value: i + 1,
+                                    child: Text(
+                                      DateFormat(
+                                        'MMMM',
+                                      ).format(DateTime(0, i + 1)),
+                                    ),
+                                  );
+                                }),
+                                onChanged:
+                                    (val) => _onDateFilterChanged(month: val),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 1,
+                              child: DropdownButtonFormField<int>(
+                                initialValue: selectedYear,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Year',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[200],
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 12,
+                                  ),
+                                ),
+                                items:
+                                    getYears().map((y) {
+                                      return DropdownMenuItem(
+                                        value: y,
+                                        child: Text('$y'),
+                                      );
+                                    }).toList(),
+                                onChanged:
+                                    (val) => _onDateFilterChanged(year: val),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       Expanded(
                         child: Card(
                           child: Padding(
@@ -328,54 +404,6 @@ class _AttendancePageState extends State<AttendancePage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        initialValue: selectedYear,
-                                        isExpanded: true,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Year',
-                                        ),
-                                        items:
-                                            getYears().map((y) {
-                                              return DropdownMenuItem(
-                                                value: y,
-                                                child: Text('$y'),
-                                              );
-                                            }).toList(),
-                                        onChanged:
-                                            (val) =>
-                                                _onDateFilterChanged(year: val),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        isExpanded: true,
-                                        initialValue: selectedMonth,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Month',
-                                        ),
-                                        items: List.generate(12, (i) {
-                                          return DropdownMenuItem(
-                                            value: i + 1,
-                                            child: Text(
-                                              DateFormat(
-                                                'MMMM',
-                                              ).format(DateTime(0, i + 1)),
-                                            ),
-                                          );
-                                        }),
-                                        onChanged:
-                                            (val) => _onDateFilterChanged(
-                                              month: val,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
                                 Expanded(
                                   child: Skeletonizer(
                                     enabled: _isLoading,

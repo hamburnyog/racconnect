@@ -15,7 +15,10 @@ final class LeaveError extends LeaveState {
 
 final class GetAllLeaveSuccess extends LeaveState {
   final List<LeaveModel> leaveModels;
-  const GetAllLeaveSuccess(this.leaveModels);
+  final List<LeaveModel> filteredLeaveModels;
+  final int selectedYear;
+  const GetAllLeaveSuccess(
+      this.leaveModels, this.filteredLeaveModels, this.selectedYear);
 }
 
 final class LeaveAddSuccess extends LeaveState {

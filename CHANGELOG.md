@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-01-09
+
+### Added
+- **Year Filtering**: Added year filtering functionality to Holiday, Leave, Suspension, and Travel pages.
+
+### Changed
+- **Icon Update**: Changed the travel icon in the sidebar.
+- **DTR Generation**: Refactored the excel generation for DTR.
+
+### Fixed
+- **Previous Year Issues**: Fixed issues related to fetching data from the previous year.
+- **Minor Bugs**: Fixed some minor bugs.
+
 ## [1.1.2] - 2025-11-04
 
 ### Added
