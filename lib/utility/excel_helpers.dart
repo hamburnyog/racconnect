@@ -4,6 +4,17 @@ import 'package:flutter/foundation.dart'; // For error logging
 
 import 'constants.dart';
 
+String formatSuspensionName(String originalName, bool isHalfday) {
+  if (isHalfday) {
+    if (originalName.toLowerCase().contains('morning')) {
+      return 'AM Suspension';
+    } else if (originalName.toLowerCase().contains('afternoon')) {
+      return 'PM Suspension';
+    }
+  }
+  return originalName;
+}
+
 Map<String, String> extractLogTimes(List<dynamic> dayLogs) {
   try {
     dayLogs.sort((a, b) => a.timestamp.compareTo(b.timestamp));

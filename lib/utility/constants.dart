@@ -106,7 +106,7 @@ const sideBarItemsHr = [
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
   BottomNavigationBarItem(
-    icon: Icon(Icons.airplane_ticket_outlined),
+    icon: Icon(Icons.directions_car_filled_outlined),
     activeIcon: Icon(Icons.directions_car),
     label: 'Travels',
   ),

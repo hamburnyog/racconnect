@@ -15,7 +15,10 @@ final class SuspensionError extends SuspensionState {
 
 final class GetAllSuspensionSuccess extends SuspensionState {
   final List<SuspensionModel> suspensionModels;
-  const GetAllSuspensionSuccess(this.suspensionModels);
+  final List<SuspensionModel> filteredSuspensionModels;
+  final int selectedYear;
+  const GetAllSuspensionSuccess(
+      this.suspensionModels, this.filteredSuspensionModels, this.selectedYear);
 }
 
 final class SuspensionAddSuccess extends SuspensionState {

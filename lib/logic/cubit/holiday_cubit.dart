@@ -54,15 +54,28 @@ class HolidayCubit extends Cubit<HolidayState> {
     }
   }
 
-  Future<void> getAllHolidays({String? employeeNumber}) async {
+  Future<void> getAllHolidays({int? year}) async {
     try {
       emit(HolidayLoading());
-      final holidayModel = await holidayRepository.getAllHolidays(
-        employeeNumber,
-      );
-      emit(GetAllHolidaySuccess(holidayModel));
+      final holidayModel = await holidayRepository.getAllHolidays();
+      final selectedYear = year ?? DateTime.now().year;
+      final filteredHolidays = holidayModel
+          .where((holiday) => holiday.date.year == selectedYear)
+          .toList();
+      emit(GetAllHolidaySuccess(holidayModel, filteredHolidays, selectedYear));
     } catch (e) {
       errorMessage(e);
+    }
+  }
+
+  void filterHolidaysByYear(int year) {
+    if (state is GetAllHolidaySuccess) {
+      final currentState = state as GetAllHolidaySuccess;
+      final filteredHolidays = currentState.holidayModels
+          .where((holiday) => holiday.date.year == year)
+          .toList();
+      emit(GetAllHolidaySuccess(
+          currentState.holidayModels, filteredHolidays, year));
     }
   }
 

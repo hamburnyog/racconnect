@@ -23,6 +23,9 @@ class _LeavePageState extends State<LeavePage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoading = true;
+  int selectedYear = DateTime.now().year;
+
+  List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
 
   void _showLeaveForm() {
     showModalBottomSheet(
@@ -82,11 +85,20 @@ class _LeavePageState extends State<LeavePage> {
     setState(() {
       _isLoading = true;
     });
-    await context.read<LeaveCubit>().getAllLeaves();
+    await context.read<LeaveCubit>().getAllLeaves(year: selectedYear);
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void _onYearChanged(int? year) {
+    if (year != null) {
+      setState(() {
+        selectedYear = year;
+      });
+      context.read<LeaveCubit>().filterLeavesByYear(year);
     }
   }
 
@@ -165,26 +177,59 @@ class _LeavePageState extends State<LeavePage> {
                             vertical: 8.0,
                             horizontal: 3.0,
                           ),
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Search by leave type or date',
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).primaryColor,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search by leave type or date',
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[200],
+                                    contentPadding: EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 10,
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: DropdownButtonFormField<int>(
+                                  initialValue: selectedYear,
+                                  decoration: InputDecoration(
+                                    labelText: 'Year',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[200],
+                                    contentPadding: EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 12),
+                                  ),
+                                  items: getYears().map((y) {
+                                    return DropdownMenuItem(
+                                      value: y,
+                                      child: Text('$y'),
+                                    );
+                                  }).toList(),
+                                  onChanged: _onYearChanged,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                         BlocConsumer<LeaveCubit, LeaveState>(
@@ -207,7 +252,8 @@ class _LeavePageState extends State<LeavePage> {
                             } else if (state is LeaveUpdateSuccess) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Leave updated successfully!'),
+                                  content:
+                                      Text('Leave updated successfully!'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -224,7 +270,7 @@ class _LeavePageState extends State<LeavePage> {
                           },
                           builder: (context, state) {
                             if (state is GetAllLeaveSuccess) {
-                              final leaves = state.leaveModels.toList();
+                              final leaves = state.filteredLeaveModels.toList();
 
                               // Apply search filter
                               if (_searchQuery.isNotEmpty) {
@@ -252,7 +298,8 @@ class _LeavePageState extends State<LeavePage> {
                                       .join(' ');
 
                                   return leaveType.contains(_searchQuery) ||
-                                      employeeNumbers.contains(_searchQuery) ||
+                                      employeeNumbers
+                                          .contains(_searchQuery) ||
                                       leaveDates.contains(_searchQuery) ||
                                       leaveDatesShort.contains(_searchQuery);
                                 });
@@ -350,7 +397,8 @@ class _LeavePageState extends State<LeavePage> {
                                             margin: const EdgeInsets.symmetric(
                                               horizontal: 5,
                                             ),
-                                            padding: const EdgeInsets.symmetric(
+                                            padding:
+                                                const EdgeInsets.symmetric(
                                               horizontal: 20,
                                             ),
                                             child: const Icon(
@@ -395,7 +443,8 @@ class _LeavePageState extends State<LeavePage> {
                                                     children: [
                                                       Text(
                                                         '${leaveModel.employeeNumbers.length} employee${leaveModel.employeeNumbers.length != 1 ? 's' : ''}, ${leaveModel.specificDates.length} date${leaveModel.specificDates.length != 1 ? 's' : ''}',
-                                                        style: const TextStyle(
+                                                        style:
+                                                            const TextStyle(
                                                           fontSize: 10,
                                                         ),
                                                       ),
@@ -409,8 +458,8 @@ class _LeavePageState extends State<LeavePage> {
                                                           ),
                                                           style:
                                                               const TextStyle(
-                                                                fontSize: 10,
-                                                              ),
+                                                            fontSize: 10,
+                                                          ),
                                                         ),
                                                     ],
                                                   ),
@@ -440,7 +489,8 @@ class _LeavePageState extends State<LeavePage> {
                                     clipBehavior: Clip.hardEdge,
                                     elevation: 3,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(12),
                                     ),
                                     child: ListTile(
                                       leading: Bone.circle(size: 48),
@@ -467,7 +517,9 @@ class _LeavePageState extends State<LeavePage> {
             );
           }
         }
-        return Center(child: Text('You do not have access to this page.'));
+        return Center(
+          child: Text('You do not have access to this page.'),
+        );
       },
     );
   }

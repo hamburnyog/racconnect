@@ -57,15 +57,29 @@ class SuspensionCubit extends Cubit<SuspensionState> {
     }
   }
 
-  Future<void> getAllSuspensions({String? employeeNumber}) async {
+  Future<void> getAllSuspensions({int? year}) async {
     try {
       emit(SuspensionLoading());
-      final suspensionModel = await suspensionRepository.getAllSuspensions(
-        employeeNumber,
-      );
-      emit(GetAllSuspensionSuccess(suspensionModel));
+      final suspensionModel = await suspensionRepository.getAllSuspensions();
+      final selectedYear = year ?? DateTime.now().year;
+      final filteredSuspensions = suspensionModel
+          .where((suspension) => suspension.datetime.year == selectedYear)
+          .toList();
+      emit(GetAllSuspensionSuccess(
+          suspensionModel, filteredSuspensions, selectedYear));
     } catch (e) {
       errorMessage(e);
+    }
+  }
+
+  void filterSuspensionsByYear(int year) {
+    if (state is GetAllSuspensionSuccess) {
+      final currentState = state as GetAllSuspensionSuccess;
+      final filteredSuspensions = currentState.suspensionModels
+          .where((suspension) => suspension.datetime.year == year)
+          .toList();
+      emit(GetAllSuspensionSuccess(
+          currentState.suspensionModels, filteredSuspensions, year));
     }
   }
 

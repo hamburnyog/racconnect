@@ -22,6 +22,9 @@ class _SuspensionPageState extends State<SuspensionPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoading = true;
+  int selectedYear = DateTime.now().year;
+
+  List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
 
   void _showSuspensionForm() {
     showModalBottomSheet(
@@ -67,11 +70,20 @@ class _SuspensionPageState extends State<SuspensionPage> {
     setState(() {
       _isLoading = true;
     });
-    await context.read<SuspensionCubit>().getAllSuspensions();
+    await context.read<SuspensionCubit>().getAllSuspensions(year: selectedYear);
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void _onYearChanged(int? year) {
+    if (year != null) {
+      setState(() {
+        selectedYear = year;
+      });
+      context.read<SuspensionCubit>().filterSuspensionsByYear(year);
     }
   }
 
@@ -136,24 +148,57 @@ class _SuspensionPageState extends State<SuspensionPage> {
                     vertical: 8.0,
                     horizontal: 3.0,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search by suspension name or date',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Theme.of(context).primaryColor,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search by suspension name or date',
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          ),
                         ),
                       ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedYear,
+                          decoration: InputDecoration(
+                            labelText: 'Year',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 12),
+                          ),
+                          items: getYears().map((y) {
+                            return DropdownMenuItem(
+                              value: y,
+                              child: Text('$y'),
+                            );
+                          }).toList(),
+                          onChanged: _onYearChanged,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 BlocConsumer<SuspensionCubit, SuspensionState>(
@@ -193,7 +238,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                   },
                   builder: (context, state) {
                     if (state is GetAllSuspensionSuccess) {
-                      final suspensions = state.suspensionModels.toList();
+                      final suspensions = state.filteredSuspensionModels.toList();
 
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
@@ -270,6 +315,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                                   ) async {
                                     return await showDialog(
                                       context: context,
+      
                                       builder: (BuildContext context) {
                                         return AlertDialog(
                                           title: const Text("Confirm"),

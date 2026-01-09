@@ -3,14 +3,12 @@ import 'package:racconnect/utility/pocketbase_client.dart';
 
 class SuspensionRepository {
   final pb = PocketBaseClient.instance;
-  Future<List<SuspensionModel>> getAllSuspensions(employeeNumber) async {
+  Future<List<SuspensionModel>> getAllSuspensions() async {
     try {
       final response = await pb
           .collection('suspensions')
           .getFullList(
             sort: '+datetime',
-            filter:
-                'datetime >= "${DateTime.now().year}-01-01" && datetime <= "${DateTime.now().year}-12-31"',
           );
       return response
           .map((e) => SuspensionModel.fromJson(e.toString()))

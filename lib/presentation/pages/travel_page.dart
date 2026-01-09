@@ -22,6 +22,9 @@ class _TravelPageState extends State<TravelPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoading = true;
+  int selectedYear = DateTime.now().year;
+
+  List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
 
   void _showTravelForm() {
     showModalBottomSheet(
@@ -81,11 +84,20 @@ class _TravelPageState extends State<TravelPage> {
     setState(() {
       _isLoading = true;
     });
-    await context.read<TravelCubit>().getAllTravels();
+    await context.read<TravelCubit>().getAllTravels(year: selectedYear);
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void _onYearChanged(int? year) {
+    if (year != null) {
+      setState(() {
+        selectedYear = year;
+      });
+      context.read<TravelCubit>().filterTravelsByYear(year);
     }
   }
 
@@ -156,24 +168,57 @@ class _TravelPageState extends State<TravelPage> {
                     vertical: 8.0,
                     horizontal: 3.0,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search by SO number or travel date',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Theme.of(context).primaryColor,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search by SO number or travel date',
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          ),
                         ),
                       ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedYear,
+                          decoration: InputDecoration(
+                            labelText: 'Year',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 12),
+                          ),
+                          items: getYears().map((y) {
+                            return DropdownMenuItem(
+                              value: y,
+                              child: Text('$y'),
+                            );
+                          }).toList(),
+                          onChanged: _onYearChanged,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 BlocConsumer<TravelCubit, TravelState>(
@@ -213,7 +258,7 @@ class _TravelPageState extends State<TravelPage> {
                   },
                   builder: (context, state) {
                     if (state is GetAllTravelSuccess) {
-                      final travels = state.travelModels.toList();
+                      final travels = state.filteredTravelModels.toList();
 
                       // Apply search filter
                       if (_searchQuery.isNotEmpty) {
