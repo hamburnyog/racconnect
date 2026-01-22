@@ -35,6 +35,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
         await cubit.getEmployeeAttendanceToday(employeeNumber: employeeNumber);
         final state = cubit.state;
         if (state is GetTodayAttendanceSuccess) {
+          if (!mounted) return;
           setState(() {
             attendanceToday = state.attendanceModels;
           });
@@ -51,6 +52,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
       final accomplishment = await _accomplishmentRepository
           .getAccomplishmentByDate(now, employeeNumber);
       if (accomplishment != null) {
+        if (!mounted) return;
         setState(() {
           accomplishmentToday = accomplishment;
           targetController.text = accomplishment.target;

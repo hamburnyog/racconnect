@@ -84,16 +84,6 @@ Map<String, Map<String, String>> groupAttendance(
     } else if (times.length == 1) {
       amIn = timeFormat.format(times[0]);
       timeInRemarks = remarks[0];
-      if (isWFH) {
-        final amInDateTime = times[0];
-        if (amInDateTime.hour >= 12) {
-          amOut = '—';
-          pmIn = '—';
-        } else {
-          amOut = '12:00 PM';
-          pmIn = '01:00 PM';
-        }
-      }
     } else if (times.length <= 3) {
       amIn = timeFormat.format(times.first);
       pmOut = timeFormat.format(times.last);
