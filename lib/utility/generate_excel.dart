@@ -96,7 +96,6 @@ Future<String?> generateExcel(
   }
 }
 
-
 void _generateExcelFooter(
   Sheet sheet,
   ProfileModel profile,
@@ -118,12 +117,14 @@ void _generateExcelFooter(
   String supervisor;
   String supervisorDesignation;
 
-  supervisor = profile.sectionCode == 'OIC'
-      ? 'ASEC ROWENA M. MACALINTAL'
-      : 'JOHN S. CALIDGUID, RSW, MPA';
-  supervisorDesignation = profile.sectionCode == 'OIC'
-      ? 'Deputy Executive Director for Operations and Services'
-      : 'Officer-in-charge, Social Welfare Officer IV';
+  supervisor =
+      profile.sectionCode == 'OIC'
+          ? 'ASEC ROWENA M. MACALINTAL'
+          : 'JOHN S. CALIDGUID, RSW, MPA';
+  supervisorDesignation =
+      profile.sectionCode == 'OIC'
+          ? 'Deputy Executive Director for Operations and Services'
+          : 'Officer-in-charge, Social Welfare Officer IV';
 
   buildTotalRowSection(
     sheet,
@@ -209,15 +210,6 @@ Map<String, int> _generateExcelBody(
 
       final logTimes = extractLogTimes(dayLogs);
       // Check if day should be considered WFH: only if there are WFH logs and NO biometric logs
-      final hasBiometrics = dayLogs.any(
-        (log) => log.type.toLowerCase() == 'biometrics',
-      );
-      final hasWFH = dayLogs.any(
-        (log) => log.type.toLowerCase().contains('wfh'),
-      );
-      bool isWFH =
-          hasWFH &&
-          !hasBiometrics; // For calculations only, biometrics take priority
 
       // Use original extracted values for both computation and initial display
       String amIn = logTimes['amIn'] ?? '';
@@ -229,7 +221,7 @@ Map<String, int> _generateExcelBody(
 
       final isSuspension = suspensionMap.containsKey(currentDate);
       final suspensionModel = suspensionMap[currentDate];
-      
+
       final effectiveHoliday = isHoliday || isLeave || isTravel;
       final effectiveHolidayName =
           isHoliday
@@ -253,22 +245,6 @@ Map<String, int> _generateExcelBody(
           amOut = '';
           pmIn = '';
           pmOut = '';
-        }
-      } else if (isWFH) {
-        final amInDateTime =
-            amIn.isNotEmpty
-                ? dateFormat
-                    .parse(amIn)
-                    .copyWith(
-                      year: currentDate.year,
-                      month: currentDate.month,
-                      day: currentDate.day,
-                    )
-                : null;
-
-        if (amInDateTime != null && amInDateTime.hour < 12) {
-          amOut = '12:00 PM';
-          pmIn = '1:00 PM';
         }
       }
 
@@ -302,9 +278,7 @@ Map<String, int> _generateExcelBody(
             // Merge PM cells and display suspension name
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
-              CellIndex.indexByString(
-                'E$currrentRowNumber',
-              ), // Merges D and E
+              CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
               customValue: TextCellValue(
                 formatSuspensionName(
                   suspensionModel.name,
@@ -358,9 +332,7 @@ Map<String, int> _generateExcelBody(
             // Merge PM cells and display suspension name
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
-              CellIndex.indexByString(
-                'E$currrentRowNumber',
-              ), // Merges D and E
+              CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
               customValue: TextCellValue(
                 formatSuspensionName(
                   suspensionModel.name,
@@ -381,9 +353,7 @@ Map<String, int> _generateExcelBody(
           // Full-day suspension
           sheet.merge(
             CellIndex.indexByString('B$currrentRowNumber'),
-            CellIndex.indexByString(
-              'E$currrentRowNumber',
-            ), // Merges B, C, D, E
+            CellIndex.indexByString('E$currrentRowNumber'), // Merges B, C, D, E
             customValue: TextCellValue(
               formatSuspensionName(
                 suspensionModel.name,
@@ -452,19 +422,20 @@ Map<String, int> _generateExcelBody(
             totalDayMinutes > 0
                 ? TextCellValue(totalDayMinutes.toString())
                 : TextCellValue('');
-                  cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  if (suspensionModel.isHalfday) {
-                    if (amIn.isNotEmpty) {
-                      cellList['J$currrentRowNumber'] = sheet.cell(
-                        CellIndex.indexByString('J$currrentRowNumber'),
-                      );            cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
+        cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        if (suspensionModel.isHalfday) {
+          if (amIn.isNotEmpty) {
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
+            );
+            cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
             cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
 
             cellList['K$currrentRowNumber'] = sheet.cell(
@@ -580,25 +551,25 @@ Map<String, int> _generateExcelBody(
               greyedTopBottomBorderCellStyle;
         }
 
-                  for (var col in ['F', 'G']) {
-                    cellList['$col$currrentRowNumber'] = sheet.cell(
-                      CellIndex.indexByString('$col$currrentRowNumber'),
-                    );
-                    cellList['$col$currrentRowNumber'].value = null;
-                    cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-                  }
-        
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  sheet.merge(
-                    CellIndex.indexByString('J$currrentRowNumber'),
-                    CellIndex.indexByString('M$currrentRowNumber'),
-                    customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
-                  );
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
+
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        sheet.merge(
+          CellIndex.indexByString('J$currrentRowNumber'),
+          CellIndex.indexByString('M$currrentRowNumber'),
+          customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
+        );
         for (var col in ['J', 'K', 'L', 'M']) {
           cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
@@ -635,25 +606,25 @@ Map<String, int> _generateExcelBody(
               greyedTopBottomBorderCellStyle;
         }
 
-          for (var col in ['F', 'G']) {
-            cellList['$col$currrentRowNumber'] = sheet.cell(
-              CellIndex.indexByString('$col$currrentRowNumber'),
-            );
-            cellList['$col$currrentRowNumber'].value = null;
-            cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-          }
-
-          cellList['I$currrentRowNumber'] = sheet.cell(
-            CellIndex.indexByString('I$currrentRowNumber'),
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
           );
-          cellList['I$currrentRowNumber'].value = IntCellValue(day);
-          cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
 
-          sheet.merge(
-            CellIndex.indexByString('J$currrentRowNumber'),
-            CellIndex.indexByString('M$currrentRowNumber'),
-            customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
-          );
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        sheet.merge(
+          CellIndex.indexByString('J$currrentRowNumber'),
+          CellIndex.indexByString('M$currrentRowNumber'),
+          customValue: TextCellValue(effectiveHolidayName.toUpperCase()),
+        );
 
         for (var col in ['J', 'K', 'L', 'M']) {
           cellList['$col$currrentRowNumber'] ??= sheet.cell(
@@ -700,9 +671,7 @@ Map<String, int> _generateExcelBody(
             // Merge PM cells and display suspension name
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
-              CellIndex.indexByString(
-                'E$currrentRowNumber',
-              ), // Merges D and E
+              CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
               customValue: TextCellValue(
                 formatSuspensionName(
                   suspensionModel.name,
@@ -756,9 +725,7 @@ Map<String, int> _generateExcelBody(
             // Merge PM cells and display suspension name
             sheet.merge(
               CellIndex.indexByString('D$currrentRowNumber'),
-              CellIndex.indexByString(
-                'E$currrentRowNumber',
-              ), // Merges D and E
+              CellIndex.indexByString('E$currrentRowNumber'), // Merges D and E
               customValue: TextCellValue(
                 formatSuspensionName(
                   suspensionModel.name,
@@ -779,9 +746,7 @@ Map<String, int> _generateExcelBody(
           // Full-day suspension
           sheet.merge(
             CellIndex.indexByString('B$currrentRowNumber'),
-            CellIndex.indexByString(
-              'E$currrentRowNumber',
-            ), // Merges B, C, D, E
+            CellIndex.indexByString('E$currrentRowNumber'), // Merges B, C, D, E
             customValue: TextCellValue(
               formatSuspensionName(
                 suspensionModel.name,
@@ -850,19 +815,20 @@ Map<String, int> _generateExcelBody(
             totalDayMinutes > 0
                 ? TextCellValue(totalDayMinutes.toString())
                 : TextCellValue('');
-                  cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  if (suspensionModel.isHalfday) {
-                    if (amIn.isNotEmpty) {
-                      cellList['J$currrentRowNumber'] = sheet.cell(
-                        CellIndex.indexByString('J$currrentRowNumber'),
-                      );            cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
+        cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        if (suspensionModel.isHalfday) {
+          if (amIn.isNotEmpty) {
+            cellList['J$currrentRowNumber'] = sheet.cell(
+              CellIndex.indexByString('J$currrentRowNumber'),
+            );
+            cellList['J$currrentRowNumber'].value = TextCellValue(amIn);
             cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
 
             cellList['K$currrentRowNumber'] = sheet.cell(
@@ -1028,9 +994,7 @@ Map<String, int> _generateExcelBody(
                 ((secondTime.isAtSameMomentAs(
                           lunchStartTime,
                         ) || // Exactly 12:00 PM
-                        secondTime.isAfter(
-                          lunchStartTime,
-                        )) && // After 12:00 PM
+                        secondTime.isAfter(lunchStartTime)) && // After 12:00 PM
                     (secondTime.isAtSameMomentAs(
                           lunchEndTime,
                         ) || // Exactly 1:00 PM
@@ -1041,11 +1005,27 @@ Map<String, int> _generateExcelBody(
               // Visual change: put the second log (lunch break time) in AM departure for display
               visualAmOut =
                   pmOut; // Second log becomes AM departure for visual display
-              visualPmOut =
-                  ''; // PM departure is now empty for visual display
+              visualPmOut = ''; // PM departure is now empty for visual display
             }
           } catch (e) {
             // If parsing fails, keep original display values
+          }
+        }
+
+        // Auto-fill lunch break visually if user arrived before 12PM and left after or at 1PM
+        // This is purely for display and does not affect computation
+        if (amIn.isNotEmpty && pmOut.isNotEmpty) {
+          try {
+            final amInTime = dateFormat.parse(amIn);
+            final pmOutTime = dateFormat.parse(pmOut);
+
+            // Arrived before 12:00 PM and left at or after 1:00 PM
+            if (amInTime.hour < 12 && pmOutTime.hour >= 13) {
+              if (visualAmOut.isEmpty) visualAmOut = '12:00 PM';
+              if (visualPmIn.isEmpty) visualPmIn = '1:00 PM';
+            }
+          } catch (e) {
+            // Ignore parsing errors
           }
         }
 
@@ -1229,8 +1209,7 @@ Map<String, int> _generateExcelBody(
             // Calculate late minutes
             int calculatedLateMinutes = 0;
             if (amInTime.isAfter(graceTime)) {
-              calculatedLateMinutes =
-                  amInTime.difference(graceTime).inMinutes;
+              calculatedLateMinutes = amInTime.difference(graceTime).inMinutes;
             }
 
             // Calculate undertime based on required hours vs actual hours worked
@@ -1342,9 +1321,7 @@ Map<String, int> _generateExcelBody(
 
                 // If logged out after 1PM but no PM in record, assume lunch 12-1PM
                 final effectivePmIn =
-                    pmOutTime.isAfter(lunchEndTime)
-                        ? lunchEndTime
-                        : pmOutTime;
+                    pmOutTime.isAfter(lunchEndTime) ? lunchEndTime : pmOutTime;
                 final afternoonWork =
                     pmOutTime.difference(effectivePmIn).inMinutes;
 
@@ -1472,18 +1449,18 @@ Map<String, int> _generateExcelBody(
             totalDayMinutes > 0
                 ? TextCellValue(totalDayMinutes.toString())
                 : TextCellValue('');
-                  cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  // Mirrored columns I to O
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  // Apply same visual display logic to mirrored section
-                  if (displayAsAfternoonHalfDay) {
-                    // For visual display, if first arrival is at or after 12 PM,          // show it in PM Arrival (L) instead of AM Arrival (J)
+        cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        // Mirrored columns I to O
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        // Apply same visual display logic to mirrored section
+        if (displayAsAfternoonHalfDay) {
+          // For visual display, if first arrival is at or after 12 PM,          // show it in PM Arrival (L) instead of AM Arrival (J)
           cellList['J$currrentRowNumber'] = sheet.cell(
             CellIndex.indexByString('J$currrentRowNumber'),
           );
@@ -1635,24 +1612,25 @@ Map<String, int> _generateExcelBody(
         cellList['F$currrentRowNumber'].value = TextCellValue('');
         cellList['F$currrentRowNumber'].cellStyle = borderedCellStyle;
 
-                  // Late Minutes
-                  cellList['G$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('G$currrentRowNumber'),
-                  );
-                  cellList['G$currrentRowNumber'].value = TextCellValue('');
-                  cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  // Mirrored columns I to O
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  // J - AM In
-                  cellList['J$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('J$currrentRowNumber'),
-                  );        cellList['J$currrentRowNumber'].value = TextCellValue('');
+        // Late Minutes
+        cellList['G$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('G$currrentRowNumber'),
+        );
+        cellList['G$currrentRowNumber'].value = TextCellValue('');
+        cellList['G$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        // Mirrored columns I to O
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        // J - AM In
+        cellList['J$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('J$currrentRowNumber'),
+        );
+        cellList['J$currrentRowNumber'].value = TextCellValue('');
         cellList['J$currrentRowNumber'].cellStyle = borderedCellStyle;
 
         // K - AM Out
@@ -1705,25 +1683,25 @@ Map<String, int> _generateExcelBody(
               greyedTopBottomBorderCellStyle;
         }
 
-                  for (var col in ['F', 'G']) {
-                    cellList['$col$currrentRowNumber'] = sheet.cell(
-                      CellIndex.indexByString('$col$currrentRowNumber'),
-                    );
-                    cellList['$col$currrentRowNumber'].value = null;
-                    cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
-                  }
-        
-                  cellList['I$currrentRowNumber'] = sheet.cell(
-                    CellIndex.indexByString('I$currrentRowNumber'),
-                  );
-                  cellList['I$currrentRowNumber'].value = IntCellValue(day);
-                  cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
-        
-                  sheet.merge(
-                    CellIndex.indexByString('J$currrentRowNumber'),
-                    CellIndex.indexByString('M$currrentRowNumber'),
-                    customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
-                  );
+        for (var col in ['F', 'G']) {
+          cellList['$col$currrentRowNumber'] = sheet.cell(
+            CellIndex.indexByString('$col$currrentRowNumber'),
+          );
+          cellList['$col$currrentRowNumber'].value = null;
+          cellList['$col$currrentRowNumber'].cellStyle = borderedCellStyle;
+        }
+
+        cellList['I$currrentRowNumber'] = sheet.cell(
+          CellIndex.indexByString('I$currrentRowNumber'),
+        );
+        cellList['I$currrentRowNumber'].value = IntCellValue(day);
+        cellList['I$currrentRowNumber'].cellStyle = borderedCellStyle;
+
+        sheet.merge(
+          CellIndex.indexByString('J$currrentRowNumber'),
+          CellIndex.indexByString('M$currrentRowNumber'),
+          customValue: TextCellValue(monthDayNames[day - 1].toUpperCase()),
+        );
         for (var col in ['J', 'K', 'L', 'M']) {
           cellList['$col$currrentRowNumber'] ??= sheet.cell(
             CellIndex.indexByString('$col$currrentRowNumber'),
@@ -1752,7 +1730,10 @@ Map<String, int> _generateExcelBody(
 }
 
 void _generateExcelHeader(
-    Sheet sheet, ProfileModel profile, DateTime selectedDate) {
+  Sheet sheet,
+  ProfileModel profile,
+  DateTime selectedDate,
+) {
   String monthName = getMonthName(selectedDate.month);
 
   String firstName = profile.firstName;
