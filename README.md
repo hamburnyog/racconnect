@@ -22,9 +22,8 @@ RACConnect is a comprehensive employee management system developed for the **Nat
 |----------|--------|--------------|
 | **Windows** | ✅ Available | Windows 11 or higher |
 | **macOS** | ✅ Available | macOS Sonoma or higher |
-| **Android** | ✅ Available | Android 11 or higher | [![Get it on Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.codecarpentry.racconnect)
+| **Android** | ✅ [Get it on Google Play](https://play.google.com/store/apps/details?id=com.codecarpentry.racconnect) | Android 11 or higher |
 | **iOS** | 🔜 Planned | (waiting for apple developer subscription) |
-
 ## Security Features
 
 - **Time Tampering Detection** - Prevents manipulation of system time
