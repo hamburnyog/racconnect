@@ -59,6 +59,20 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.sick_rounded),
     label: 'Leaves',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.forum_outlined),
+    activeIcon: Icon(Icons.forum_rounded),
+    label: 'Forum',
+  ),
+];
+
+const sideBarItemsIO = [
+  ...sideBarItemsUser,
+  BottomNavigationBarItem(
+    icon: Icon(Icons.forum_outlined),
+    activeIcon: Icon(Icons.forum_rounded),
+    label: 'Forum',
+  ),
 ];
 
 const sideBarItemsOic = [

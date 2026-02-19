@@ -30,10 +30,10 @@ dependencies:
   share_plus: ^11.0.0
   google_fonts: ^6.2.1
   file_picker: ^10.2.0
-  pdf: ^3.8.1
+  pdf: ^3.10.0
   image_picker: ^1.0.0
   yaml: ^3.1.0
-  printing: ^5.12.0
+  printing: ^5.13.0
   skeletonizer: ^2.1.0+1
   ntp: ^2.0.0
 
@@ -68,4 +68,5 @@ flutter:
     - assets/
     - assets/images/
     - assets/animations/
+    - assets/certificate/
     - pubspec.yaml

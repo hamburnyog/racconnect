@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
+import 'package:racconnect/logic/cubit/forum_cubit.dart';
 import 'package:racconnect/logic/cubit/holiday_cubit.dart';
 import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
@@ -58,6 +59,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<HolidayCubit>(create: (_) => HolidayCubit()),
         BlocProvider<EventCubit>(create: (_) => EventCubit()),
         BlocProvider<AttendanceCubit>(create: (_) => AttendanceCubit()),
+        BlocProvider<ForumCubit>(create: (_) => ForumCubit()),
         BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
         BlocProvider<SuspensionCubit>(create: (_) => SuspensionCubit()),
         BlocProvider<LeaveCubit>(create: (_) => LeaveCubit()),

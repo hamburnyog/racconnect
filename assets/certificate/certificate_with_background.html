@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Certificate with Background</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Bookman Old Style", serif;
+            position: relative;
+            width: 210mm;
+            height: 297mm;
+            font-size: 16px;
+            background-image: url('TEMPLATE CERT DRAFT.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+
+        .certificate-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .field-container {
+            position: absolute;
+            padding: 5px;
+            background-color: transparent;
+            text-align: center;
+        }
+
+        .field-container-bottom-border {
+            position: absolute;
+            border-bottom: 1px solid grey;
+            background-color: transparent;
+            text-align: center;
+        }
+
+        #name-field {
+            top: 124mm;
+            left: 125mm;
+            width: 315mm;
+            text-align: center;
+            font-size: 60px;
+            font-weight: bold;
+            transform: none;
+        }
+
+        #address-field {
+            top: 145mm;
+            left: 125mm;
+            width: 315mm;
+            text-align: center;
+            font-size: 16px;
+            transform: none;
+            font-weight: bold;
+        }
+
+        #forum-date-field {
+            top: 167mm;
+            left: 150mm;
+            width: 70mm;
+            text-align: center;
+            font-size: 26px;
+            transform: none;
+            font-weight: bold;
+        }
+
+        #certification-date-field {
+            top: 222mm;
+            left: 188mm;
+            width: 110mm;
+            text-align: center;
+            font-size: 28px;
+            transform: none;
+            /* font-weight: bold; */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="certificate-content">
+        <div id="name-field" class="field-container">
+            {{NAME}}
+        </div>
+        <div id="address-field" class="field-container">
+            {{ADDRESS}}
+        </div>
+        <div id="forum-date-field" class="field-container-bottom-border">
+            {{FORUM_DATE}}
+        </div>
+        <div id="certification-date-field" class="field-container-bottom-border">
+            {{CERTIFICATION_DATE}}
+        </div>
+    </div>
+</body>
+
+</html>

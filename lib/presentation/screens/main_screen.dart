@@ -12,6 +12,7 @@ import 'package:racconnect/presentation/pages/section_page.dart';
 import 'package:racconnect/presentation/pages/suspension_page.dart';
 import 'package:racconnect/presentation/pages/travel_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
+import 'package:racconnect/presentation/pages/forum_page.dart';
 
 import 'package:racconnect/utility/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -186,6 +187,8 @@ class _MainScreenState extends State<MainScreen> {
                       sidebarItemMenu = sideBarItemsRecords;
                     } else if (user.role == 'Unit Head') {
                       sidebarItemMenu = sideBarItemsUnitHead;
+                    } else if (user.role == 'IO') {
+                      sidebarItemMenu = sideBarItemsIO;
                     }
                   }
                   return BottomNavigationBar(
@@ -219,6 +222,8 @@ class _MainScreenState extends State<MainScreen> {
                 sidebarItemMenu = sideBarItemsRecords;
               } else if (user.role == 'Unit Head') {
                 sidebarItemMenu = sideBarItemsUnitHead;
+              } else if (user.role == 'IO') {
+                sidebarItemMenu = sideBarItemsIO;
               }
             }
 
@@ -294,6 +299,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Travels') {
                           return TravelPage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Forum') {
+                          return ForumPage();
                         } else {
                           return Text(
                             sidebarItemMenu[_selectedIndex].label.toString(),
