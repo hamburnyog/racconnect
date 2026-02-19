@@ -26,7 +26,7 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
   bool _isLoading = true;
   bool _showCalibration = false;
 
-  // Calibration State with provided final default values
+  // Calibration State
   double nameTop = 123.0;
   double nameLeft = 46.0;
   double nameWidth = 150.0;
@@ -47,6 +47,11 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
   double certDateWidth = 56.0;
   double certDateFontSize = 12.0;
 
+  // QR Calibration State
+  double qrTop = 262.0;
+  double qrLeft = 193.0;
+  double qrSize = 9.0;
+
   @override
   void initState() {
     super.initState();
@@ -57,8 +62,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
     try {
       final svgData = await rootBundle.load('assets/certificate/TEMPLATE CERT DRAFT.svg');
       final svgBytes = svgData.buffer.asUint8List();
-      
-      // Using Libre Baskerville as a high-quality alternative to Bookman Old Style
       final font = await PdfGoogleFonts.libreBaskervilleRegular();
       final fontBold = await PdfGoogleFonts.libreBaskervilleBold();
 
@@ -79,18 +82,12 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
   }
 
   String _formatOrdinal(int day) {
-    if (day >= 11 && day <= 13) {
-      return '${day}th';
-    }
+    if (day >= 11 && day <= 13) return '${day}th';
     switch (day % 10) {
-      case 1:
-        return '${day}st';
-      case 2:
-        return '${day}nd';
-      case 3:
-        return '${day}rd';
-      default:
-        return '${day}th';
+      case 1: return '${day}st';
+      case 2: return '${day}nd';
+      case 3: return '${day}rd';
+      default: return '${day}th';
     }
   }
 
@@ -103,11 +100,8 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
   Future<Uint8List> _generatePdf(PdfPageFormat format) async {
     final pdf = pw.Document();
     
-    final forumDate = widget.attendee.forumDate ?? DateTime.now();
-    final certDate = widget.attendee.certificateDate ?? DateTime.now();
-
-    final forumDateStr = DateFormat('MMMM d, yyyy').format(forumDate);
-    final certDateStr = _formatFullOrdinalDate(certDate);
+    final forumDateStr = DateFormat('MMMM d, yyyy').format(widget.attendee.forumDate ?? DateTime.now());
+    final certDateStr = _formatFullOrdinalDate(widget.attendee.certificateDate ?? DateTime.now());
 
     final pageFormat = PdfPageFormat.a4.landscape.copyWith(
       marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0,
@@ -159,7 +153,7 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
               
-              // Forum Date Container - Permanent Black Bottom Border
+              // Forum Date Container
               pw.Positioned(
                 top: y(forumDateTop),
                 left: x(forumDateLeft),
@@ -181,7 +175,7 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
               
-              // Cert Date Container - Permanent Black Bottom Border - Bold Text
+              // Cert Date Container
               pw.Positioned(
                 top: y(certDateTop),
                 left: x(certDateLeft),
@@ -202,6 +196,24 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                   ),
                 ),
               ),
+
+              // QR Code
+              pw.Positioned(
+                top: y(qrTop),
+                left: x(qrLeft),
+                child: pw.Container(
+                  padding: _showCalibration ? const pw.EdgeInsets.all(1) : null,
+                  decoration: _showCalibration ? pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.purple300, width: 0.5),
+                  ) : null,
+                  child: pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: widget.attendee.id,
+                    width: x(qrSize),
+                    height: x(qrSize),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -219,58 +231,26 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
       final fileName = 'Certificate_${widget.attendee.name.replaceAll(' ', '_')}.pdf';
       final file = File(p.join(dir.path, fileName));
       await file.writeAsBytes(bytes);
-      
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Saved to: ${file.path}'),
-          action: SnackBarAction(
-            label: 'Open',
-            onPressed: () async {
-              final uri = Uri.file(file.path);
-              if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
-    }
+      messenger.showSnackBar(SnackBar(content: Text('Saved to: ${file.path}'), action: SnackBarAction(label: 'Open', onPressed: () async {
+        final uri = Uri.file(file.path);
+        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      })));
+    } catch (e) { messenger.showSnackBar(SnackBar(content: Text('Save failed: $e'))); }
   }
 
   Widget _buildControlRow(String label, double value, double min, double max, Function(double) onChanged) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
           Row(
             children: [
-              Expanded(
-                child: Slider(
-                  value: value.clamp(min, max),
-                  min: min,
-                  max: max,
-                  onChanged: (v) => setState(() => onChanged(v)),
-                ),
-              ),
-              SizedBox(
-                width: 60,
-                child: TextField(
-                  controller: TextEditingController(text: value.toStringAsFixed(1)),
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 12),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  onSubmitted: (v) {
-                    final newVal = double.tryParse(v);
-                    if (newVal != null) setState(() => onChanged(newVal));
-                  },
-                ),
-              ),
+              Expanded(child: Slider(value: value.clamp(min, max), min: min, max: max, onChanged: (v) => setState(() => onChanged(v)))),
+              SizedBox(width: 50, child: TextField(controller: TextEditingController(text: value.toStringAsFixed(1)), keyboardType: TextInputType.number, style: const TextStyle(fontSize: 11), decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), border: OutlineInputBorder(), isDense: true), onSubmitted: (v) {
+                final newVal = double.tryParse(v); if (newVal != null) setState(() => onChanged(newVal));
+              })),
             ],
           ),
         ],
@@ -286,23 +266,16 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
       appBar: AppBar(
         title: const Text('Certificate Preview'),
         actions: [
-          IconButton(
-            icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune),
-            onPressed: () => setState(() => _showCalibration = !_showCalibration),
-            tooltip: 'Toggle Calibration',
-          ),
+          IconButton(icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune), onPressed: () => setState(() => _showCalibration = !_showCalibration), tooltip: 'Toggle Calibration'),
           if (_showCalibration)
-            IconButton(
-              icon: const Icon(Icons.bug_report),
-              onPressed: () {
-                debugPrint('--- CALIBRATION ---');
-                debugPrint('name: top:$nameTop, left:$nameLeft, width:$nameWidth, size:$nameFontSize');
-                debugPrint('addr: top:$addrTop, left:$addrLeft, width:$addrWidth, size:$addrFontSize');
-                debugPrint('forum: top:$forumDateTop, left:$forumDateLeft, width:$forumDateWidth, size:$forumDateFontSize');
-                debugPrint('cert: top:$certDateTop, left:$certDateLeft, width:$certDateWidth, size:$certDateFontSize');
-              },
-              tooltip: 'Log to Console',
-            ),
+            IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
+              debugPrint('--- CALIBRATION ---');
+              debugPrint('name: top:$nameTop, left:$nameLeft, width:$nameWidth, size:$nameFontSize');
+              debugPrint('addr: top:$addrTop, left:$addrLeft, width:$addrWidth, size:$addrFontSize');
+              debugPrint('forum: top:$forumDateTop, left:$forumDateLeft, width:$forumDateWidth, size:$forumDateFontSize');
+              debugPrint('cert: top:$certDateTop, left:$certDateLeft, width:$certDateWidth, size:$certDateFontSize');
+              debugPrint('qr: top:$qrTop, left:$qrLeft, size:$qrSize');
+            }, tooltip: 'Log to Console'),
           IconButton(icon: const Icon(Icons.save), onPressed: _savePdf, tooltip: 'Save to Downloads'),
         ],
       ),
@@ -311,7 +284,7 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
           Expanded(
             flex: 2,
             child: PdfPreview(
-              key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize'),
+              key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
               build: _generatePdf,
               initialPageFormat: PdfPageFormat.a4.landscape,
               canChangePageFormat: false,
@@ -324,13 +297,13 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
           ),
           if (_showCalibration)
             Container(
-              width: 320,
+              width: 300,
               color: Colors.grey.shade100,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
-                    const Text('CALIBRATION CONTROLS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text('CALIBRATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const Divider(),
                     _buildControlRow('Name Top', nameTop, 0, 300, (v) => nameTop = v),
                     _buildControlRow('Name Left', nameLeft, 0, 300, (v) => nameLeft = v),
@@ -351,12 +324,13 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                     _buildControlRow('Cert Left', certDateLeft, 0, 300, (v) => certDateLeft = v),
                     _buildControlRow('Cert Width', certDateWidth, 10, 300, (v) => certDateWidth = v),
                     _buildControlRow('Cert Size', certDateFontSize, 5, 50, (v) => certDateFontSize = v),
+                    const Divider(),
+                    const Text('QR CODE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    _buildControlRow('QR Top', qrTop, 0, 300, (v) => qrTop = v),
+                    _buildControlRow('QR Left', qrLeft, 0, 300, (v) => qrLeft = v),
+                    _buildControlRow('QR Size', qrSize, 5, 100, (v) => qrSize = v),
                     const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: _savePdf,
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save PDF Now'),
-                    ),
+                    ElevatedButton.icon(onPressed: _savePdf, icon: const Icon(Icons.save), label: const Text('Save PDF Now')),
                   ],
                 ),
               ),
