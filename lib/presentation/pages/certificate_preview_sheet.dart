@@ -10,16 +10,16 @@ import 'package:racconnect/data/models/forum_attendee.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
-class CertificatePreviewPage extends StatefulWidget {
+class CertificatePreviewSheet extends StatefulWidget {
   final ForumAttendee attendee;
 
-  const CertificatePreviewPage({super.key, required this.attendee});
+  const CertificatePreviewSheet({super.key, required this.attendee});
 
   @override
-  State<CertificatePreviewPage> createState() => _CertificatePreviewPageState();
+  State<CertificatePreviewSheet> createState() => _CertificatePreviewSheetState();
 }
 
-class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
+class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   Uint8List? _svgBytes;
   pw.Font? _font;
   pw.Font? _fontBold;
@@ -97,8 +97,37 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
     return '$dayOrdinal of $monthYear';
   }
 
+  void _resetToDefault() {
+    setState(() {
+      nameTop = 123.0;
+      nameLeft = 46.0;
+      nameWidth = 150.0;
+      nameFontSize = 32.0;
+      addrTop = 145.0;
+      addrLeft = 46.0;
+      addrWidth = 150.0;
+      addrFontSize = 10.0;
+      forumDateTop = 166.0;
+      forumDateLeft = 50.0;
+      forumDateWidth = 40.0;
+      forumDateFontSize = 12.0;
+      certDateTop = 224.0;
+      certDateLeft = 72.0;
+      certDateWidth = 56.0;
+      certDateFontSize = 12.0;
+      qrTop = 262.0;
+      qrLeft = 193.0;
+      qrSize = 9.0;
+    });
+  }
+
   Future<Uint8List> _generatePdf(PdfPageFormat format) async {
-    final pdf = pw.Document();
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: _font,
+        bold: _fontBold,
+      ),
+    );
     
     final forumDateStr = DateFormat('MMMM d, yyyy').format(widget.attendee.forumDate ?? DateTime.now());
     final certDateStr = _formatFullOrdinalDate(widget.attendee.certificateDate ?? DateTime.now());
@@ -119,7 +148,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
               if (_svgBytes != null)
                 pw.Positioned.fill(child: pw.SvgImage(svg: String.fromCharCodes(_svgBytes!))),
               
-              // Name Container
               pw.Positioned(
                 top: y(nameTop),
                 left: x(nameLeft),
@@ -136,7 +164,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
               
-              // Address Container
               pw.Positioned(
                 top: y(addrTop),
                 left: x(addrLeft),
@@ -153,7 +180,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
               
-              // Forum Date Container
               pw.Positioned(
                 top: y(forumDateTop),
                 left: x(forumDateLeft),
@@ -175,7 +201,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
               
-              // Cert Date Container
               pw.Positioned(
                 top: y(certDateTop),
                 left: x(certDateLeft),
@@ -197,7 +222,6 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                 ),
               ),
 
-              // QR Code
               pw.Positioned(
                 top: y(qrTop),
                 left: x(qrLeft),
@@ -211,6 +235,7 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
                     data: widget.attendee.id,
                     width: x(qrSize),
                     height: x(qrSize),
+                    drawText: false,
                   ),
                 ),
               ),
@@ -258,83 +283,119 @@ class _CertificatePreviewPageState extends State<CertificatePreviewPage> {
     );
   }
 
+  Widget _buildCalibrationPanel(bool isHorizontal) {
+    return Container(
+      width: isHorizontal ? 300 : double.infinity,
+      height: isHorizontal ? double.infinity : 250,
+      color: Colors.grey.shade100,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const Text('CALIBRATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const Divider(),
+            _buildControlRow('Name Top', nameTop, 0, 300, (v) => nameTop = v),
+            _buildControlRow('Name Left', nameLeft, 0, 300, (v) => nameLeft = v),
+            _buildControlRow('Name Width', nameWidth, 10, 300, (v) => nameWidth = v),
+            _buildControlRow('Name Size', nameFontSize, 5, 80, (v) => nameFontSize = v),
+            const Divider(),
+            _buildControlRow('Addr Top', addrTop, 0, 300, (v) => addrTop = v),
+            _buildControlRow('Addr Left', addrLeft, 0, 300, (v) => addrLeft = v),
+            _buildControlRow('Addr Width', addrWidth, 10, 300, (v) => addrWidth = v),
+            _buildControlRow('Addr Size', addrFontSize, 5, 40, (v) => addrFontSize = v),
+            const Divider(),
+            _buildControlRow('Forum Top', forumDateTop, 0, 300, (v) => forumDateTop = v),
+            _buildControlRow('Forum Left', forumDateLeft, 0, 300, (v) => forumDateLeft = v),
+            _buildControlRow('Forum Width', forumDateWidth, 10, 300, (v) => forumDateWidth = v),
+            _buildControlRow('Forum Size', forumDateFontSize, 5, 50, (v) => forumDateFontSize = v),
+            const Divider(),
+            _buildControlRow('Cert Top', certDateTop, 0, 300, (v) => certDateTop = v),
+            _buildControlRow('Cert Left', certDateLeft, 0, 300, (v) => certDateLeft = v),
+            _buildControlRow('Cert Width', certDateWidth, 10, 300, (v) => certDateWidth = v),
+            _buildControlRow('Cert Size', certDateFontSize, 5, 50, (v) => certDateFontSize = v),
+            const Divider(),
+            const Text('QR CODE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            _buildControlRow('QR Top', qrTop, 0, 300, (v) => qrTop = v),
+            _buildControlRow('QR Left', qrLeft, 0, 300, (v) => qrLeft = v),
+            _buildControlRow('QR Size', qrSize, 5, 100, (v) => qrSize = v),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Certificate Preview'),
-        actions: [
-          IconButton(icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune), onPressed: () => setState(() => _showCalibration = !_showCalibration), tooltip: 'Toggle Calibration'),
-          if (_showCalibration)
-            IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
-              debugPrint('--- CALIBRATION ---');
-              debugPrint('name: top:$nameTop, left:$nameLeft, width:$nameWidth, size:$nameFontSize');
-              debugPrint('addr: top:$addrTop, left:$addrLeft, width:$addrWidth, size:$addrFontSize');
-              debugPrint('forum: top:$forumDateTop, left:$forumDateLeft, width:$forumDateWidth, size:$forumDateFontSize');
-              debugPrint('cert: top:$certDateTop, left:$certDateLeft, width:$certDateWidth, size:$certDateFontSize');
-              debugPrint('qr: top:$qrTop, left:$qrLeft, size:$qrSize');
-            }, tooltip: 'Log to Console'),
-          IconButton(icon: const Icon(Icons.save), onPressed: _savePdf, tooltip: 'Save to Downloads'),
-        ],
+    final width = MediaQuery.of(context).size.width;
+    final bool isLargeScreen = width > 900;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      body: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 2,
-            child: PdfPreview(
-              key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
-              build: _generatePdf,
-              initialPageFormat: PdfPageFormat.a4.landscape,
-              canChangePageFormat: false,
-              canChangeOrientation: false,
-              canDebug: false,
-              allowPrinting: false,
-              allowSharing: false,
-              actions: [],
-            ),
+          AppBar(
+            title: Text('Certificate: ${widget.attendee.name}'),
+            automaticallyImplyLeading: false,
+            actions: [
+              if (_showCalibration)
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _resetToDefault,
+                  tooltip: 'Reset to Default Values',
+                ),
+              IconButton(icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune), onPressed: () => setState(() => _showCalibration = !_showCalibration), tooltip: 'Toggle Calibration'),
+              if (!_showCalibration)
+                IconButton(icon: const Icon(Icons.save), onPressed: _savePdf, tooltip: 'Save to Downloads'),
+              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+            ],
           ),
-          if (_showCalibration)
-            Container(
-              width: 300,
-              color: Colors.grey.shade100,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(12),
-                child: Column(
+          Expanded(
+            child: isLargeScreen 
+              ? Row(
                   children: [
-                    const Text('CALIBRATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    const Divider(),
-                    _buildControlRow('Name Top', nameTop, 0, 300, (v) => nameTop = v),
-                    _buildControlRow('Name Left', nameLeft, 0, 300, (v) => nameLeft = v),
-                    _buildControlRow('Name Width', nameWidth, 10, 300, (v) => nameWidth = v),
-                    _buildControlRow('Name Size', nameFontSize, 5, 80, (v) => nameFontSize = v),
-                    const Divider(),
-                    _buildControlRow('Addr Top', addrTop, 0, 300, (v) => addrTop = v),
-                    _buildControlRow('Addr Left', addrLeft, 0, 300, (v) => addrLeft = v),
-                    _buildControlRow('Addr Width', addrWidth, 10, 300, (v) => addrWidth = v),
-                    _buildControlRow('Addr Size', addrFontSize, 5, 40, (v) => addrFontSize = v),
-                    const Divider(),
-                    _buildControlRow('Forum Top', forumDateTop, 0, 300, (v) => forumDateTop = v),
-                    _buildControlRow('Forum Left', forumDateLeft, 0, 300, (v) => forumDateLeft = v),
-                    _buildControlRow('Forum Width', forumDateWidth, 10, 300, (v) => forumDateWidth = v),
-                    _buildControlRow('Forum Size', forumDateFontSize, 5, 50, (v) => forumDateFontSize = v),
-                    const Divider(),
-                    _buildControlRow('Cert Top', certDateTop, 0, 300, (v) => certDateTop = v),
-                    _buildControlRow('Cert Left', certDateLeft, 0, 300, (v) => certDateLeft = v),
-                    _buildControlRow('Cert Width', certDateWidth, 10, 300, (v) => certDateWidth = v),
-                    _buildControlRow('Cert Size', certDateFontSize, 5, 50, (v) => certDateFontSize = v),
-                    const Divider(),
-                    const Text('QR CODE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    _buildControlRow('QR Top', qrTop, 0, 300, (v) => qrTop = v),
-                    _buildControlRow('QR Left', qrLeft, 0, 300, (v) => qrLeft = v),
-                    _buildControlRow('QR Size', qrSize, 5, 100, (v) => qrSize = v),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(onPressed: _savePdf, icon: const Icon(Icons.save), label: const Text('Save PDF Now')),
+                    Expanded(
+                      flex: _showCalibration ? 80 : 100,
+                      child: PdfPreview(
+                        padding: EdgeInsets.zero,
+                        key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
+                        build: _generatePdf,
+                        initialPageFormat: PdfPageFormat.a4.landscape,
+                        canChangePageFormat: false,
+                        canChangeOrientation: false,
+                        canDebug: false,
+                        allowPrinting: false,
+                        allowSharing: false,
+                        actions: [],
+                      ),
+                    ),
+                    if (_showCalibration) _buildCalibrationPanel(true),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      child: PdfPreview(
+                        padding: EdgeInsets.zero,
+                        key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
+                        build: _generatePdf,
+                        initialPageFormat: PdfPageFormat.a4.landscape,
+                        canChangePageFormat: false,
+                        canChangeOrientation: false,
+                        canDebug: false,
+                        allowPrinting: false,
+                        allowSharing: false,
+                        actions: [],
+                      ),
+                    ),
+                    if (_showCalibration) _buildCalibrationPanel(false),
                   ],
                 ),
-              ),
-            ),
+          ),
         ],
       ),
     );

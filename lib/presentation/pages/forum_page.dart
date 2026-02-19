@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:racconnect/data/models/forum_attendee.dart';
 import 'package:racconnect/logic/cubit/forum_cubit.dart';
-import 'package:racconnect/presentation/pages/certificate_preview_page.dart';
+import 'package:racconnect/presentation/pages/certificate_preview_sheet.dart';
 import 'package:racconnect/presentation/widgets/forum_attendee_form.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -48,6 +48,17 @@ class _ForumPageState extends State<ForumPage> {
       builder: (BuildContext builder) {
         return ForumAttendeeForm(forumAttendee: forumAttendee);
       },
+    );
+  }
+
+  void _showCertificatePreview(ForumAttendee attendee) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints.expand(), // Override default width constraints
+      builder: (context) => CertificatePreviewSheet(attendee: attendee),
     );
   }
 
@@ -313,8 +324,7 @@ class _ForumPageState extends State<ForumPage> {
                                     elevation: 3,
                                     child: ListTile(
                                       onTap: () {
-                                        _showForumAttendeeFormWithEdit(
-                                            attendee);
+                                        _showCertificatePreview(attendee);
                                       },
                                       leading: CircleAvatar(
                                         backgroundColor:
@@ -339,32 +349,15 @@ class _ForumPageState extends State<ForumPage> {
                                         attendee.address,
                                         style: const TextStyle(fontSize: 10),
                                       ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(
-                                              Icons.preview,
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                                            ),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      CertificatePreviewPage(
-                                                          attendee: attendee),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          Icon(
-                                            Icons.edit_note,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                        ],
+                                      trailing: IconButton(
+                                        icon: Icon(
+                                          Icons.edit_note,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        onPressed: () {
+                                          _showForumAttendeeFormWithEdit(
+                                              attendee);
+                                        },
                                       ),
                                     ),
                                   ),
