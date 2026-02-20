@@ -46,6 +46,15 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes for certificate verification.</string>
+	<string>This app needs camera access to scan QR codes for certificate verification and to take profile pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to allow you to choose a profile picture.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone if you choose to record a video for your profile (optional feature of image picker).</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+	</array>
 </dict>
 </plist>
