@@ -21,12 +21,18 @@ class ForumError extends ForumState {
 }
 
 class ForumLoaded extends ForumState {
+  final List<ForumAttendee> allAttendees;
   final List<ForumAttendee> attendees;
+  final int selectedYear;
 
-  const ForumLoaded({required this.attendees});
+  const ForumLoaded({
+    required this.allAttendees,
+    required this.attendees,
+    required this.selectedYear,
+  });
 
   @override
-  List<Object> get props => [attendees];
+  List<Object> get props => [allAttendees, attendees, selectedYear];
 }
 
 class ForumAddSuccess extends ForumState {}

@@ -10,13 +10,37 @@ class ForumCubit extends Cubit<ForumState> {
 
   ForumCubit() : super(ForumInitial());
 
-  Future<void> fetchAttendees() async {
+  Future<void> fetchAttendees({int? year}) async {
     try {
       emit(ForumLoading());
-      final attendees = await _repository.getAttendees();
-      emit(ForumLoaded(attendees: attendees));
+      final allAttendees = await _repository.getAttendees();
+      final selectedYear = year ?? DateTime.now().year;
+      final filteredAttendees = allAttendees.where((attendee) {
+        if (attendee.forumDate == null) return false;
+        return attendee.forumDate!.year == selectedYear;
+      }).toList();
+      emit(ForumLoaded(
+        allAttendees: allAttendees,
+        attendees: filteredAttendees,
+        selectedYear: selectedYear,
+      ));
     } catch (e) {
       emit(ForumError(message: e.toString()));
+    }
+  }
+
+  void filterAttendeesByYear(int year) {
+    if (state is ForumLoaded) {
+      final currentState = state as ForumLoaded;
+      final filteredAttendees = currentState.allAttendees.where((attendee) {
+        if (attendee.forumDate == null) return false;
+        return attendee.forumDate!.year == year;
+      }).toList();
+      emit(ForumLoaded(
+        allAttendees: currentState.allAttendees,
+        attendees: filteredAttendees,
+        selectedYear: year,
+      ));
     }
   }
 

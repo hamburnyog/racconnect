@@ -1,19 +1,24 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:racconnect/data/models/forum_attendee.dart';
-import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
 class CertificatePreviewSheet extends StatefulWidget {
   final ForumAttendee attendee;
+  final bool showSuccess;
 
-  const CertificatePreviewSheet({super.key, required this.attendee});
+  const CertificatePreviewSheet({
+    super.key,
+    required this.attendee,
+    this.showSuccess = false,
+  });
 
   @override
   State<CertificatePreviewSheet> createState() => _CertificatePreviewSheetState();
@@ -30,7 +35,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   double nameTop = 123.0;
   double nameLeft = 46.0;
   double nameWidth = 150.0;
-  double nameFontSize = 32.0;
+  double nameFontSize = 24.0;
   
   double addrTop = 145.0;
   double addrLeft = 46.0;
@@ -56,6 +61,19 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   void initState() {
     super.initState();
     _loadAssets();
+    if (widget.showSuccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Valid Certificate Found!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadAssets() async {
@@ -102,7 +120,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
       nameTop = 123.0;
       nameLeft = 46.0;
       nameWidth = 150.0;
-      nameFontSize = 32.0;
+      nameFontSize = 24.0;
       addrTop = 145.0;
       addrLeft = 46.0;
       addrWidth = 150.0;
@@ -252,15 +270,54 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final bytes = await _generatePdf(PdfPageFormat.a4.landscape);
-      final dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
       final fileName = 'Certificate_${widget.attendee.name.replaceAll(' ', '_')}.pdf';
-      final file = File(p.join(dir.path, fileName));
-      await file.writeAsBytes(bytes);
-      messenger.showSnackBar(SnackBar(content: Text('Saved to: ${file.path}'), action: SnackBarAction(label: 'Open', onPressed: () async {
-        final uri = Uri.file(file.path);
-        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-      })));
-    } catch (e) { messenger.showSnackBar(SnackBar(content: Text('Save failed: $e'))); }
+      
+      if (kIsWeb) {
+        // Handle web if needed
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        // Use FilePicker for a better desktop "Save As" experience
+        String? outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Certificate PDF',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
+
+        if (outputFile != null) {
+          // Add .pdf extension if it's missing (some platforms might not add it automatically)
+          if (!outputFile.toLowerCase().endsWith('.pdf')) {
+            outputFile = '$outputFile.pdf';
+          }
+          
+          final file = File(outputFile);
+          await file.writeAsBytes(bytes);
+          
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('Saved successfully!'),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () async {
+                  final uri = Uri.file(file.path);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  }
+                },
+              ),
+            ),
+          );
+        }
+      } else {
+        // Use share sheet for mobile (Android/iOS)
+        await Printing.sharePdf(
+          bytes: bytes,
+          filename: fileName,
+        );
+      }
+    } catch (e) { 
+      messenger.showSnackBar(SnackBar(content: Text('Failed to save PDF: $e'))); 
+    }
   }
 
   Widget _buildControlRow(String label, double value, double min, double max, Function(double) onChanged) {
@@ -331,72 +388,85 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     final width = MediaQuery.of(context).size.width;
     final bool isLargeScreen = width > 900;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          AppBar(
-            title: Text('Certificate: ${widget.attendee.name}'),
-            automaticallyImplyLeading: false,
-            actions: [
-              if (_showCalibration)
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            AppBar(
+              title: Text('Certificate: ${widget.attendee.name}'),
+              automaticallyImplyLeading: false,
+              actions: [
+                if (_showCalibration)
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _resetToDefault,
+                    tooltip: 'Reset to Default Values',
+                  ),
                 IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _resetToDefault,
-                  tooltip: 'Reset to Default Values',
-                ),
-              IconButton(icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune), onPressed: () => setState(() => _showCalibration = !_showCalibration), tooltip: 'Toggle Calibration'),
-              if (!_showCalibration)
-                IconButton(icon: const Icon(Icons.save), onPressed: _savePdf, tooltip: 'Save to Downloads'),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
-          ),
-          Expanded(
-            child: isLargeScreen 
-              ? Row(
-                  children: [
-                    Expanded(
-                      flex: _showCalibration ? 80 : 100,
-                      child: PdfPreview(
-                        padding: EdgeInsets.zero,
-                        key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
-                        build: _generatePdf,
-                        initialPageFormat: PdfPageFormat.a4.landscape,
-                        canChangePageFormat: false,
-                        canChangeOrientation: false,
-                        canDebug: false,
-                        allowPrinting: false,
-                        allowSharing: false,
-                        actions: [],
-                      ),
+                    icon: Icon(_showCalibration ? Icons.visibility_off : Icons.tune),
+                    onPressed: () => setState(() => _showCalibration = !_showCalibration),
+                    tooltip: 'Toggle Calibration'),
+                if (!_showCalibration) ...[
+                  IconButton(
+                    icon: const Icon(Icons.save_alt),
+                    onPressed: _savePdf,
+                    tooltip: 'Save as PDF',
+                  ),
+                ],
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            Expanded(
+              child: isLargeScreen
+                  ? Row(
+                      children: [
+                        Expanded(
+                          flex: _showCalibration ? 80 : 100,
+                          child: PdfPreview(
+                            padding: EdgeInsets.zero,
+                            key: ValueKey(
+                                '$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
+                            build: _generatePdf,
+                            initialPageFormat: PdfPageFormat.a4.landscape,
+                            canChangePageFormat: false,
+                            canChangeOrientation: false,
+                            canDebug: false,
+                            allowPrinting: false,
+                            allowSharing: false,
+                            actions: [],
+                          ),
+                        ),
+                        if (_showCalibration) _buildCalibrationPanel(true),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: PdfPreview(
+                            padding: EdgeInsets.zero,
+                            key: ValueKey(
+                                '$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
+                            build: _generatePdf,
+                            initialPageFormat: PdfPageFormat.a4.landscape,
+                            canChangePageFormat: false,
+                            canChangeOrientation: false,
+                            canDebug: false,
+                            allowPrinting: false,
+                            allowSharing: false,
+                            actions: [],
+                          ),
+                        ),
+                        if (_showCalibration) _buildCalibrationPanel(false),
+                      ],
                     ),
-                    if (_showCalibration) _buildCalibrationPanel(true),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: PdfPreview(
-                        padding: EdgeInsets.zero,
-                        key: ValueKey('$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize'),
-                        build: _generatePdf,
-                        initialPageFormat: PdfPageFormat.a4.landscape,
-                        canChangePageFormat: false,
-                        canChangeOrientation: false,
-                        canDebug: false,
-                        allowPrinting: false,
-                        allowSharing: false,
-                        actions: [],
-                      ),
-                    ),
-                    if (_showCalibration) _buildCalibrationPanel(false),
-                  ],
-                ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
