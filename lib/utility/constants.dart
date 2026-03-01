@@ -4,13 +4,21 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const String serverUrl = 'https://racconnect.codecarpentry.com';
 
-String get smtpServer => dotenv.get('SMTP_SERVER', fallback: 'smtp.gmail.com');
-int get smtpPort => int.parse(dotenv.get('SMTP_PORT', fallback: '587'));
-String get smtpUsername => dotenv.get('SMTP_USERNAME', fallback: '');
-String get smtpPassword => dotenv.get('SMTP_PASSWORD', fallback: '');
-String get smtpFromEmail => dotenv.get('SMTP_FROM_EMAIL', fallback: '');
-String get smtpFromName =>
-    dotenv.get('SMTP_FROM_NAME', fallback: 'RACCONNECT Forum');
+String _getEnv(String key, String fallback) {
+  final val = String.fromEnvironment(key);
+  if (val.isNotEmpty) return val;
+  if (dotenv.isInitialized) {
+    return dotenv.get(key, fallback: fallback);
+  }
+  return fallback;
+}
+
+String get smtpServer => _getEnv('SMTP_SERVER', 'smtp.gmail.com');
+int get smtpPort => int.parse(_getEnv('SMTP_PORT', '587'));
+String get smtpUsername => _getEnv('SMTP_USERNAME', '');
+String get smtpPassword => _getEnv('SMTP_PASSWORD', '');
+String get smtpFromEmail => _getEnv('SMTP_FROM_EMAIL', '');
+String get smtpFromName => _getEnv('SMTP_FROM_NAME', 'RACCONNECT Forum');
 
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';
