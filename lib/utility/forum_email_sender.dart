@@ -368,6 +368,10 @@ class ForumEmailSender {
           success++;
         } catch (e) {
           failed++;
+          statusNotifier.value = 'Failed for ${attendee.name}: $e';
+          debugPrint('Error sending email to ${attendee.name}: $e');
+          // Wait a bit so user can see the error
+          await Future.delayed(const Duration(seconds: 3));
         }
       }
     } catch (e) {
