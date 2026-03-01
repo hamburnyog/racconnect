@@ -27,8 +27,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.1.4"
+        versionCode = flutter.versionCode.toInt()
+        versionName = flutter.versionName
     }
 
     signingConfigs {
@@ -46,8 +46,8 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             // signingConfig = signingConfigs.getByName("debug")
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
 }
