@@ -4,21 +4,34 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const String serverUrl = 'https://racconnect.codecarpentry.com';
 
-String _getEnv(String key, String fallback) {
-  final val = String.fromEnvironment(key);
-  if (val.isNotEmpty) return val;
-  if (dotenv.isInitialized) {
-    return dotenv.get(key, fallback: fallback);
+String _getEnv(String key, String fromEnv, String fallback) {
+  if (fromEnv.isNotEmpty) {
+    debugPrint('Env: $key loaded from Environment');
+    return fromEnv;
   }
+  if (dotenv.isInitialized) {
+    final dotVal = dotenv.get(key, fallback: '');
+    if (dotVal.isNotEmpty) {
+      debugPrint('Env: $key loaded from Dotenv');
+      return dotVal;
+    }
+  }
+  debugPrint('Env: $key using Fallback');
   return fallback;
 }
 
-String get smtpServer => _getEnv('SMTP_SERVER', 'smtp.gmail.com');
-int get smtpPort => int.parse(_getEnv('SMTP_PORT', '587'));
-String get smtpUsername => _getEnv('SMTP_USERNAME', '');
-String get smtpPassword => _getEnv('SMTP_PASSWORD', '');
-String get smtpFromEmail => _getEnv('SMTP_FROM_EMAIL', '');
-String get smtpFromName => _getEnv('SMTP_FROM_NAME', 'RACCONNECT Forum');
+String get smtpServer => _getEnv(
+    'SMTP_SERVER', const String.fromEnvironment('SMTP_SERVER'), 'smtp.gmail.com');
+int get smtpPort => int.parse(_getEnv(
+    'SMTP_PORT', const String.fromEnvironment('SMTP_PORT'), '587'));
+String get smtpUsername =>
+    _getEnv('SMTP_USERNAME', const String.fromEnvironment('SMTP_USERNAME'), '');
+String get smtpPassword =>
+    _getEnv('SMTP_PASSWORD', const String.fromEnvironment('SMTP_PASSWORD'), '');
+String get smtpFromEmail => _getEnv(
+    'SMTP_FROM_EMAIL', const String.fromEnvironment('SMTP_FROM_EMAIL'), '');
+String get smtpFromName => _getEnv('SMTP_FROM_NAME',
+    const String.fromEnvironment('SMTP_FROM_NAME'), 'RACCONNECT Forum');
 
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';
