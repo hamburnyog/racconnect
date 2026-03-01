@@ -6,16 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ## [1.2.0] - 2026-03-01
 
 ### Added
 - **Forum Certificate Automation**: New feature to manage forum attendees and generate certificates.
 - **Bulk Email Sending**: Automated sending of forum certificates to multiple recipients via SMTP.
 - **Dynamic HTML Template**: Professional email body with inline CSS, social icons, and dynamic keyword replacement (e.g., `{{name}}`).
-- **QR Code Integration**: Automated QR code generation for certificates linked to attendee records.
+- **QR Code Integration**: Automated QR code generation for certificate verification.
 - **CSV Import**: Support for importing forum attendee lists from CSV files.
-- **Role-Based Access**: Specialized controls for Developer and IO roles in certificate management.
+- **Role-Based Access**: Specialized controls for Developer and IO roles.
+
+### Fixed
+- **Release Build Stability**: Fixed environment variable loading and SMTP connectivity issues in production builds.
+- **Duplicate Version Code**: Bumped build number to 8 for successful store upload.
 
 ### Changed
 - **UI Improvements**: Optimized sidebar and FAB layouts for better accessibility on mobile and desktop.
