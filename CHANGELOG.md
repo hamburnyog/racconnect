@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-01
+
+### Added
+- **Forum Certificate Automation**: New feature to manage forum attendees and generate certificates.
+- **Bulk Email Sending**: Automated sending of forum certificates to multiple recipients via SMTP.
+- **Dynamic HTML Template**: Professional email body with inline CSS, social icons, and dynamic keyword replacement (e.g., `{{name}}`).
+- **QR Code Integration**: Automated QR code generation for certificates linked to attendee records.
+- **CSV Import**: Support for importing forum attendee lists from CSV files.
+- **Role-Based Access**: Specialized controls for Developer and IO roles in certificate management.
+
+### Changed
+- **UI Improvements**: Optimized sidebar and FAB layouts for better accessibility on mobile and desktop.
+- **Environment Support**: Integrated `flutter_dotenv` for secure SMTP and server configuration.
+
+### Dependencies Added
+- mailer: ^6.6.0
+- flutter_dotenv: ^6.0.0
+- csv: ^7.1.0
+
 ## [1.1.4] - 2026-01-22
 
 ### Changed

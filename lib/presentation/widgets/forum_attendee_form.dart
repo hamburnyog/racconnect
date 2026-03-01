@@ -15,9 +15,30 @@ class ForumAttendeeForm extends StatefulWidget {
 class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
   TextEditingController nameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
+  List<TextEditingController> emailControllers = [TextEditingController()];
   TextEditingController forumDateController = TextEditingController();
-  TextEditingController certificateDateController = TextEditingController();
+  String selectedType = 'Pre-adoption';
   final formKey = GlobalKey<FormState>();
+
+  void addEmailField() {
+    setState(() {
+      emailControllers.add(TextEditingController());
+    });
+  }
+
+  void removeEmailField(int index) {
+    if (emailControllers.length > 1) {
+      setState(() {
+        emailControllers[index].dispose();
+        emailControllers.removeAt(index);
+      });
+    }
+  }
+
+  String get joinedEmails => emailControllers
+      .map((c) => c.text.trim())
+      .where((text) => text.isNotEmpty)
+      .join(' / ');
 
   void addAttendee() {
     if (formKey.currentState!.validate()) {
@@ -25,8 +46,9 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
             ForumAttendee(
               name: nameController.text.trim(),
               address: addressController.text.trim(),
+              email: joinedEmails,
+              type: selectedType,
               forumDate: DateTime.parse(forumDateController.text),
-              certificateDate: DateTime.parse(certificateDateController.text),
             ),
           );
       Navigator.of(context).pop();
@@ -41,8 +63,10 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
             ForumAttendee(
               name: nameController.text.trim(),
               address: addressController.text.trim(),
+              email: joinedEmails,
+              type: selectedType,
               forumDate: DateTime.parse(forumDateController.text),
-              certificateDate: DateTime.parse(certificateDateController.text),
+              emailSentDate: widget.forumAttendee?.emailSentDate,
             ),
           );
       Navigator.of(context).pop();
@@ -55,10 +79,18 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
     if (widget.forumAttendee != null) {
       nameController.text = widget.forumAttendee!.name;
       addressController.text = widget.forumAttendee!.address;
+
+      final emails = widget.forumAttendee!.emails;
+      if (emails.isNotEmpty) {
+        emailControllers =
+            emails.map((e) => TextEditingController(text: e)).toList();
+      }
+
+      selectedType = widget.forumAttendee!.type.isNotEmpty
+          ? widget.forumAttendee!.type
+          : 'Pre-adoption';
       forumDateController.text =
           widget.forumAttendee!.forumDate.toString().split(' ')[0];
-      certificateDateController.text =
-          widget.forumAttendee!.certificateDate.toString().split(' ')[0];
     }
   }
 
@@ -66,9 +98,10 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
   void dispose() {
     nameController.dispose();
     addressController.dispose();
+    for (var controller in emailControllers) {
+      controller.dispose();
+    }
     forumDateController.dispose();
-    certificateDateController.dispose();
-    formKey.currentState?.dispose();
     super.dispose();
   }
 
@@ -81,6 +114,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
         child: Form(
           key: formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Stack(
                 children: [
@@ -99,7 +133,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                     child: Row(
                       children: [
                         Text(
-                          'Forum Attendee',
+                          'Certificate',
                           style: TextStyle(
                             fontSize: 30,
                             color: Colors.white,
@@ -137,7 +171,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
               ),
               SizedBox(height: 20),
               TextFormField(
-                maxLength: 100,
+                maxLength: 200,
                 controller: addressController,
                 keyboardType: TextInputType.streetAddress,
                 validator: (value) {
@@ -151,6 +185,80 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                   hintText: 'Enter an address',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              SizedBox(height: 20),
+              const Text(
+                'Email Address(es)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...List.generate(emailControllers.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: emailControllers[index],
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (index == 0 && (value == null || value.isEmpty)) {
+                              return 'At least one email is required';
+                            }
+                            if (value != null &&
+                                value.isNotEmpty &&
+                                !value.contains('@')) {
+                              return 'Enter a valid email';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Email ${index + 1}',
+                            hintText: 'Enter email address',
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (emailControllers.length > 1)
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline,
+                              color: Colors.red),
+                          onPressed: () => removeEmailField(index),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              TextButton.icon(
+                onPressed: addEmailField,
+                icon: const Icon(Icons.add),
+                label: const Text('Add another email'),
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                initialValue: selectedType,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: ['Pre-adoption', 'Foster Care'].map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedType = newValue;
+                    });
+                  }
+                },
               ),
               SizedBox(height: 20),
               TextFormField(
@@ -167,10 +275,11 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                   FocusScope.of(context).requestFocus(FocusNode());
                   DateTime? pickedDate = await showDatePicker(
                     context: context,
-                    initialDate: forumDateController.text.isNotEmpty
-                        ? DateTime.tryParse(forumDateController.text) ??
-                            DateTime.now()
-                        : DateTime.now(),
+                    initialDate:
+                        forumDateController.text.isNotEmpty
+                            ? DateTime.tryParse(forumDateController.text) ??
+                                DateTime.now()
+                            : DateTime.now(),
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
                   );
@@ -191,44 +300,6 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                 ),
               ),
               SizedBox(height: 20),
-              TextFormField(
-                controller: certificateDateController,
-                readOnly: true,
-                keyboardType: TextInputType.datetime,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'This field is required';
-                  }
-                  return null;
-                },
-                onTap: () async {
-                  FocusScope.of(context).requestFocus(FocusNode());
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: certificateDateController.text.isNotEmpty
-                        ? DateTime.tryParse(certificateDateController.text) ??
-                            DateTime.now()
-                        : DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    certificateDateController.text =
-                        pickedDate.toIso8601String().split('T').first;
-                    setState(() {});
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Certificate Date',
-                  hintText: 'Select a date',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Padding(
-                    padding: EdgeInsets.only(right: 26.0),
-                    child: Icon(Icons.calendar_today),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -238,9 +309,10 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  onPressed: (widget.forumAttendee == null)
-                      ? addAttendee
-                      : saveAttendee,
+                  onPressed:
+                      (widget.forumAttendee == null)
+                          ? addAttendee
+                          : saveAttendee,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(

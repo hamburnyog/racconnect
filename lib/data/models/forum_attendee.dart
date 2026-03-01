@@ -8,8 +8,10 @@ class ForumAttendee {
   final String updated;
   final String name;
   final String address;
+  final String email;
+  final String type;
   final DateTime? forumDate;
-  final DateTime? certificateDate;
+  final DateTime? emailSentDate;
 
   ForumAttendee({
     this.id = '',
@@ -19,17 +21,24 @@ class ForumAttendee {
     this.updated = '',
     required this.name,
     required this.address,
+    this.email = '',
+    this.type = '',
     this.forumDate,
-    this.certificateDate,
+    this.emailSentDate,
   });
+
+  List<String> get emails =>
+      email.split('/').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'address': address,
+      'email': email,
+      'type': type,
       if (forumDate != null) 'forumDate': forumDate!.toIso8601String(),
-      if (certificateDate != null)
-        'certificateDate': certificateDate!.toIso8601String(),
+      if (emailSentDate != null)
+        'emailSentDate': emailSentDate!.toIso8601String(),
     };
   }
 
@@ -42,15 +51,16 @@ class ForumAttendee {
       updated: map['updated'] ?? '',
       name: map['name'] ?? '',
       address: map['address'] ?? '',
+      email: map['email'] ?? '',
+      type: map['type'] ?? '',
       forumDate:
           map['forumDate'] != null && map['forumDate'].toString().isNotEmpty
               ? DateTime.tryParse(map['forumDate'].toString())
               : null,
-      certificateDate:
-          map['certificateDate'] != null &&
-                  map['certificateDate'].toString().isNotEmpty
-              ? DateTime.tryParse(map['certificateDate'].toString())
-              : null,
+      emailSentDate: map['emailSentDate'] != null &&
+              map['emailSentDate'].toString().isNotEmpty
+          ? DateTime.tryParse(map['emailSentDate'].toString())
+          : null,
     );
   }
 

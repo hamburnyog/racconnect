@@ -1146,9 +1146,10 @@ class _ExportAccomplishmentsButtonState
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: 5,
-      right: 5,
+      bottom: 0,
+      right: 0,
       child: FloatingActionButton(
+        mini: true,
         backgroundColor: Colors.white,
         onPressed: _exportToPDF,
         child:

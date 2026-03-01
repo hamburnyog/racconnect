@@ -300,7 +300,7 @@ class _MainScreenState extends State<MainScreen> {
                             'Travels') {
                           return TravelPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Forum') {
+                            'Certificates') {
                           return ForumPage();
                         } else {
                           return Text(

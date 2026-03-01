@@ -1,7 +1,16 @@
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart' hide Border, BorderStyle;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const String serverUrl = 'https://racconnect.codecarpentry.com';
+
+String get smtpServer => dotenv.get('SMTP_SERVER', fallback: 'smtp.gmail.com');
+int get smtpPort => int.parse(dotenv.get('SMTP_PORT', fallback: '587'));
+String get smtpUsername => dotenv.get('SMTP_USERNAME', fallback: '');
+String get smtpPassword => dotenv.get('SMTP_PASSWORD', fallback: '');
+String get smtpFromEmail => dotenv.get('SMTP_FROM_EMAIL', fallback: '');
+String get smtpFromName =>
+    dotenv.get('SMTP_FROM_NAME', fallback: 'RACCONNECT Forum');
 
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';
@@ -59,20 +68,10 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.sick_rounded),
     label: 'Leaves',
   ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.forum_outlined),
-    activeIcon: Icon(Icons.forum_rounded),
-    label: 'Forum',
-  ),
 ];
 
 const sideBarItemsIO = [
   ...sideBarItemsUser,
-  BottomNavigationBarItem(
-    icon: Icon(Icons.forum_outlined),
-    activeIcon: Icon(Icons.forum_rounded),
-    label: 'Forum',
-  ),
 ];
 
 const sideBarItemsOic = [
@@ -136,6 +135,11 @@ const sideBarItemsUser = [
     icon: Icon(Icons.access_time),
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.card_membership_outlined),
+    activeIcon: Icon(Icons.card_membership_rounded),
+    label: 'Certificates',
   ),
 ];
 

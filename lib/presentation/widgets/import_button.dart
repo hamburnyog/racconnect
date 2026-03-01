@@ -32,11 +32,12 @@ class ImportButton extends StatelessWidget {
     if (!_isDesktop || !isDeveloper) return const SizedBox.shrink();
 
     return Positioned(
-      bottom: 70, // Position below the export button
-      right: 5,
+      bottom: 50, // Positioned above the mini export button (0 + 40 + 10)
+      right: 0,
       child: Builder(
         builder: (localContext) {
           return FloatingActionButton(
+            mini: true,
             backgroundColor: Colors.white,
             onPressed: () async {
               final attendanceRepo =

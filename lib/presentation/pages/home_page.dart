@@ -537,12 +537,13 @@ class _HomePageState extends State<HomePage> {
             }
 
             return Positioned(
-              right: 16,
-              bottom: 16,
+              right: 0,
+              bottom: 0,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   FloatingActionButton(
+                    mini: true,
                     heroTag: 'orgChartFab',
                     backgroundColor: Colors.white,
                     onPressed: () {
@@ -557,8 +558,9 @@ class _HomePageState extends State<HomePage> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   FloatingActionButton(
+                    mini: true,
                     heroTag: 'uniformFab',
                     backgroundColor: Colors.white,
                     onPressed: () {

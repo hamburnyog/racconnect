@@ -62,10 +62,15 @@ class ForumCubit extends Cubit<ForumState> {
     }
   }
 
-  Future<void> updateAttendee(String id, ForumAttendee attendee) async {
+  Future<void> updateAttendee(String id, ForumAttendee attendee,
+      {bool silent = false}) async {
     try {
       await _repository.updateAttendee(id, attendee);
-      emit(ForumUpdateSuccess());
+      if (silent) {
+        emit(ForumUpdateSilentSuccess());
+      } else {
+        emit(ForumUpdateSuccess());
+      }
     } catch (e) {
       emit(ForumError(message: e.toString()));
     }

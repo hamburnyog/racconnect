@@ -39,4 +39,6 @@ class ForumAddSuccess extends ForumState {}
 
 class ForumUpdateSuccess extends ForumState {}
 
+class ForumUpdateSilentSuccess extends ForumState {}
+
 class ForumDeleteSuccess extends ForumState {}

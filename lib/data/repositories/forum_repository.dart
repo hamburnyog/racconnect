@@ -12,7 +12,7 @@ class ForumRepository {
       return response.map((e) => ForumAttendee.fromRecord(e)).toList();
     } catch (e) {
       // ignore: avoid_print
-      print('Error fetching forum attendees: $e');
+      print('Error fetching certificates: $e');
       rethrow;
     }
   }
