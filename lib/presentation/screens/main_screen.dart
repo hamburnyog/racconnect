@@ -9,6 +9,7 @@ import 'package:racconnect/presentation/pages/leave_page.dart';
 import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/section_page.dart';
+import 'package:racconnect/presentation/pages/signatory_page.dart';
 import 'package:racconnect/presentation/pages/suspension_page.dart';
 import 'package:racconnect/presentation/pages/travel_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
@@ -284,6 +285,9 @@ class _MainScreenState extends State<MainScreen> {
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Sections') {
                           return SectionPage();
+                        } else if (sidebarItemMenu[_selectedIndex].label ==
+                            'Signatories') {
+                          return SignatoryPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Holidays') {
                           return HolidayPage();

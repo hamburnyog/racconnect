@@ -43,8 +43,9 @@ class _ExportButtonState extends State<ExportButton> {
     final isSmallScreen = MediaQuery.of(context).size.width < 700;
 
     final authState = context.read<AuthCubit>().state;
-    final profile =
-        authState is AuthenticatedState ? authState.user.profile : null;
+    final user = authState is AuthenticatedState ? authState.user : null;
+    final profile = user?.profile;
+    final userRole = user?.role ?? '';
     final employeeNumber = profile?.employeeNumber ?? '';
     final employmentStatus = profile?.employmentStatus ?? '';
     final isProfileComplete = employeeNumber.isNotEmpty;
@@ -58,14 +59,20 @@ class _ExportButtonState extends State<ExportButton> {
     Future<void> handleExport() async {
       if (!isProfileComplete) return;
 
-      final signatory = await _showSignatorySelectionDialog(profile!);
+      final signatory = await _showSignatorySelectionDialog(profile!, userRole);
       if (signatory == null) return;
       if (!mounted) return;
 
       if (isCOS) {
-        _showCOSExportOptions(profile, signatory);
+        _showCOSExportOptions(profile, signatory, userRole);
       } else {
-        await _performExport(profile, employeeNumber, null, signatory);
+        await _performExport(
+          profile,
+          employeeNumber,
+          null,
+          signatory,
+          userRole,
+        );
       }
     }
 
@@ -80,7 +87,10 @@ class _ExportButtonState extends State<ExportButton> {
     );
   }
 
-  Future<SignatoryModel?> _showSignatorySelectionDialog(profile) async {
+  Future<SignatoryModel?> _showSignatorySelectionDialog(
+    profile,
+    String userRole,
+  ) async {
     final signatoryCubit = context.read<SignatoryCubit>();
     if (profile.section != null) {
       signatoryCubit.getSignatoriesBySection(profile.section!);
@@ -94,36 +104,98 @@ class _ExportButtonState extends State<ExportButton> {
         return BlocBuilder<SignatoryCubit, SignatoryState>(
           builder: (context, state) {
             return AlertDialog(
-              title: const Text('Select Signatory'),
+              contentPadding: const EdgeInsets.fromLTRB(10, 20, 10, 10),
               content: SizedBox(
-                width: double.maxFinite,
+                width: 300,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Choose the signatory for this DTR:'),
-                    const SizedBox(height: 16),
+                    const Text(
+                      'Choose Signatory',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 10),
                     if (state is SignatoryLoading)
-                      const Center(child: CircularProgressIndicator())
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      )
                     else if (state is SignatoryLoadSuccess)
                       Flexible(
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: state.signatories.length,
-                          separatorBuilder: (context, index) => const Divider(),
-                          itemBuilder: (context, index) {
-                            final signatory = state.signatories[index];
-                            return ListTile(
-                              title: Text(signatory.name),
-                              subtitle: Text(signatory.designation),
-                              onTap: () => Navigator.of(context).pop(signatory),
-                            );
-                          },
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4,
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.signatories.length,
+                            separatorBuilder:
+                                (context, index) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final signatory = state.signatories[index];
+
+                              String displayName = signatory.name;
+                              String displayDesignation = signatory.designation;
+
+                              // Use userRole from argument
+                              bool useSupervisor = false;
+                              if (profile.sectionCode == 'OIC') {
+                                useSupervisor = userRole == 'OIC';
+                              } else {
+                                useSupervisor = userRole == 'Unit Head';
+                              }
+
+                              if (useSupervisor &&
+                                  signatory.supervisor != null) {
+                                displayName = signatory.supervisor!;
+                                displayDesignation =
+                                    signatory.supervisorDesignation ?? '';
+                              }
+
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  displayName,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                subtitle: Text(
+                                  displayDesignation,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onTap:
+                                    () => Navigator.of(context).pop(signatory),
+                              );
+                            },
+                          ),
                         ),
                       )
                     else if (state is SignatoryError)
-                      Text('Error: ${state.message}')
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'Error: ${state.message}',
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      )
                     else
-                      const Text('No signatories found.'),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'No signatories found.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    const Divider(height: 1),
+                    ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.not_interested, size: 20),
+                      title: const Text('Leave Blank', style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.of(context).pop(
+                          SignatoryModel(name: '', designation: ''),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -143,6 +215,7 @@ class _ExportButtonState extends State<ExportButton> {
   Future<void> _showCOSExportOptions(
     profile,
     SignatoryModel selectedSignatory,
+    String userRole,
   ) async {
     return showDialog<void>(
       context: context,
@@ -160,6 +233,7 @@ class _ExportButtonState extends State<ExportButton> {
                   profile.employeeNumber ?? '',
                   'first',
                   selectedSignatory,
+                  userRole,
                 );
               },
             ),
@@ -172,6 +246,7 @@ class _ExportButtonState extends State<ExportButton> {
                   profile.employeeNumber ?? '',
                   'second',
                   selectedSignatory,
+                  userRole,
                 );
               },
             ),
@@ -184,6 +259,7 @@ class _ExportButtonState extends State<ExportButton> {
                   profile.employeeNumber ?? '',
                   'whole',
                   selectedSignatory,
+                  userRole,
                 );
               },
             ),
@@ -198,6 +274,7 @@ class _ExportButtonState extends State<ExportButton> {
     String employeeNumber,
     String? period,
     SignatoryModel? signatory,
+    String userRole,
   ) async {
     if (_isExporting) return;
 
@@ -261,6 +338,7 @@ class _ExportButtonState extends State<ExportButton> {
         startDate: startDate,
         endDate: endDate,
         signatory: signatory,
+        userRole: userRole,
       );
 
       if (!mounted) {

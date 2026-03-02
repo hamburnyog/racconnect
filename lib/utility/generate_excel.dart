@@ -24,6 +24,7 @@ Future<String?> generateExcel(
   DateTime? startDate,
   DateTime? endDate,
   SignatoryModel? signatory,
+  String? userRole,
 }) async {
   try {
     var excel = Excel.createExcel();
@@ -52,6 +53,7 @@ Future<String?> generateExcel(
       bodyData['totalLateUndertimeMinutes']!,
       bodyData['startingRowNumber']!,
       signatory: signatory,
+      userRole: userRole,
     );
 
     var bytes = excel.encode();
@@ -107,6 +109,7 @@ void _generateExcelFooter(
   int totalLateUndertimeMinutes,
   int startingRowNumber, {
   SignatoryModel? signatory,
+  String? userRole,
 }) {
   Map<String, dynamic> cellList = {};
 
@@ -122,17 +125,25 @@ void _generateExcelFooter(
   String supervisorDesignation;
 
   if (signatory != null) {
-    supervisor = signatory.name.toUpperCase();
-    supervisorDesignation = signatory.designation;
+    bool useSupervisor = false;
+    final effectiveRole = userRole ?? profile.role;
+
+    if (profile.sectionCode == 'OIC') {
+      useSupervisor = effectiveRole == 'OIC';
+    } else {
+      useSupervisor = effectiveRole == 'Unit Head';
+    }
+
+    if (useSupervisor && signatory.supervisor != null) {
+      supervisor = signatory.supervisor!.toUpperCase();
+      supervisorDesignation = signatory.supervisorDesignation ?? '';
+    } else {
+      supervisor = signatory.name.toUpperCase();
+      supervisorDesignation = signatory.designation;
+    }
   } else {
-    supervisor =
-        profile.sectionCode == 'OIC'
-            ? 'ASEC ROWENA M. MACALINTAL'
-            : 'JOHN S. CALIDGUID, RSW, MPA';
-    supervisorDesignation =
-        profile.sectionCode == 'OIC'
-            ? 'Deputy Executive Director for Operations and Services'
-            : 'Officer-in-charge, Social Welfare Officer IV';
+    supervisor = '';
+    supervisorDesignation = '';
   }
 
   buildTotalRowSection(

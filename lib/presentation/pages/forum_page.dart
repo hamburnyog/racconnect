@@ -749,98 +749,112 @@ class _ForumPageState extends State<ForumPage> {
                 ),
               ),
               // Positioned FAB column
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                    if (role == 'Developer') ...[
-                                      FloatingActionButton(
-                                        mini: true,
-                                        heroTag: 'markAllSentForumCert',
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text('Mark All as Sent?'),
-                                              content: const Text(
-                                                  'This will mark all unsent certificates as "Sent" using today\'s date. No emails will be sent.'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context),
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _markAllAsSent();
-                                                  },
-                                                  child: const Text('Mark All'),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                        backgroundColor: Colors.white,
-                                        tooltip: 'Mark All as Sent',
-                                        child: const Icon(Icons.done_all,
-                                            color: Colors.deepPurple),
-                                      ),
-                                      const SizedBox(height: 10),
-                                    ],
-                                    FloatingActionButton(
-                                      mini: true,
-                                      heroTag: 'sendAllForumCert',
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (role == 'Developer') ...[
+                      FloatingActionButton(
+                        mini: true,
+                        heroTag: 'markAllSentForumCert',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Text('Mark All as Sent?'),
+                                  content: const Text(
+                                    'This will mark all unsent certificates as "Sent" using today\'s date. No emails will be sent.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
                                       onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Send All Unsent?'),
-                                            content: const Text(
-                                                'This will generate and send certificates to all recipients who have an email address but haven\'t received theirs yet.'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  _sendAllUnsent();
-                                                },
-                                                child: const Text('Send All'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
+                                        Navigator.pop(context);
+                                        _markAllAsSent();
                                       },
-                                      backgroundColor: Colors.white,
-                                      child: const Icon(Icons.forward_to_inbox,
-                                          color: Colors.deepPurple),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    FloatingActionButton(
-                                      mini: true,
-                                      heroTag: 'importForumCert',
-                                      onPressed: _importCSV,
-                                      backgroundColor: Colors.white,
-                                      tooltip: 'Import CSV',
-                                      child: const Icon(Icons.upload_file,
-                                          color: Colors.deepPurple),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    FloatingActionButton(
-                                      mini: true,
-                                      heroTag: 'scanQRForumCert',
-                                      onPressed: _scanQRCode,
-                                      backgroundColor: Colors.white,
-                                      child: const Icon(Icons.qr_code_scanner,
-                                          color: Colors.deepPurple),
+                                      child: const Text('Mark All'),
                                     ),
                                   ],
                                 ),
-                              ),
+                          );
+                        },
+                        backgroundColor: Colors.white,
+                        tooltip: 'Mark All as Sent',
+                        child: const Icon(
+                          Icons.done_all,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (isAuthorized) ...[
+                      FloatingActionButton(
+                        mini: true,
+                        heroTag: 'sendAllForumCert',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Text('Send All Unsent?'),
+                                  content: const Text(
+                                    'This will generate and send certificates to all recipients who have an email address but haven\'t received theirs yet.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _sendAllUnsent();
+                                      },
+                                      child: const Text('Send All'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        },
+                        backgroundColor: Colors.white,
+                        child: const Icon(
+                          Icons.forward_to_inbox,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      FloatingActionButton(
+                        mini: true,
+                        heroTag: 'importForumCert',
+                        onPressed: _importCSV,
+                        backgroundColor: Colors.white,
+                        tooltip: 'Import CSV',
+                        child: const Icon(
+                          Icons.upload_file,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    FloatingActionButton(
+                      mini: true,
+                      heroTag: 'scanQRForumCert',
+                      onPressed: _scanQRCode,
+                      backgroundColor: Colors.white,
+                      child: const Icon(
+                        Icons.qr_code_scanner,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         );

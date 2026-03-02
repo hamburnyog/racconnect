@@ -15,6 +15,8 @@ import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:printing/printing.dart';
+import 'package:racconnect/data/models/signatory_model.dart';
+import 'package:racconnect/logic/cubit/signatory_cubit.dart';
 
 class ExportAccomplishmentsButton extends StatefulWidget {
   final int selectedYear;
@@ -45,52 +47,159 @@ class _ExportAccomplishmentsButtonState
 
   Future<void> _exportToPDF() async {
     final authState = context.read<AuthCubit>().state;
+    if (authState is! AuthenticatedState) return;
 
-    final isCOS =
-        authState is AuthenticatedState &&
-        authState.user.profile?.employmentStatus == 'COS';
+    final profile = authState.user.profile;
+    if (profile == null) return;
 
-    if (authState is AuthenticatedState) {
-      if (isCOS) {
-        _showCOSExportOptions(authState);
-      } else {
-        _showPermanentAccomplishmentOptions(authState);
-      }
+    final userRole = authState.user.role ?? '';
+    final selectedSignatory = await _showSignatorySelectionDialog(
+      profile,
+      userRole,
+    );
+
+    if (selectedSignatory == null) return;
+    if (!mounted) return;
+
+    final signatory = selectedSignatory;
+    final isCOS = profile.employmentStatus == 'COS';
+
+    if (isCOS) {
+      _showCOSExportOptions(authState, signatory, userRole);
+    } else {
+      _showPermanentAccomplishmentOptions(authState, signatory, userRole);
     }
   }
 
-  Future<void> _showCOSExportOptions(AuthenticatedState authState) async {
-    return showDialog<void>(
+  Future<SignatoryModel?> _showSignatorySelectionDialog(
+    profile,
+    String userRole,
+  ) async {
+    final signatoryCubit = context.read<SignatoryCubit>();
+    if (profile.section != null) {
+      signatoryCubit.getSignatoriesBySection(profile.section!);
+    } else {
+      signatoryCubit.getSignatories();
+    }
+
+    return showDialog<SignatoryModel>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Report Type'),
-          content: const Text(
-            'Choose the type of accomplishment report to generate:',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Annex A (WFH)'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showPeriodSelection(authState, true);
-              },
-            ),
-            TextButton(
-              child: const Text('Accomplishment Report'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showPeriodSelection(authState, false);
-              },
-            ),
-          ],
+        return BlocBuilder<SignatoryCubit, SignatoryState>(
+          builder: (context, state) {
+            return AlertDialog(
+              contentPadding: const EdgeInsets.fromLTRB(10, 20, 10, 10),
+              content: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Choose Signatory',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 10),
+                    if (state is SignatoryLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      )
+                    else if (state is SignatoryLoadSuccess)
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4,
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.signatories.length,
+                            separatorBuilder:
+                                (context, index) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final signatory = state.signatories[index];
+
+                              String displayName = signatory.name;
+                              String displayDesignation = signatory.designation;
+
+                              // Use userRole from argument
+                              bool useSupervisor = false;
+                              if (profile.sectionCode == 'OIC') {
+                                useSupervisor = userRole == 'OIC';
+                              } else {
+                                useSupervisor = userRole == 'Unit Head';
+                              }
+
+                              if (useSupervisor &&
+                                  signatory.supervisor != null) {
+                                displayName = signatory.supervisor!;
+                                displayDesignation =
+                                    signatory.supervisorDesignation ?? '';
+                              }
+
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  displayName,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                subtitle: Text(
+                                  displayDesignation,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onTap:
+                                    () => Navigator.of(context).pop(signatory),
+                              );
+                            },
+                          ),
+                        ),
+                      )
+                    else if (state is SignatoryError)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'Error: ${state.message}',
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'No signatories found.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    const Divider(height: 1),
+                    ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.not_interested, size: 20),
+                      title: const Text('Leave Blank', style: TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.of(context).pop(
+                          SignatoryModel(name: '', designation: ''),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  Future<void> _showPermanentAccomplishmentOptions(
+  Future<void> _showCOSExportOptions(
     AuthenticatedState authState,
+    SignatoryModel selectedSignatory,
+    String userRole,
   ) async {
     return showDialog<void>(
       context: context,
@@ -105,14 +214,72 @@ class _ExportAccomplishmentsButtonState
               child: const Text('Annex A (WFH)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(authState, 'whole', true, false);
+                _showPeriodSelection(
+                  authState,
+                  true,
+                  selectedSignatory,
+                  userRole,
+                );
               },
             ),
             TextButton(
               child: const Text('Accomplishment Report'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(authState, 'whole', false, false);
+                _showPeriodSelection(
+                  authState,
+                  false,
+                  selectedSignatory,
+                  userRole,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showPermanentAccomplishmentOptions(
+    AuthenticatedState authState,
+    SignatoryModel selectedSignatory,
+    String userRole,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Report Type'),
+          content: const Text(
+            'Choose the type of accomplishment report to generate:',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annex A (WFH)'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(
+                  authState,
+                  'whole',
+                  true,
+                  false,
+                  selectedSignatory,
+                  userRole,
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('Accomplishment Report'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performExport(
+                  authState,
+                  'whole',
+                  false,
+                  false,
+                  selectedSignatory,
+                  userRole,
+                );
               },
             ),
           ],
@@ -124,6 +291,8 @@ class _ExportAccomplishmentsButtonState
   Future<void> _showPeriodSelection(
     AuthenticatedState authState,
     bool isAnnexA,
+    SignatoryModel selectedSignatory,
+    String userRole,
   ) async {
     return showDialog<void>(
       context: context,
@@ -136,21 +305,42 @@ class _ExportAccomplishmentsButtonState
               child: const Text('First Half (1-15)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(authState, 'first', isAnnexA, true);
+                _performExport(
+                  authState,
+                  'first',
+                  isAnnexA,
+                  true,
+                  selectedSignatory,
+                  userRole,
+                );
               },
             ),
             TextButton(
               child: const Text('Second Half (16-last day)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(authState, 'second', isAnnexA, true);
+                _performExport(
+                  authState,
+                  'second',
+                  isAnnexA,
+                  true,
+                  selectedSignatory,
+                  userRole,
+                );
               },
             ),
             TextButton(
               child: const Text('Whole Month'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(authState, 'whole', isAnnexA, true);
+                _performExport(
+                  authState,
+                  'whole',
+                  isAnnexA,
+                  true,
+                  selectedSignatory,
+                  userRole,
+                );
               },
             ),
           ],
@@ -164,6 +354,8 @@ class _ExportAccomplishmentsButtonState
     String? period,
     bool isAnnexA,
     bool isCOS,
+    SignatoryModel signatory,
+    String userRole,
   ) async {
     if (_isExporting) return;
 
@@ -299,6 +491,9 @@ class _ExportAccomplishmentsButtonState
         userName,
         userPosition,
         userOffice,
+        authState.user.profile,
+        signatory: signatory,
+        userRole: userRole,
         period: period,
         isAnnexA: isAnnexA,
         isCOS: isCOS,
@@ -408,7 +603,8 @@ class _ExportAccomplishmentsButtonState
     DateTime month,
     String userName,
     String userPosition,
-    String userOffice, {
+    String userOffice,
+    ProfileModel? profile, {
     String? period,
     bool isAnnexA = true,
     bool isCOS = false,
@@ -416,8 +612,30 @@ class _ExportAccomplishmentsButtonState
     required Map<DateTime, SuspensionModel> suspensionMap,
     required Map<DateTime, String> leaveMap,
     required Map<DateTime, String> travelMap,
+    required SignatoryModel signatory,
+    required String userRole,
   }) async {
     final pdf = pw.Document();
+
+    String supervisor = '';
+    String supervisorDesignation = '';
+
+    if (signatory.name.isNotEmpty) {
+      bool useSupervisor = false;
+      if (profile?.sectionCode == 'OIC') {
+        useSupervisor = userRole == 'OIC';
+      } else {
+        useSupervisor = userRole == 'Unit Head';
+      }
+
+      if (useSupervisor && signatory.supervisor != null) {
+        supervisor = signatory.supervisor!.toUpperCase();
+        supervisorDesignation = signatory.supervisorDesignation ?? '';
+      } else {
+        supervisor = signatory.name.toUpperCase();
+        supervisorDesignation = signatory.designation;
+      }
+    }
 
     pw.MemoryImage? headerImage;
     pw.MemoryImage? footerImage;
@@ -1030,16 +1248,14 @@ class _ExportAccomplishmentsButtonState
                           children: [
                             pw.SizedBox(height: 20), // Space for signature
                             pw.Text(
-                              _getUnitHeadName(userOffice),
+                              supervisor,
                               style: pw.TextStyle(
                                 fontSize: 10,
                                 fontWeight: pw.FontWeight.bold,
                               ),
                             ),
                             pw.Text(
-                              userOffice == 'Office of the RACC Officer'
-                                  ? 'Deputy Executive Director for Operations and Services'
-                                  : 'Officer-in-charge, Social Welfare Officer IV',
+                              supervisorDesignation,
                               style: const pw.TextStyle(fontSize: 10),
                             ),
                           ],
@@ -1111,14 +1327,6 @@ class _ExportAccomplishmentsButtonState
       default:
         return DateFormat('MMMM yyyy').format(month);
     }
-  }
-
-  String _getUnitHeadName(userOffice) {
-    String supervisor =
-        userOffice == 'Office of the RACC Officer'
-            ? 'ASEC Rowena M. Macalintal'
-            : 'John S. Calidguid, RSW, MPA';
-    return supervisor;
   }
 
   List<DateTime> getDaysInPeriod(int year, int month, String? period) {

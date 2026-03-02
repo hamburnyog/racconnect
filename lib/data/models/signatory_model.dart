@@ -8,6 +8,8 @@ class SignatoryModel {
   final String? sectionCode;
   final String name;
   final String designation;
+  final String? supervisor;
+  final String? supervisorDesignation;
 
   SignatoryModel({
     this.id,
@@ -16,6 +18,8 @@ class SignatoryModel {
     this.sectionCode,
     required this.name,
     required this.designation,
+    this.supervisor,
+    this.supervisorDesignation,
   });
 
   SignatoryModel copyWith({
@@ -25,6 +29,8 @@ class SignatoryModel {
     ValueGetter<String?>? sectionCode,
     String? name,
     String? designation,
+    ValueGetter<String?>? supervisor,
+    ValueGetter<String?>? supervisorDesignation,
   }) {
     return SignatoryModel(
       id: id != null ? id() : this.id,
@@ -33,24 +39,27 @@ class SignatoryModel {
       sectionCode: sectionCode != null ? sectionCode() : this.sectionCode,
       name: name ?? this.name,
       designation: designation ?? this.designation,
+      supervisor: supervisor != null ? supervisor() : this.supervisor,
+      supervisorDesignation: supervisorDesignation != null
+          ? supervisorDesignation()
+          : this.supervisorDesignation,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'section': section,
-      'sectionName': sectionName,
-      'sectionCode': sectionCode,
       'name': name,
       'designation': designation,
+      'supervisor': supervisor,
+      'supervisorDesignation': supervisorDesignation,
     };
   }
 
   factory SignatoryModel.fromMap(Map<String, dynamic> map) {
     // Handle expansion if available
     final expandedSection = map['expand']?['section'];
-    
+
     return SignatoryModel(
       id: map['id'],
       section: map['section'],
@@ -58,6 +67,8 @@ class SignatoryModel {
       sectionCode: expandedSection?['code'] ?? map['sectionCode'],
       name: map['name'] ?? '',
       designation: map['designation'] ?? '',
+      supervisor: map['supervisor'],
+      supervisorDesignation: map['supervisorDesignation'],
     );
   }
 

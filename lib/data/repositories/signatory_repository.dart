@@ -34,4 +34,37 @@ class SignatoryRepository {
       rethrow;
     }
   }
+
+  Future<SignatoryModel> addSignatory(SignatoryModel signatory) async {
+    try {
+      final response = await pb.collection('signatories').create(
+            body: signatory.toMap(),
+            expand: 'section',
+          );
+      return SignatoryModel.fromMap(response.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<SignatoryModel> updateSignatory(SignatoryModel signatory) async {
+    try {
+      final response = await pb.collection('signatories').update(
+            signatory.id!,
+            body: signatory.toMap(),
+            expand: 'section',
+          );
+      return SignatoryModel.fromMap(response.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteSignatory(String id) async {
+    try {
+      await pb.collection('signatories').delete(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

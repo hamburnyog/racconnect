@@ -28,4 +28,34 @@ class SignatoryCubit extends Cubit<SignatoryState> {
       emit(SignatoryError(e.toString()));
     }
   }
+
+  Future<void> addSignatory(SignatoryModel signatory) async {
+    try {
+      emit(SignatoryLoading());
+      await signatoryRepository.addSignatory(signatory);
+      await getSignatories();
+    } catch (e) {
+      emit(SignatoryError(e.toString()));
+    }
+  }
+
+  Future<void> updateSignatory(SignatoryModel signatory) async {
+    try {
+      emit(SignatoryLoading());
+      await signatoryRepository.updateSignatory(signatory);
+      await getSignatories();
+    } catch (e) {
+      emit(SignatoryError(e.toString()));
+    }
+  }
+
+  Future<void> deleteSignatory(String id) async {
+    try {
+      emit(SignatoryLoading());
+      await signatoryRepository.deleteSignatory(id);
+      await getSignatories();
+    } catch (e) {
+      emit(SignatoryError(e.toString()));
+    }
+  }
 }

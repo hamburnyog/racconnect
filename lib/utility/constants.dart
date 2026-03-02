@@ -70,6 +70,11 @@ const sideBarItemsDev = [
     label: 'Sections',
   ),
   BottomNavigationBarItem(
+    icon: Icon(Icons.assignment_ind_outlined),
+    activeIcon: Icon(Icons.assignment_ind_rounded),
+    label: 'Signatories',
+  ),
+  BottomNavigationBarItem(
     icon: Icon(Icons.calendar_month_outlined),
     activeIcon: Icon(Icons.calendar_month),
     label: 'Holidays',
@@ -111,6 +116,11 @@ const sideBarItemsUnitHead = [
     activeIcon: Icon(Icons.person_rounded),
     label: 'Personnel',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.assignment_ind_outlined),
+    activeIcon: Icon(Icons.assignment_ind_rounded),
+    label: 'Signatories',
+  ),
 ];
 
 const sideBarItemsHr = [
@@ -119,6 +129,11 @@ const sideBarItemsHr = [
     icon: Icon(Icons.person_outline_rounded),
     activeIcon: Icon(Icons.person_rounded),
     label: 'Personnel',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.assignment_ind_outlined),
+    activeIcon: Icon(Icons.assignment_ind_rounded),
+    label: 'Signatories',
   ),
   BottomNavigationBarItem(
     icon: Icon(Icons.calendar_month_outlined),
