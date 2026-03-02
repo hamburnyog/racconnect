@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:racconnect/data/repositories/signatory_repository.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/event_cubit.dart';
@@ -14,6 +15,7 @@ import 'package:racconnect/logic/cubit/internet_cubit.dart';
 import 'package:racconnect/logic/cubit/leave_cubit.dart';
 import 'package:racconnect/logic/cubit/profile_cubit.dart';
 import 'package:racconnect/logic/cubit/section_cubit.dart';
+import 'package:racconnect/logic/cubit/signatory_cubit.dart';
 import 'package:racconnect/logic/cubit/suspension_cubit.dart';
 import 'package:racconnect/logic/cubit/time_check_cubit.dart';
 import 'package:racconnect/logic/cubit/travel_cubit.dart';
@@ -70,6 +72,9 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<SuspensionCubit>(create: (_) => SuspensionCubit()),
         BlocProvider<LeaveCubit>(create: (_) => LeaveCubit()),
         BlocProvider<TravelCubit>(create: (_) => TravelCubit()),
+        BlocProvider<SignatoryCubit>(
+          create: (context) => SignatoryCubit(SignatoryRepository()),
+        ),
         BlocProvider<TimeCheckCubit>(create: (_) => TimeCheckCubit()),
         BlocProvider<VersionCheckCubit>(
           create:

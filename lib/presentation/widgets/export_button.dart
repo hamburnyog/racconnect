@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:racconnect/data/models/signatory_model.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/logic/cubit/attendance_cubit.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/logic/cubit/signatory_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/generate_excel.dart';
 import 'package:share_plus/share_plus.dart';
@@ -56,10 +58,14 @@ class _ExportButtonState extends State<ExportButton> {
     Future<void> handleExport() async {
       if (!isProfileComplete) return;
 
+      final signatory = await _showSignatorySelectionDialog(profile!);
+      if (signatory == null) return;
+      if (!mounted) return;
+
       if (isCOS) {
-        _showCOSExportOptions(profile!);
+        _showCOSExportOptions(profile, signatory);
       } else {
-        await _performExport(profile!, employeeNumber, null);
+        await _performExport(profile, employeeNumber, null, signatory);
       }
     }
 
@@ -74,7 +80,70 @@ class _ExportButtonState extends State<ExportButton> {
     );
   }
 
-  Future<void> _showCOSExportOptions(profile) async {
+  Future<SignatoryModel?> _showSignatorySelectionDialog(profile) async {
+    final signatoryCubit = context.read<SignatoryCubit>();
+    if (profile.section != null) {
+      signatoryCubit.getSignatoriesBySection(profile.section!);
+    } else {
+      signatoryCubit.getSignatories();
+    }
+
+    return showDialog<SignatoryModel>(
+      context: context,
+      builder: (BuildContext context) {
+        return BlocBuilder<SignatoryCubit, SignatoryState>(
+          builder: (context, state) {
+            return AlertDialog(
+              title: const Text('Select Signatory'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Choose the signatory for this DTR:'),
+                    const SizedBox(height: 16),
+                    if (state is SignatoryLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else if (state is SignatoryLoadSuccess)
+                      Flexible(
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: state.signatories.length,
+                          separatorBuilder: (context, index) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final signatory = state.signatories[index];
+                            return ListTile(
+                              title: Text(signatory.name),
+                              subtitle: Text(signatory.designation),
+                              onTap: () => Navigator.of(context).pop(signatory),
+                            );
+                          },
+                        ),
+                      )
+                    else if (state is SignatoryError)
+                      Text('Error: ${state.message}')
+                    else
+                      const Text('No signatories found.'),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showCOSExportOptions(
+    profile,
+    SignatoryModel selectedSignatory,
+  ) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -86,21 +155,36 @@ class _ExportButtonState extends State<ExportButton> {
               child: const Text('First Half (1-15)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(profile, profile.employeeNumber ?? '', 'first');
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'first',
+                  selectedSignatory,
+                );
               },
             ),
             TextButton(
               child: const Text('Second Half (16-last day)'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(profile, profile.employeeNumber ?? '', 'second');
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'second',
+                  selectedSignatory,
+                );
               },
             ),
             TextButton(
               child: const Text('Whole Month'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _performExport(profile, profile.employeeNumber ?? '', 'whole');
+                _performExport(
+                  profile,
+                  profile.employeeNumber ?? '',
+                  'whole',
+                  selectedSignatory,
+                );
               },
             ),
           ],
@@ -113,6 +197,7 @@ class _ExportButtonState extends State<ExportButton> {
     profile,
     String employeeNumber,
     String? period,
+    SignatoryModel? signatory,
   ) async {
     if (_isExporting) return;
 
@@ -175,6 +260,7 @@ class _ExportButtonState extends State<ExportButton> {
         widget.travelMap, // Add travelMap
         startDate: startDate,
         endDate: endDate,
+        signatory: signatory,
       );
 
       if (!mounted) {

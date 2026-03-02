@@ -403,8 +403,9 @@ void buildCertificationSection(
   String supervisor,
   String supervisorDesignation,
   Map<String, dynamic> cellList,
-  String? sectionCode,
-) {
+  String? sectionCode, {
+  bool hasSignatory = false,
+}) {
   // Certification
   var certificationStartNumber = startingRowNumber + 2;
   var certificationEndNumber = startingRowNumber + 4;
@@ -530,7 +531,9 @@ void buildCertificationSection(
     CellIndex.indexByString('D$attestationRowNumber'),
     CellIndex.indexByString('G$attestationRowNumber'),
     customValue: TextCellValue(
-      supervisorSections.contains(sectionCode) ? supervisorText : '',
+      (hasSignatory || supervisorSections.contains(sectionCode))
+          ? supervisorText
+          : '',
     ),
   );
 
@@ -543,7 +546,9 @@ void buildCertificationSection(
     CellIndex.indexByString('L$attestationRowNumber'),
     CellIndex.indexByString('O$attestationRowNumber'),
     customValue: TextCellValue(
-      supervisorSections.contains(sectionCode) ? supervisorText : '',
+      (hasSignatory || supervisorSections.contains(sectionCode))
+          ? supervisorText
+          : '',
     ),
   );
 

@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
+import 'package:racconnect/data/models/signatory_model.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:flutter/foundation.dart';
 
@@ -22,6 +23,7 @@ Future<String?> generateExcel(
   Map<DateTime, String> travelMap, {
   DateTime? startDate,
   DateTime? endDate,
+  SignatoryModel? signatory,
 }) async {
   try {
     var excel = Excel.createExcel();
@@ -49,6 +51,7 @@ Future<String?> generateExcel(
       bodyData['totalLateUndertimeHours']!,
       bodyData['totalLateUndertimeMinutes']!,
       bodyData['startingRowNumber']!,
+      signatory: signatory,
     );
 
     var bytes = excel.encode();
@@ -102,8 +105,9 @@ void _generateExcelFooter(
   DateTime selectedDate,
   int totalLateUndertimeHours,
   int totalLateUndertimeMinutes,
-  int startingRowNumber,
-) {
+  int startingRowNumber, {
+  SignatoryModel? signatory,
+}) {
   Map<String, dynamic> cellList = {};
 
   String firstName = profile.firstName;
@@ -117,14 +121,19 @@ void _generateExcelFooter(
   String supervisor;
   String supervisorDesignation;
 
-  supervisor =
-      profile.sectionCode == 'OIC'
-          ? 'ASEC ROWENA M. MACALINTAL'
-          : 'JOHN S. CALIDGUID, RSW, MPA';
-  supervisorDesignation =
-      profile.sectionCode == 'OIC'
-          ? 'Deputy Executive Director for Operations and Services'
-          : 'Officer-in-charge, Social Welfare Officer IV';
+  if (signatory != null) {
+    supervisor = signatory.name.toUpperCase();
+    supervisorDesignation = signatory.designation;
+  } else {
+    supervisor =
+        profile.sectionCode == 'OIC'
+            ? 'ASEC ROWENA M. MACALINTAL'
+            : 'JOHN S. CALIDGUID, RSW, MPA';
+    supervisorDesignation =
+        profile.sectionCode == 'OIC'
+            ? 'Deputy Executive Director for Operations and Services'
+            : 'Officer-in-charge, Social Welfare Officer IV';
+  }
 
   buildTotalRowSection(
     sheet,
@@ -143,6 +152,7 @@ void _generateExcelFooter(
     supervisorDesignation,
     cellList,
     profile.sectionCode,
+    hasSignatory: signatory != null,
   );
 
   applyColumnWidths(sheet);
