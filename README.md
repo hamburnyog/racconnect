@@ -2,9 +2,7 @@
 
 **Regional Alternative Child Care Office IV-A Calabarzon Companion App**
 
-<div align="center">
-  <img src="assets/images/racconnect.gif" alt="RACCOnnect App Demo" width="300" />
-</div>
+<img src="assets/images/racconnect.gif" alt="RACCOnnect App Demo" width="500" />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20android%20%7C%20ios-lightgrey)
