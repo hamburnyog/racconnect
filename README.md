@@ -2,6 +2,10 @@
 
 **Regional Alternative Child Care Office IV-A Calabarzon Companion App**
 
+<div align="center">
+  <img src="assets/images/racconnect.gif" alt="RACCOnnect App Demo" width="300" />
+</div>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20android%20%7C%20ios-lightgrey)
 ![Flutter](https://img.shields.io/badge/flutter-3.0+-blue)
@@ -11,10 +15,11 @@
 RACConnect is a comprehensive employee management system developed for the **National Authority for Child Care - Regional Alternative Child Care Office IV-A Calabarzon**. The application streamlines attendance tracking, DTR and accomplishment reporting, through a modern, cross-platform interface. 
 
 ### Key Features
-- **Work From Home (WFH) Attendance**
-- **Daily Accomplishment Logging**
-- **Personnel Directory (for certain roles)**
-- **Automated Form Generation**
+- **Work From Home (WFH) Attendance** - Secure attendance tracking for remote work.
+- **Daily Accomplishment Logging** - Easy tracking of daily tasks and deliverables.
+- **Personnel Directory** - Centralized directory for certain user roles.
+- **Automated Report Export** - High-quality PDF generation for Annex A (WFH) and Accomplishment Reports with multi-page support and robust text handling.
+- **Signatory Management** - Flexible signatory selection for report approvals.
 
 ## Platform Availability
 

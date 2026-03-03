@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -642,18 +643,14 @@ class _ExportAccomplishmentsButtonState
 
     try {
       final headerData = await rootBundle.load('assets/images/header.png');
-      if (headerData.lengthInBytes > 0) {
-        headerImage = pw.MemoryImage(headerData.buffer.asUint8List());
-      }
+      headerImage = pw.MemoryImage(headerData.buffer.asUint8List());
     } catch (e) {
       headerImage = null;
     }
 
     try {
       final footerData = await rootBundle.load('assets/images/footer.png');
-      if (footerData.lengthInBytes > 0) {
-        footerImage = pw.MemoryImage(footerData.buffer.asUint8List());
-      }
+      footerImage = pw.MemoryImage(footerData.buffer.asUint8List());
     } catch (e) {
       footerImage = null;
     }
@@ -666,82 +663,37 @@ class _ExportAccomplishmentsButtonState
             ? ['Date', 'Activity / Deliverables', 'Accomplishment', 'Remarks']
             : ['Date', 'Accomplishment'];
 
-    final List<List<dynamic>> tableData;
+    final List<List<dynamic>> tableData = <List<dynamic>>[];
     if (isAnnexA) {
-      tableData =
-          accomplishments.map((acc) {
-            // Process target text with formatting (newlines, bullets)
-            final List<pw.TextSpan> targetTextSpans = [];
-            final targetLines = acc.target.split('\n');
-            for (int i = 0; i < targetLines.length; i++) {
-              if (i > 0) {
-                targetTextSpans.add(
-                  pw.TextSpan(text: '\n'),
-                ); // Add newline between lines
-              }
+      for (var acc in accomplishments) {
+        final sanitizedTarget = _sanitizeText(acc.target);
+        final sanitizedAccomplishment = _sanitizeText(acc.accomplishment);
 
-              String line = targetLines[i].trim();
-              if (line.startsWith('- ') || line.startsWith('* ')) {
-                // Handle bullet points
-                targetTextSpans.add(
-                  pw.TextSpan(
-                    text: '• ',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
-                );
-                targetTextSpans.add(
-                  pw.TextSpan(text: line.substring(2)),
-                ); // Remove bullet marker
-              } else {
-                targetTextSpans.add(pw.TextSpan(text: line));
-              }
-            }
+        final targetChunks = _splitTextIntoChunks(sanitizedTarget, maxLines: 15, maxChars: 1200);
+        final accomplishmentChunks = _splitTextIntoChunks(
+          sanitizedAccomplishment,
+          maxLines: 15,
+          maxChars: 1200,
+        );
 
-            // Process accomplishment text with formatting (newlines, bullets)
-            final List<pw.TextSpan> accomplishmentTextSpans = [];
-            final accomplishmentLines = acc.accomplishment.split('\n');
-            for (int i = 0; i < accomplishmentLines.length; i++) {
-              if (i > 0) {
-                accomplishmentTextSpans.add(
-                  pw.TextSpan(text: '\n'),
-                ); // Add newline between lines
-              }
+        final totalChunks = max(targetChunks.length, accomplishmentChunks.length);
 
-              String line = accomplishmentLines[i].trim();
-              if (line.startsWith('- ') || line.startsWith('* ')) {
-                // Handle bullet points
-                accomplishmentTextSpans.add(
-                  pw.TextSpan(
-                    text: '• ',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
-                );
-                accomplishmentTextSpans.add(
-                  pw.TextSpan(text: line.substring(2)),
-                ); // Remove bullet marker
-              } else {
-                accomplishmentTextSpans.add(pw.TextSpan(text: line));
-              }
-            }
+        for (int i = 0; i < totalChunks; i++) {
+          final target = i < targetChunks.length ? targetChunks[i] : '';
+          final accomplishment =
+              i < accomplishmentChunks.length ? accomplishmentChunks[i] : '';
+          final dateStr =
+              (i == 0) ? DateFormat('MMM dd, yyyy').format(acc.date) : '';
 
-            final targetRichText = pw.RichText(
-              text: pw.TextSpan(children: targetTextSpans),
-            );
-            final accomplishmentRichText = pw.RichText(
-              text: pw.TextSpan(children: accomplishmentTextSpans),
-            );
-            final dateStr = DateFormat('MMM dd, yyyy').format(acc.date);
-            final remarksStr = '';
-
-            return <dynamic>[
-              dateStr,
-              targetRichText,
-              accomplishmentRichText,
-              remarksStr,
-            ];
-          }).toList();
+          tableData.add([
+            dateStr,
+            _createFormattedRichText(target),
+            _createFormattedRichText(accomplishment),
+            '', // Remarks
+          ]);
+        }
+      }
     } else {
-      tableData = <List<dynamic>>[];
       final daysInPeriod = getDaysInPeriod(month.year, month.month, period);
 
       for (var day in daysInPeriod) {
@@ -760,7 +712,6 @@ class _ExportAccomplishmentsButtonState
           nonWorkingDayText = holidayName;
         } else if (suspension != null) {
           if (suspension.isHalfday) {
-            // Format time as AM/PM in parentheses (e.g., "Morning Suspension (10:00 AM)" or "Afternoon Suspension (2:00 PM)")
             String formattedTime = DateFormat(
               'h:mm a',
             ).format(suspension.datetime);
@@ -784,96 +735,70 @@ class _ExportAccomplishmentsButtonState
           nonWorkingDayText = 'Sunday';
         }
 
-        final accomplishmentText = accomplishmentsForDay
-            .map((e) => e.accomplishment)
-            .join('\n');
-
-        // Split the non-working day text to handle bolding properly
-        String mainText = nonWorkingDayText;
-        String timeText = '';
-
-        if (nonWorkingDayText.contains('(')) {
-          int parenthesisIndex = nonWorkingDayText.indexOf('(');
-          mainText = nonWorkingDayText.substring(0, parenthesisIndex);
-          timeText = nonWorkingDayText.substring(parenthesisIndex);
-        }
-
-        // Create a rich text with proper formatting to handle newlines and bullets in accomplishment text
-        final List<pw.TextSpan> textSpans = [];
+        final dateStr = DateFormat('MMM dd, yyyy').format(day);
+        bool dateShown = false;
 
         if (nonWorkingDayText.isNotEmpty) {
-          textSpans.add(
+          String mainText = nonWorkingDayText;
+          String timeText = '';
+
+          if (nonWorkingDayText.contains('(')) {
+            int parenthesisIndex = nonWorkingDayText.indexOf('(');
+            mainText = nonWorkingDayText.substring(0, parenthesisIndex);
+            timeText = nonWorkingDayText.substring(parenthesisIndex);
+          }
+
+          final List<pw.TextSpan> spans = [
             pw.TextSpan(
               text: mainText,
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
             ),
-          );
+          ];
           if (timeText.isNotEmpty) {
-            textSpans.add(
+            spans.add(
               pw.TextSpan(
                 text: timeText,
                 style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
               ),
             );
           }
-          if (accomplishmentText.isNotEmpty) {
-            textSpans.add(
-              pw.TextSpan(text: '\n'),
-            ); // Add a newline between non-working day text and accomplishment
+
+          tableData.add([
+            dateStr,
+            pw.RichText(text: pw.TextSpan(children: spans)),
+          ]);
+          dateShown = true;
+        }
+
+        for (var acc in accomplishmentsForDay) {
+          final sanitized = _sanitizeText(acc.accomplishment);
+          final chunks = _splitTextIntoChunks(sanitized, maxLines: 25, maxChars: 2000);
+
+          for (var chunk in chunks) {
+            tableData.add([
+              !dateShown ? dateStr : '',
+              _createFormattedRichText(chunk),
+            ]);
+            dateShown = true;
           }
         }
 
-        // Process the accomplishment text to handle formatting (newlines, bullets)
-        if (accomplishmentText.isNotEmpty) {
-          // Split by newline and process each line
-          final lines = accomplishmentText.split('\n');
-          for (int i = 0; i < lines.length; i++) {
-            if (i > 0) {
-              textSpans.add(
-                pw.TextSpan(text: '\n'),
-              ); // Add newline between lines
-            }
-
-            String line = lines[i].trim();
-            if (line.startsWith('- ') || line.startsWith('* ')) {
-              // Handle bullet points
-              textSpans.add(
-                pw.TextSpan(
-                  text: '• ',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-              );
-              textSpans.add(
-                pw.TextSpan(text: line.substring(2)),
-              ); // Remove bullet marker
-            } else {
-              textSpans.add(pw.TextSpan(text: line));
-            }
-          }
+        if (!dateShown) {
+          tableData.add([dateStr, pw.Text('')]);
         }
-
-        final richText = pw.RichText(
-          text: pw.TextSpan(
-            children:
-                textSpans.isNotEmpty ? textSpans : [pw.TextSpan(text: '')],
-          ),
-        );
-
-        tableData.add([DateFormat('MMM dd, yyyy').format(day), richText]);
       }
     }
 
     pdf.addPage(
       pw.MultiPage(
-        pageTheme: pw.PageTheme(
-          pageFormat: PdfPageFormat.a4.copyWith(
-            marginTop: 20,
-            marginBottom: 20,
-            marginLeft: 20,
-            marginRight: 20,
-          ),
-          theme: pw.ThemeData.withFont(base: garamond, bold: garamondBold),
+        maxPages: 1000,
+        pageFormat: PdfPageFormat.a4.copyWith(
+          marginTop: 20,
+          marginBottom: 20,
+          marginLeft: 20,
+          marginRight: 20,
         ),
+        theme: pw.ThemeData.withFont(base: garamond, bold: garamondBold),
         header: (pw.Context context) {
           return pw.Column(
             children: [
@@ -894,7 +819,7 @@ class _ExportAccomplishmentsButtonState
           return pw.Column(
             children: [
               pw.Text(
-                'Page ${context.pageNumber} of ${context.pagesCount}',
+                'Page ${context.pageNumber}',
                 style: const pw.TextStyle(fontSize: 8),
                 textAlign: pw.TextAlign.center,
               ),
@@ -913,366 +838,196 @@ class _ExportAccomplishmentsButtonState
             ],
           );
         },
-        build:
-            (pw.Context context) => [
-              if (isAnnexA) ...[
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    pw.Text(
-                      'WFH ACCOMPLISHMENT REPORT (ANNEX A)',
-                      style: pw.TextStyle(
-                        fontSize: 12,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ],
+        build: (pw.Context context) {
+          final List<pw.Widget> result = [];
+
+          // Report Title
+          result.add(
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              children: [
+                pw.Text(
+                  isAnnexA
+                      ? 'WFH ACCOMPLISHMENT REPORT (ANNEX A)'
+                      : 'ACCOMPLISHMENT REPORT',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                pw.SizedBox(height: 10),
-              ] else ...[
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    pw.Text(
-                      'ACCOMPLISHMENT REPORT',
-                      style: pw.TextStyle(
-                        fontSize: 12,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 10),
               ],
-              pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
-                columnWidths: {
-                  0: pw.FractionColumnWidth(0.15),
-                  1: pw.FractionColumnWidth(0.35),
-                  2: pw.FractionColumnWidth(0.15),
-                  3: pw.FractionColumnWidth(0.35),
-                },
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 70,
-                          child: pw.Text(
-                            'Name:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 180,
-                          child: pw.Text(
-                            userName,
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 90,
-                          child: pw.Text(
-                            'Period Covered:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 160,
-                          child: pw.Text(
-                            _getPeriodCoveredText(month, period),
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 70,
-                          child: pw.Text(
-                            'Position:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 180,
-                          child: pw.Text(
-                            userPosition,
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 90,
-                          child: pw.Text(
-                            'Office:',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Container(
-                          width: 160,
-                          child: pw.Text(
-                            userOffice,
-                            style: const pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 5),
+            ),
+          );
+          result.add(pw.SizedBox(height: 10));
+
+          // Profile Table
+          result.add(
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
+              columnWidths: {
+                0: pw.FractionColumnWidth(0.12),
+                1: pw.FractionColumnWidth(0.38),
+                2: pw.FractionColumnWidth(0.12),
+                3: pw.FractionColumnWidth(0.38),
+              },
+              children: [
+                pw.TableRow(
+                  children: [
+                    _cell('Name:', isBold: true),
+                    _cell(userName),
+                    _cell('Period Covered:', isBold: true),
+                    _cell(_getPeriodCoveredText(month, period)),
+                  ],
+                ),
+                pw.TableRow(
+                  children: [
+                    _cell('Position:', isBold: true),
+                    _cell(userPosition),
+                    _cell('Office:', isBold: true),
+                    _cell(userOffice),
+                  ],
+                ),
+              ],
+            ),
+          );
+          result.add(pw.SizedBox(height: 5));
+
+          // Main Table - Split into smaller chunks to prevent truncation
+          const rowsPerTable = 20;
+          for (int i = 0; i < tableData.length; i += rowsPerTable) {
+            final chunk = tableData.sublist(
+              i,
+              min(i + rowsPerTable, tableData.length),
+            );
+            
+            result.add(
               pw.Table(
                 border: pw.TableBorder.all(),
                 tableWidth: pw.TableWidth.max,
                 columnWidths:
                     isAnnexA
                         ? {
-                          0: pw.FractionColumnWidth(0.15),
-                          1: pw.FractionColumnWidth(0.35),
-                          2: pw.FractionColumnWidth(0.35),
-                          3: pw.FractionColumnWidth(0.15),
+                          0: pw.FractionColumnWidth(0.12),
+                          1: pw.FractionColumnWidth(0.38),
+                          2: pw.FractionColumnWidth(0.38),
+                          3: pw.FractionColumnWidth(0.12),
                         }
                         : {
-                          0: pw.FractionColumnWidth(0.15),
-                          1: pw.FractionColumnWidth(0.85),
+                          0: pw.FractionColumnWidth(0.12),
+                          1: pw.FractionColumnWidth(0.88),
                         },
                 children: [
-                  pw.TableRow(
-                    decoration: const pw.BoxDecoration(
-                      color: PdfColors.grey300,
+                  if (i == 0)
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                      children:
+                          isAnnexA
+                              ? [
+                                _cell(tableHeaders[0], isBold: true, center: true),
+                                _cell(tableHeaders[1], isBold: true),
+                                _cell(tableHeaders[2], isBold: true),
+                                _cell(tableHeaders[3], isBold: true, center: true),
+                              ]
+                              : [
+                                _cell(tableHeaders[0], isBold: true, center: true),
+                                _cell(tableHeaders[1], isBold: true),
+                              ],
                     ),
-                    children:
-                        isAnnexA
-                            ? [
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[0],
-                                  textAlign: pw.TextAlign.center,
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[1],
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[2],
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[3],
-                                  textAlign: pw.TextAlign.center,
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ]
-                            : [
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[0],
-                                  textAlign: pw.TextAlign.center,
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                              pw.Padding(
-                                padding: const pw.EdgeInsets.all(4),
-                                child: pw.Text(
-                                  tableHeaders[1],
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ],
-                  ),
-                  ...tableData.map(
+                  ...chunk.map(
                     (row) => pw.TableRow(
                       children:
                           isAnnexA
-                              ? row
-                                  .asMap()
-                                  .map(
-                                    (index, cell) => MapEntry(
-                                      index,
-                                      pw.Padding(
-                                        padding: const pw.EdgeInsets.all(4),
-                                        child:
-                                            index == 1 || index == 2
-                                                ? cell as pw.RichText
-                                                : pw.Text(
-                                                  cell as String,
-                                                  textAlign:
-                                                      index == 0 || index == 3
-                                                          ? pw.TextAlign.center
-                                                          : pw.TextAlign.left,
-                                                  style: const pw.TextStyle(
-                                                    fontSize: 10,
-                                                  ),
-                                                ),
-                                      ),
-                                    ),
-                                  )
-                                  .values
-                                  .toList()
+                              ? [
+                                _cellWidget(row[0]),
+                                _cellWidget(row[1]),
+                                _cellWidget(row[2]),
+                                _cellWidget(row[3], center: true),
+                              ]
                               : [
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: pw.Text(
-                                    row[0] as String,
-                                    textAlign: pw.TextAlign.center,
-                                    style: const pw.TextStyle(fontSize: 10),
-                                  ),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.all(4),
-                                  child: row[1] as pw.RichText,
-                                ),
+                                _cellWidget(row[0], center: true),
+                                _cellWidget(row[1]),
                               ],
                     ),
                   ),
                 ],
               ),
-              pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
-                columnWidths: {
-                  0: pw.FractionColumnWidth(0.15), // First column (label)
-                  1: pw.FractionColumnWidth(
-                    0.85,
-                  ), // Merged columns 2-4 for name/designation
-                },
-                children: [
-                  pw.TableRow(
-                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Center(
-                          child: pw.Text(
-                            'Prepared by:',
-                            style: pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
+            );
+            // No need for SizedBox between tables as TableBorder already provides visual separation
+          }
+
+          // Approval Table
+          result.add(
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
+              columnWidths:
+                  isAnnexA
+                      ? {
+                        0: pw.FractionColumnWidth(0.12),
+                        1: pw.FractionColumnWidth(0.88),
+                      }
+                      : {
+                        0: pw.FractionColumnWidth(0.12),
+                        1: pw.FractionColumnWidth(0.88),
+                      },
+              children: [
+                pw.TableRow(
+                  verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                  children: [
+                    _cell('Prepared by:', center: true),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(4),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.SizedBox(height: 20),
+                          pw.Text(userName, style: const pw.TextStyle(fontSize: 9)),
+                        ],
                       ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.SizedBox(height: 20), // Space for signature
-                            pw.Text(
-                              userName,
-                              style: const pw.TextStyle(fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  pw.TableRow(
-                    verticalAlignment: pw.TableCellVerticalAlignment.middle,
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Center(
-                          child: pw.Text(
-                            'Approved by:',
-                            style: pw.TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.SizedBox(height: 20), // Space for signature
-                            pw.Text(
-                              supervisor,
-                              style: pw.TextStyle(
-                                fontSize: 10,
-                                fontWeight: pw.FontWeight.bold,
-                              ),
-                            ),
-                            pw.Text(
-                              supervisorDesignation,
-                              style: const pw.TextStyle(fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 10),
-              pw.Center(
-                child: pw.Text(
-                  '*** THIS IS A SYSTEM-GENERATED REPORT. NOTHING FOLLOWS. ***',
-                  style: pw.TextStyle(color: PdfColors.grey, fontSize: 6),
+                    ),
+                  ],
                 ),
+                pw.TableRow(
+                  verticalAlignment: pw.TableCellVerticalAlignment.middle,
+                  children: [
+                    _cell('Approved by:', center: true),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(4),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.SizedBox(height: 20),
+                          pw.Text(
+                            supervisor,
+                            style: pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.Text(
+                            supervisorDesignation,
+                            style: const pw.TextStyle(fontSize: 9),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+
+          result.add(pw.SizedBox(height: 10));
+          result.add(
+            pw.Center(
+              child: pw.Text(
+                '*** THIS IS A SYSTEM-GENERATED REPORT. NOTHING FOLLOWS. ***',
+                style: pw.TextStyle(color: PdfColors.grey, fontSize: 6),
               ),
-            ],
+            ),
+          );
+
+          return result;
+        },
       ),
     );
 
@@ -1283,6 +1038,34 @@ class _ExportAccomplishmentsButtonState
 
     await file.writeAsBytes(await pdf.save());
     return file;
+  }
+
+  pw.Widget _cell(String text, {bool isBold = false, bool center = false}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(4),
+      child: pw.Text(
+        text,
+        textAlign: center ? pw.TextAlign.center : pw.TextAlign.left,
+        style: pw.TextStyle(
+          fontSize: 9,
+          fontWeight: isBold ? pw.FontWeight.bold : null,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _cellWidget(dynamic cell, {bool center = false}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(4),
+      child:
+          cell is pw.Widget
+              ? cell
+              : pw.Text(
+                cell as String,
+                textAlign: center ? pw.TextAlign.center : pw.TextAlign.left,
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+    );
   }
 
   String _getMiddleInitialFromMiddleName(String? middleName) {
@@ -1327,6 +1110,105 @@ class _ExportAccomplishmentsButtonState
       default:
         return DateFormat('MMMM yyyy').format(month);
     }
+  }
+
+  String _sanitizeText(String text) {
+    if (text.isEmpty) return text;
+    // Normalize newlines
+    String sanitized = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    // Remove null bytes and dangerous control characters, but keep common Unicode
+    sanitized = sanitized.replaceAll(RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F]'), '');
+    // Collapse 3+ newlines into 2
+    sanitized = sanitized.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+    return sanitized.trim();
+  }
+
+  List<String> _splitTextIntoChunks(String text, {int maxLines = 20, int maxChars = 800}) {
+    if (text.isEmpty) return [''];
+    
+    final lines = text.split('\n');
+    final chunks = <String>[];
+    List<String> currentChunkLines = [];
+    int currentCharCount = 0;
+
+    for (var line in lines) {
+      // Split the line itself if it's too long
+      if (line.length > maxChars) {
+        if (currentChunkLines.isNotEmpty) {
+          chunks.add(currentChunkLines.join('\n'));
+          currentChunkLines = [];
+          currentCharCount = 0;
+        }
+        for (int i = 0; i < line.length; i += maxChars) {
+          int end = min(i + maxChars, line.length);
+          chunks.add(line.substring(i, end));
+        }
+        continue;
+      }
+
+      if (currentChunkLines.isNotEmpty && 
+          (currentChunkLines.length >= maxLines || currentCharCount + line.length > maxChars)) {
+        chunks.add(currentChunkLines.join('\n'));
+        currentChunkLines = [];
+        currentCharCount = 0;
+      }
+      
+      currentChunkLines.add(line);
+      currentCharCount += line.length;
+    }
+
+    if (currentChunkLines.isNotEmpty) {
+      chunks.add(currentChunkLines.join('\n'));
+    }
+
+    return chunks.isEmpty ? [''] : chunks;
+  }
+
+  pw.Widget _createFormattedRichText(String text, {bool isBold = false}) {
+    if (text.isEmpty) return pw.Text('');
+    final List<pw.TextSpan> textSpans = [];
+    final lines = text.split('\n');
+
+    for (int i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        textSpans.add(pw.TextSpan(text: '\n'));
+      }
+
+      String line = lines[i].trim();
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        textSpans.add(
+          pw.TextSpan(
+            text: '• ',
+            style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 9,
+            ),
+          ),
+        );
+        textSpans.add(
+          pw.TextSpan(
+            text: line.substring(2),
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+        );
+      } else {
+        textSpans.add(
+          pw.TextSpan(
+            text: line,
+            style: pw.TextStyle(
+              fontWeight: isBold ? pw.FontWeight.bold : null,
+              fontSize: 9,
+            ),
+          ),
+        );
+      }
+    }
+
+    return pw.RichText(
+      text: pw.TextSpan(
+        children: textSpans.isNotEmpty ? textSpans : [pw.TextSpan(text: '')],
+      ),
+    );
   }
 
   List<DateTime> getDaysInPeriod(int year, int month, String? period) {
