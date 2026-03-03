@@ -17,6 +17,8 @@ RACConnect is a comprehensive employee management system developed for the **Nat
 - **Daily Accomplishment Logging** - Easy tracking of daily tasks and deliverables.
 - **Personnel Directory** - Centralized directory for certain user roles.
 - **Automated Report Export** - High-quality PDF generation for Annex A (WFH) and Accomplishment Reports with multi-page support and robust text handling.
+- **Forum Certificate Generation** - Automated generation of high-quality attendance certificates from customizable SVG templates.
+- **Bulk Email Delivery** - Integrated SMTP system for sending certificates to forum attendees with support for HTML templates and multiple recipients.
 - **Signatory Management** - Flexible signatory selection for report approvals.
 
 ## Platform Availability
