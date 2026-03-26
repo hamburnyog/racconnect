@@ -46,6 +46,7 @@ class ForumCubit extends Cubit<ForumState> {
 
   Future<void> addAttendee(ForumAttendee attendee) async {
     try {
+      emit(ForumLoading());
       await _repository.addAttendee(attendee);
       emit(ForumAddSuccess());
     } catch (e) {
@@ -55,6 +56,7 @@ class ForumCubit extends Cubit<ForumState> {
 
   Future<void> removeAttendee(String id) async {
     try {
+      emit(ForumLoading());
       await _repository.deleteAttendee(id);
       emit(ForumDeleteSuccess());
     } catch (e) {
@@ -65,6 +67,7 @@ class ForumCubit extends Cubit<ForumState> {
   Future<void> updateAttendee(String id, ForumAttendee attendee,
       {bool silent = false}) async {
     try {
+      if (!silent) emit(ForumLoading());
       await _repository.updateAttendee(id, attendee);
       if (silent) {
         emit(ForumUpdateSilentSuccess());

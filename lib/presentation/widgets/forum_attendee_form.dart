@@ -14,9 +14,11 @@ class ForumAttendeeForm extends StatefulWidget {
 
 class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
   TextEditingController nameController = TextEditingController();
+  TextEditingController spouseNameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
   List<TextEditingController> emailControllers = [TextEditingController()];
   TextEditingController forumDateController = TextEditingController();
+  TextEditingController emailSentDateController = TextEditingController();
   String selectedType = 'Pre-adoption';
   final formKey = GlobalKey<FormState>();
 
@@ -45,10 +47,16 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
       context.read<ForumCubit>().addAttendee(
             ForumAttendee(
               name: nameController.text.trim(),
+              spouseName: spouseNameController.text.trim().isEmpty
+                  ? null
+                  : spouseNameController.text.trim(),
               address: addressController.text.trim(),
               email: joinedEmails,
               type: selectedType,
-              forumDate: DateTime.parse(forumDateController.text),
+              forumDate: DateTime.tryParse(forumDateController.text),
+              emailSentDate: emailSentDateController.text.isNotEmpty
+                  ? DateTime.tryParse(emailSentDateController.text)
+                  : null,
             ),
           );
       Navigator.of(context).pop();
@@ -62,11 +70,16 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
             attendeeId,
             ForumAttendee(
               name: nameController.text.trim(),
+              spouseName: spouseNameController.text.trim().isEmpty
+                  ? null
+                  : spouseNameController.text.trim(),
               address: addressController.text.trim(),
               email: joinedEmails,
               type: selectedType,
-              forumDate: DateTime.parse(forumDateController.text),
-              emailSentDate: widget.forumAttendee?.emailSentDate,
+              forumDate: DateTime.tryParse(forumDateController.text),
+              emailSentDate: emailSentDateController.text.isNotEmpty
+                  ? DateTime.tryParse(emailSentDateController.text)
+                  : null,
             ),
           );
       Navigator.of(context).pop();
@@ -78,6 +91,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
     super.initState();
     if (widget.forumAttendee != null) {
       nameController.text = widget.forumAttendee!.name;
+      spouseNameController.text = widget.forumAttendee!.spouseName ?? '';
       addressController.text = widget.forumAttendee!.address;
 
       final emails = widget.forumAttendee!.emails;
@@ -89,19 +103,27 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
       selectedType = widget.forumAttendee!.type.isNotEmpty
           ? widget.forumAttendee!.type
           : 'Pre-adoption';
-      forumDateController.text =
-          widget.forumAttendee!.forumDate.toString().split(' ')[0];
+      if (widget.forumAttendee!.forumDate != null) {
+        forumDateController.text =
+            widget.forumAttendee!.forumDate.toString().split(' ')[0];
+      }
+      if (widget.forumAttendee!.emailSentDate != null) {
+        emailSentDateController.text =
+            widget.forumAttendee!.emailSentDate.toString().split(' ')[0];
+      }
     }
   }
 
   @override
   void dispose() {
     nameController.dispose();
+    spouseNameController.dispose();
     addressController.dispose();
     for (var controller in emailControllers) {
       controller.dispose();
     }
     forumDateController.dispose();
+    emailSentDateController.dispose();
     super.dispose();
   }
 
@@ -166,6 +188,17 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   hintText: 'Enter a name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 20),
+              TextFormField(
+                maxLength: 50,
+                controller: spouseNameController,
+                keyboardType: TextInputType.name,
+                decoration: const InputDecoration(
+                  labelText: 'Spouse Name (Optional)',
+                  hintText: 'Enter spouse name if applicable',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -299,7 +332,54 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: emailSentDateController,
+                readOnly: true,
+                keyboardType: TextInputType.datetime,
+                onTap: () async {
+                  FocusScope.of(context).requestFocus(FocusNode());
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate:
+                        emailSentDateController.text.isNotEmpty
+                            ? DateTime.tryParse(emailSentDateController.text) ??
+                                DateTime.now()
+                            : DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (pickedDate != null) {
+                    emailSentDateController.text =
+                        pickedDate.toIso8601String().split('T').first;
+                    setState(() {});
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Email Sent Date (Issued Date)',
+                  hintText: 'Select a date if already sent',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (emailSentDateController.text.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              emailSentDateController.clear();
+                            });
+                          },
+                        ),
+                      const Padding(
+                        padding: EdgeInsets.only(right: 26.0),
+                        child: Icon(Icons.calendar_today),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

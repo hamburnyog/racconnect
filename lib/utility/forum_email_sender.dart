@@ -15,79 +15,106 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class ForumEmailSender {
   final BuildContext context;
   final List<ForumAttendee> attendees;
+  final double? nameTop;
+  final double? nameLeft;
+  final double? nameWidth;
+  final double? nameFontSize;
+  final double? addrTop;
+  final double? addrLeft;
+  final double? addrWidth;
+  final double? addrFontSize;
+  final double? forumDateTop;
+  final double? forumDateLeft;
+  final double? forumDateWidth;
+  final double? forumDateFontSize;
+  final double? certDateTop;
+  final double? certDateLeft;
+  final double? certDateWidth;
+  final double? certDateFontSize;
+  final double? qrTop;
+  final double? qrLeft;
+  final double? qrSize;
 
-  ForumEmailSender({required this.context, required this.attendees});
+  ForumEmailSender({
+    required this.context,
+    required this.attendees,
+    this.nameTop,
+    this.nameLeft,
+    this.nameWidth,
+    this.nameFontSize,
+    this.addrTop,
+    this.addrLeft,
+    this.addrWidth,
+    this.addrFontSize,
+    this.forumDateTop,
+    this.forumDateLeft,
+    this.forumDateWidth,
+    this.forumDateFontSize,
+    this.certDateTop,
+    this.certDateLeft,
+    this.certDateWidth,
+    this.certDateFontSize,
+    this.qrTop,
+    this.qrLeft,
+    this.qrSize,
+  });
 
   final ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
   final ValueNotifier<String> statusNotifier = ValueNotifier('Preparing...');
   late BuildContext dialogContext;
 
-  static String _formatOrdinal(int day) {
-    if (day >= 11 && day <= 13) return '${day}th';
-    switch (day % 10) {
-      case 1:
-        return '${day}st';
-      case 2:
-        return '${day}nd';
-      case 3:
-        return '${day}rd';
-      default:
-        return '${day}th';
-    }
-  }
-
-  static String _formatFullOrdinalDate(DateTime date) {
-    final dayOrdinal = _formatOrdinal(date.day);
-    final monthYear = DateFormat('MMMM yyyy').format(date);
-    return '$dayOrdinal of $monthYear';
-  }
-
-  Future<String> _getTemplate() async {
-    try {
-      return await rootBundle.loadString('assets/certificate/email_template.html');
-    } catch (e) {
-      debugPrint('Error loading email template from assets: $e');
-    }
-
-    // Default template fallback if asset fails to load
-    return '''<p>Dear {{name}},</p>
-<p>Isang mapagarugang araw!</p>
-<p>Attached is your Forum Certificate. We are truly grateful for your participation—this marks a meaningful first step in your adoption/foster care journey, and we commend you for taking it.</p>
-<p><b>Please note that this certificate is system-generated.</b> If you notice any concerns or require clarification, feel free to reach out and we will be happy to assist you.</p>
-<p>Thank you once again, and we wish you all the best as you move forward in this important and inspiring path.</p>
-<p>Kind regards,</p>
-<p><b>RACCO IV-A Calabarzon</b></p>''';
-  }
-
-  String _processTemplate(String template, ForumAttendee attendee) {
-    final forumDateStr = DateFormat(
-      'MMMM d, yyyy',
-    ).format(attendee.forumDate ?? DateTime.now());
-
-    return template
-        .replaceAll('{{name}}', attendee.name)
-        .replaceAll('{{forum_date}}', forumDateStr)
-        .replaceAll('{{address}}', attendee.address)
-        .replaceAll('{{type}}', attendee.type);
-  }
-
-  static Future<Uint8List> generateCertificatePdf({
+  static void addCertificatePage({
+    required pw.Document pdf,
     required ForumAttendee attendee,
     required Uint8List svgBytes,
     required pw.Font font,
     required pw.Font fontBold,
-  }) async {
-    final pdf = pw.Document(
-      theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-    );
-
+    double nameTop = 128.0,
+    double nameLeft = 46.0,
+    double nameWidth = 150.0,
+    double nameFontSize = 24.0,
+    double addrTop = 145.0,
+    double addrLeft = 46.0,
+    double addrWidth = 150.0,
+    double addrFontSize = 10.0,
+    double forumDateTop = 166.0,
+    double forumDateLeft = 50.0,
+    double forumDateWidth = 40.0,
+    double forumDateFontSize = 12.0,
+    double certDateTop = 224.0,
+    double certDateLeft = 72.0,
+    double certDateWidth = 56.0,
+    double certDateFontSize = 12.0,
+    double qrTop = 262.0,
+    double qrLeft = 193.0,
+    double qrSize = 9.0,
+  }) {
     final forumDateStr = DateFormat(
       'MMMM d, yyyy',
     ).format(attendee.forumDate ?? DateTime.now());
-    final certDateStr =
-        attendee.emailSentDate != null
-            ? _formatFullOrdinalDate(attendee.emailSentDate!)
-            : '(For sending)';
+
+    final sentDate = attendee.emailSentDate ?? DateTime.now();
+    final day = sentDate.day;
+    final monthYear = DateFormat('MMMM yyyy').format(sentDate);
+
+    String suffix = 'th';
+    if (day >= 11 && day <= 13) {
+      suffix = 'th';
+    } else {
+      switch (day % 10) {
+        case 1:
+          suffix = 'st';
+          break;
+        case 2:
+          suffix = 'nd';
+          break;
+        case 3:
+          suffix = 'rd';
+          break;
+        default:
+          suffix = 'th';
+      }
+    }
 
     final pageFormat = PdfPageFormat.a4.landscape.copyWith(
       marginTop: 0,
@@ -98,31 +125,6 @@ class ForumEmailSender {
 
     double x(double mm) => (mm / 210) * pageFormat.width;
     double y(double mm) => (mm / 297) * pageFormat.height;
-
-    // Calibration values (matching CertificatePreviewSheet defaults)
-    const double nameTop = 123.0;
-    const double nameLeft = 46.0;
-    const double nameWidth = 150.0;
-    const double nameFontSize = 24.0;
-
-    const double addrTop = 145.0;
-    const double addrLeft = 46.0;
-    const double addrWidth = 150.0;
-    const double addrFontSize = 10.0;
-
-    const double forumDateTop = 166.0;
-    const double forumDateLeft = 50.0;
-    const double forumDateWidth = 40.0;
-    const double forumDateFontSize = 12.0;
-
-    const double certDateTop = 224.0;
-    const double certDateLeft = 72.0;
-    const double certDateWidth = 56.0;
-    const double certDateFontSize = 12.0;
-
-    const double qrTop = 262.0;
-    const double qrLeft = 193.0;
-    const double qrSize = 9.0;
 
     pdf.addPage(
       pw.Page(
@@ -199,14 +201,51 @@ class ForumEmailSender {
                     ),
                   ),
                   alignment: pw.Alignment.center,
-                  child: pw.Text(
-                    certDateStr,
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: certDateFontSize,
-                      color: PdfColors.black,
-                    ),
-                  ),
+                  child: attendee.emailSentDate == null
+                      ? pw.Text(
+                          '(For sending)',
+                          style: pw.TextStyle(
+                            font: fontBold,
+                            fontSize: certDateFontSize,
+                            color: PdfColors.black,
+                          ),
+                        )
+                      : pw.RichText(
+                          text: pw.TextSpan(
+                            children: [
+                              pw.TextSpan(
+                                text: '$day',
+                                style: pw.TextStyle(
+                                  font: fontBold,
+                                  fontSize: certDateFontSize,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                              pw.WidgetSpan(
+                                baseline: 0.5,
+                                child: pw.Transform.translate(
+                                  offset: const PdfPoint(0, 4),
+                                  child: pw.Text(
+                                    suffix,
+                                    style: pw.TextStyle(
+                                      font: fontBold,
+                                      fontSize: certDateFontSize * 0.6,
+                                      color: PdfColors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              pw.TextSpan(
+                                text: ' of $monthYear',
+                                style: pw.TextStyle(
+                                  font: fontBold,
+                                  fontSize: certDateFontSize,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
               ),
               pw.Positioned(
@@ -225,12 +264,68 @@ class ForumEmailSender {
         },
       ),
     );
+  }
+
+  Future<String> _getTemplate() async {
+    try {
+      return await rootBundle.loadString('assets/certificate/email_template.html');
+    } catch (e) {
+      debugPrint('Error loading email template from assets: $e');
+    }
+
+    // Default template fallback if asset fails to load
+    return '''<p>Dear {{name}},</p>
+<p>Isang mapagarugang araw!</p>
+<p>Attached is your Forum Certificate. We are truly grateful for your participation—this marks a meaningful first step in your adoption/foster care journey, and we commend you for taking it.</p>
+<p><b>Please note that this certificate is system-generated.</b> If you notice any concerns or require clarification, feel free to reach out and we will be happy to assist you.</p>
+<p>Thank you once again, and we wish you all the best as you move forward in this important and inspiring path.</p>
+<p>Kind regards,</p>
+<p><b>RACCO IV-A Calabarzon</b></p>''';
+  }
+
+  String _processTemplate(String template, ForumAttendee attendee) {
+    final forumDateStr = DateFormat(
+      'MMMM d, yyyy',
+    ).format(attendee.forumDate ?? DateTime.now());
+
+    return template
+        .replaceAll('{{name}}', attendee.name)
+        .replaceAll('{{forum_date}}', forumDateStr)
+        .replaceAll('{{address}}', attendee.address)
+        .replaceAll('{{type}}', attendee.type);
+  }
+
+  static Future<Uint8List> generateCertificatePdf({
+    required ForumAttendee attendee,
+    required Uint8List svgBytes,
+    required pw.Font font,
+    required pw.Font fontBold,
+  }) async {
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+    );
+
+    addCertificatePage(
+      pdf: pdf,
+      attendee: attendee,
+      svgBytes: svgBytes,
+      font: font,
+      fontBold: fontBold,
+    );
 
     return pdf.save();
   }
 
   Future<void> sendEmails() async {
     if (attendees.isEmpty) return;
+
+    if (smtpUsername.isEmpty || smtpPassword.isEmpty) {
+      _showSnackBar(
+        'SMTP Error: Username or Password not configured. Please check your environment settings.',
+        false,
+      );
+      return;
+    }
 
     _showProgressDialog();
 
@@ -242,7 +337,12 @@ class ForumEmailSender {
       final font = await PdfGoogleFonts.libreBaskervilleRegular();
       final fontBold = await PdfGoogleFonts.libreBaskervilleBold();
 
-      final smtpServerInstance = gmail(smtpUsername, smtpPassword);
+      final smtpServerInstance = SmtpServer(
+        smtpServer,
+        port: smtpPort,
+        username: smtpUsername,
+        password: smtpPassword,
+      );
 
       final rawTemplate = await _getTemplate();
 
@@ -286,51 +386,132 @@ class ForumEmailSender {
           final svgData = await rootBundle.load(svgPath);
           final svgBytes = svgData.buffer.asUint8List();
 
-          // Determine if this is the first time sending
-          final bool isFirstTime = attendee.emailSentDate == null;
-          // Use original date if available, otherwise use 'now'
-          final DateTime sentDateToUse =
-              attendee.emailSentDate ?? DateTime.now();
+          // Determine the date to use for the PDF
+          // If first time sending, use 'now'. If already sent, use the existing date.
+          final DateTime sentDateToUse = attendee.emailSentDate ?? DateTime.now();
 
           // Create a version of attendee with the correct date for the PDF
-          final attendeeForCert = ForumAttendee(
-            id: attendee.id,
-            name: attendee.name,
-            address: attendee.address,
-            email: attendee.email,
-            type: attendee.type,
-            forumDate: attendee.forumDate,
-            emailSentDate: sentDateToUse,
-          );
-
-          final bytes = await generateCertificatePdf(
-            attendee: attendeeForCert,
-            svgBytes: svgBytes,
-            font: font,
-            fontBold: fontBold,
-          );
+          final attendeeForCert = attendee.copyWith(emailSentDate: sentDateToUse);
 
           final forumDateStr = DateFormat(
             'MMMM d, yyyy',
           ).format(attendee.forumDate ?? DateTime.now());
 
           final htmlBody = _processTemplate(rawTemplate, attendee);
+          
+          final fromEmail = smtpFromEmail.isNotEmpty 
+              ? smtpFromEmail 
+              : (smtpUsername.contains('@') ? smtpUsername : '');
+
+          if (fromEmail.isEmpty) {
+            failed++;
+            statusNotifier.value = 'Invalid "From" email configuration';
+            debugPrint('Error: smtpFromEmail and smtpUsername are not valid email addresses.');
+            continue;
+          }
+
+          final recipients = attendee.emails;
+
+          if (recipients.isEmpty) {
+            failed++;
+            statusNotifier.value = 'No valid email for ${attendee.name}';
+            continue;
+          }
 
           final message =
               Message()
-                ..from = Address(smtpFromEmail, smtpFromName)
-                ..recipients.addAll(attendee.emails)
+                ..from = Address(fromEmail, smtpFromName)
+                ..recipients.addAll(recipients)
                 ..subject =
                     'Forum Certificate ($forumDateStr): ${attendee.name}'
-                ..html = htmlBody
-                ..attachments.add(
-                  StreamAttachment(
-                    Stream.value(bytes),
-                    'application/pdf',
-                    fileName:
-                        'Certificate_${attendee.name.replaceAll(' ', '_')}.pdf',
-                  ),
-                );
+                ..html = htmlBody;
+
+          // 1. Add Main Certificate Attachment
+          final mainPdf = pw.Document(
+            theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+          );
+
+          addCertificatePage(
+            pdf: mainPdf,
+            attendee: attendeeForCert,
+            svgBytes: svgBytes,
+            font: font,
+            fontBold: fontBold,
+            nameTop: nameTop ?? 128.0,
+            nameLeft: nameLeft ?? 46.0,
+            nameWidth: nameWidth ?? 150.0,
+            nameFontSize: nameFontSize ?? 24.0,
+            addrTop: addrTop ?? 145.0,
+            addrLeft: addrLeft ?? 46.0,
+            addrWidth: addrWidth ?? 150.0,
+            addrFontSize: addrFontSize ?? 10.0,
+            forumDateTop: forumDateTop ?? 166.0,
+            forumDateLeft: forumDateLeft ?? 50.0,
+            forumDateWidth: forumDateWidth ?? 40.0,
+            forumDateFontSize: forumDateFontSize ?? 12.0,
+            certDateTop: certDateTop ?? 224.0,
+            certDateLeft: certDateLeft ?? 72.0,
+            certDateWidth: certDateWidth ?? 56.0,
+            certDateFontSize: certDateFontSize ?? 12.0,
+            qrTop: qrTop ?? 262.0,
+            qrLeft: qrLeft ?? 193.0,
+            qrSize: qrSize ?? 9.0,
+          );
+
+          final mainBytes = await mainPdf.save();
+          message.attachments.add(
+            StreamAttachment(
+              Stream.value(mainBytes),
+              'application/pdf',
+              fileName:
+                  'Certificate_${attendee.name.replaceAll(' ', '_')}.pdf',
+            ),
+          );
+
+          // 2. Add Spouse Certificate Attachment if available
+          if (attendee.spouseName != null && attendee.spouseName!.isNotEmpty) {
+            final spousePdf = pw.Document(
+              theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+            );
+            final spouseAttendeeForCert = attendeeForCert.copyWith(
+              name: attendee.spouseName!,
+            );
+            addCertificatePage(
+              pdf: spousePdf,
+              attendee: spouseAttendeeForCert,
+              svgBytes: svgBytes,
+              font: font,
+              fontBold: fontBold,
+              nameTop: nameTop ?? 128.0,
+              nameLeft: nameLeft ?? 46.0,
+              nameWidth: nameWidth ?? 150.0,
+              nameFontSize: nameFontSize ?? 24.0,
+              addrTop: addrTop ?? 145.0,
+              addrLeft: addrLeft ?? 46.0,
+              addrWidth: addrWidth ?? 150.0,
+              addrFontSize: addrFontSize ?? 10.0,
+              forumDateTop: forumDateTop ?? 166.0,
+              forumDateLeft: forumDateLeft ?? 50.0,
+              forumDateWidth: forumDateWidth ?? 40.0,
+              forumDateFontSize: forumDateFontSize ?? 12.0,
+              certDateTop: certDateTop ?? 224.0,
+              certDateLeft: certDateLeft ?? 72.0,
+              certDateWidth: certDateWidth ?? 56.0,
+              certDateFontSize: certDateFontSize ?? 12.0,
+              qrTop: qrTop ?? 262.0,
+              qrLeft: qrLeft ?? 193.0,
+              qrSize: qrSize ?? 9.0,
+            );
+            final spouseBytes = await spousePdf.save();
+            message.attachments.add(
+              StreamAttachment(
+                Stream.value(spouseBytes),
+                'application/pdf',
+                fileName:
+                    'Certificate_${attendee.spouseName!.replaceAll(' ', '_')}.pdf',
+              ),
+            );
+          }
 
           // Add CID image attachments
           emailImages.forEach((name, data) {
@@ -350,18 +531,10 @@ class ForumEmailSender {
           await send(message, smtpServerInstance);
 
           // ONLY update the database if this is the first successful send
-          if (isFirstTime && context.mounted) {
+          if (attendee.emailSentDate == null && context.mounted) {
             await context.read<ForumCubit>().updateAttendee(
               attendee.id,
-              ForumAttendee(
-                id: attendee.id,
-                name: attendee.name,
-                address: attendee.address,
-                email: attendee.email,
-                type: attendee.type,
-                forumDate: attendee.forumDate,
-                emailSentDate: sentDateToUse,
-              ),
+              attendee.copyWith(emailSentDate: sentDateToUse),
               silent: true,
             );
           }

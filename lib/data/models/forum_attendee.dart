@@ -10,6 +10,7 @@ class ForumAttendee {
   final String address;
   final String email;
   final String type;
+  final String? spouseName;
   final DateTime? forumDate;
   final DateTime? emailSentDate;
 
@@ -23,6 +24,7 @@ class ForumAttendee {
     required this.address,
     this.email = '',
     this.type = '',
+    this.spouseName,
     this.forumDate,
     this.emailSentDate,
   });
@@ -30,15 +32,45 @@ class ForumAttendee {
   List<String> get emails =>
       email.split('/').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
+  ForumAttendee copyWith({
+    String? id,
+    String? collectionId,
+    String? collectionName,
+    String? created,
+    String? updated,
+    String? name,
+    String? address,
+    String? email,
+    String? type,
+    String? spouseName,
+    DateTime? forumDate,
+    DateTime? emailSentDate,
+  }) {
+    return ForumAttendee(
+      id: id ?? this.id,
+      collectionId: collectionId ?? this.collectionId,
+      collectionName: collectionName ?? this.collectionName,
+      created: created ?? this.created,
+      updated: updated ?? this.updated,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      email: email ?? this.email,
+      type: type ?? this.type,
+      spouseName: spouseName ?? this.spouseName,
+      forumDate: forumDate ?? this.forumDate,
+      emailSentDate: emailSentDate ?? this.emailSentDate,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'address': address,
       'email': email,
       'type': type,
-      if (forumDate != null) 'forumDate': forumDate!.toIso8601String(),
-      if (emailSentDate != null)
-        'emailSentDate': emailSentDate!.toIso8601String(),
+      'spouseName': spouseName,
+      'forumDate': forumDate?.toIso8601String(),
+      'emailSentDate': emailSentDate?.toIso8601String(),
     };
   }
 
@@ -53,6 +85,7 @@ class ForumAttendee {
       address: map['address'] ?? '',
       email: map['email'] ?? '',
       type: map['type'] ?? '',
+      spouseName: map['spouseName'],
       forumDate:
           map['forumDate'] != null && map['forumDate'].toString().isNotEmpty
               ? DateTime.tryParse(map['forumDate'].toString())

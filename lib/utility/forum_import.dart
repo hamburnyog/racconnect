@@ -126,13 +126,17 @@ class ForumImport {
   
               final dateStr = clean(row[1]);
               final name = clean(row[2]);
+              final spouseRaw = row.length > 4 ? clean(row[4]) : '';
+              final spouseName = (spouseRaw.toLowerCase() == 'n/a' || spouseRaw.isEmpty)
+                  ? null
+                  : spouseRaw;
               final address = clean(row[5]);
-  
+
               if (name.isEmpty) {
                 failedDetails.add('Row $rowNum: Name is empty after cleaning');
                 continue;
               }
-  
+
               // Email extraction
               final rawEmail = row[8].toString();
               final currentEmails = rawEmail
@@ -140,9 +144,9 @@ class ForumImport {
                   .map((e) => e.trim())
                   .where((e) => e.isNotEmpty && e.contains('@'))
                   .toList();
-  
+
               final emailString = currentEmails.join(' / ');
-  
+
               String type = 'Pre-adoption';
               if (row.length > 9) {
                 final rawCategory = clean(row[9]).toLowerCase();
@@ -150,7 +154,7 @@ class ForumImport {
                   type = 'Foster Care';
                 }
               }
-  
+
               DateTime? forumDate;
               String dateKeyPart = 'no-date';
               final dateFormats = [
@@ -160,7 +164,7 @@ class ForumImport {
                 'MM-dd-yyyy',
                 'd/M/yyyy'
               ];
-  
+
               if (dateStr.isNotEmpty) {
                 for (var format in dateFormats) {
                   try {
@@ -170,18 +174,18 @@ class ForumImport {
                   } catch (_) {}
                 }
               }
-  
+
               // Duplicate Check
               final currentNameDateKey = '${name.toLowerCase()}_$dateKeyPart';
               bool isDuplicate =
                   existingNamesWithDates.contains(currentNameDateKey);
-  
+
               if (!isDuplicate && currentEmails.isNotEmpty) {
                 isDuplicate = currentEmails.any(
                   (e) => existingEmails.contains(e.toLowerCase()),
                 );
               }
-  
+
                           if (isDuplicate) {
                             skippedCount++;
                           } else {
@@ -190,9 +194,11 @@ class ForumImport {
                               address: address,
                               email: emailString,
                               type: type,
+                              spouseName: spouseName,
                               forumDate: forumDate,
                             );
                             await _repository.addAttendee(attendee);
+
                             success++;
               
                             existingNamesWithDates.add(currentNameDateKey);

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -11,6 +12,7 @@ class WfhCubit extends Cubit<WfhState> {
   WfhCubit() : super(WfhInitial());
 
   Future<void> getInitialWfhCount() async {
+    if (isClosed) return;
     emit(WfhLoading());
     final today = DateTime.now();
     final startOfDay =
@@ -73,20 +75,26 @@ class WfhCubit extends Cubit<WfhState> {
         }
       }
 
+      if (isClosed) return;
       emit(WfhLoaded(wfhEmployeeNumbers.length));
     } catch (e) {
+      if (isClosed) return;
       emit(WfhError(e.toString()));
     }
   }
 
   void subscribeToWfhUpdates() {
-    _pb.collection('attendance').subscribe('*', (e) {
-      if (e.action == 'create' ||
-          e.action == 'delete' ||
-          e.action == 'update') {
-        getInitialWfhCount();
-      }
-    });
+    try {
+      _pb.collection('attendance').subscribe('*', (e) {
+        if (e.action == 'create' ||
+            e.action == 'delete' ||
+            e.action == 'update') {
+          getInitialWfhCount();
+        }
+      });
+    } catch (e) {
+      debugPrint('Error subscribing to WFH updates: $e');
+    }
   }
 
   @override

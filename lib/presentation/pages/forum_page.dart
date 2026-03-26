@@ -203,15 +203,7 @@ class _ForumPageState extends State<ForumPage> {
       try {
         await repository.updateAttendee(
           attendee.id,
-          ForumAttendee(
-            id: attendee.id,
-            name: attendee.name,
-            address: attendee.address,
-            email: attendee.email,
-            type: attendee.type,
-            forumDate: attendee.forumDate,
-            emailSentDate: now,
-          ),
+          attendee.copyWith(emailSentDate: now),
         );
         count++;
       } catch (_) {}
@@ -299,13 +291,67 @@ class _ForumPageState extends State<ForumPage> {
                             color: Theme.of(context).primaryColor,
                             child: ListTile(
                               minTileHeight: 70,
-                              title: const Text(
-                                'Certificates',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                              title: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Certificates',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (_statusFilter == 'All')
+                                    BlocBuilder<ForumCubit, ForumState>(
+                                      builder: (context, state) {
+                                        if (state is ForumLoaded) {
+                                          final unsentCount = state.allAttendees
+                                              .where((a) => a.emailSentDate == null)
+                                              .length;
+                                          if (unsentCount > 0) {
+                                            return Container(
+                                              margin: const EdgeInsets.only(left: 8),
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.withAlpha(230),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black26,
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.mail_outline,
+                                                    color: Colors.white,
+                                                    size: 14,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Unsent: $unsentCount',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }
+                                        }
+                                        return const SizedBox.shrink();
+                                      },
+                                    ),
+                                ],
                               ),
                               subtitle: Text(
                                 !isSmallScreen
@@ -442,6 +488,8 @@ class _ForumPageState extends State<ForumPage> {
                                   attendees.retainWhere((attendee) {
                                     final attendeeName =
                                         attendee.name.toLowerCase();
+                                    final spouseName =
+                                        (attendee.spouseName ?? '').toLowerCase();
                                     final attendeeAddress =
                                         attendee.address.toLowerCase();
                                     final forumDateStr = attendee.forumDate !=
@@ -450,9 +498,17 @@ class _ForumPageState extends State<ForumPage> {
                                             .format(attendee.forumDate!)
                                             .toLowerCase()
                                         : '';
+                                    final emailSentDateStr = attendee.emailSentDate !=
+                                            null
+                                        ? DateFormat('MMMM d, yyyy')
+                                            .format(attendee.emailSentDate!)
+                                            .toLowerCase()
+                                        : '';
                                     return attendeeName.contains(_searchQuery) ||
+                                        spouseName.contains(_searchQuery) ||
                                         attendeeAddress.contains(_searchQuery) ||
-                                        forumDateStr.contains(_searchQuery);
+                                        forumDateStr.contains(_searchQuery) ||
+                                        emailSentDateStr.contains(_searchQuery);
                                   });
                                 }
 
@@ -465,29 +521,28 @@ class _ForumPageState extends State<ForumPage> {
                                       attendee.emailSentDate == null);
                                 }
 
-                                // Apply sorting: Sent first, then by latest date
+                                // Apply sorting: Unsent first, then by latest forum date
                                 attendees.sort((a, b) {
-                                  // 1. Sent vs Unsent
-                                  if (a.emailSentDate != null &&
-                                      b.emailSentDate == null) {
-                                    return -1; // a comes first
-                                  }
+                                  // 1. Unsent vs Sent (Unsent comes first)
                                   if (a.emailSentDate == null &&
                                       b.emailSentDate != null) {
-                                    return 1; // b comes first
+                                    return -1; // a (unsent) comes first
                                   }
-
-                                  // 2. If both sent, latest emailSentDate first
                                   if (a.emailSentDate != null &&
-                                      b.emailSentDate != null) {
-                                    return b.emailSentDate!
-                                        .compareTo(a.emailSentDate!);
+                                      b.emailSentDate == null) {
+                                    return 1; // b (unsent) comes first
                                   }
 
-                                  // 3. If both unsent, latest forumDate first
-                                  final dateA = a.forumDate ?? DateTime(0);
-                                  final dateB = b.forumDate ?? DateTime(0);
-                                  return dateB.compareTo(dateA);
+                                  // 2. If both unsent, latest forumDate first
+                                  if (a.emailSentDate == null &&
+                                      b.emailSentDate == null) {
+                                    final dateA = a.forumDate ?? DateTime(0);
+                                    final dateB = b.forumDate ?? DateTime(0);
+                                    return dateB.compareTo(dateA);
+                                  }
+
+                                  // 3. If both sent, latest emailSentDate first
+                                  return b.emailSentDate!.compareTo(a.emailSentDate!);
                                 });
 
                                 if (attendees.isEmpty) {
@@ -625,7 +680,9 @@ class _ForumPageState extends State<ForumPage> {
                                                   ),
                                                 ),
                                                                                                                                                 title: Text(
-                                                                                                                                                  attendee.name,
+                                                                                                                                                  attendee.spouseName != null && attendee.spouseName!.isNotEmpty
+                                                                                                                                                      ? '${attendee.name} & ${attendee.spouseName}'
+                                                                                                                                                      : attendee.name,
                                                                                                                                                   style: TextStyle(
                                                                                                                                                     fontSize: 16,
                                                                                                                                                     fontWeight: FontWeight.bold,

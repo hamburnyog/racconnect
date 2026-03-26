@@ -22,8 +22,11 @@ String _getEnv(String key, String fromEnv, String fallback) {
 
 String get smtpServer => _getEnv(
     'SMTP_SERVER', const String.fromEnvironment('SMTP_SERVER'), 'smtp.gmail.com');
-int get smtpPort => int.parse(_getEnv(
-    'SMTP_PORT', const String.fromEnvironment('SMTP_PORT'), '587'));
+int get smtpPort {
+  final portStr = _getEnv(
+      'SMTP_PORT', const String.fromEnvironment('SMTP_PORT'), '587');
+  return int.tryParse(portStr) ?? 587;
+}
 String get smtpUsername =>
     _getEnv('SMTP_USERNAME', const String.fromEnvironment('SMTP_USERNAME'), '');
 String get smtpPassword =>

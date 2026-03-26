@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 import 'package:racconnect/data/models/forum_attendee.dart';
 import 'package:racconnect/logic/cubit/auth_cubit.dart';
 import 'package:racconnect/logic/cubit/forum_cubit.dart';
+import 'package:racconnect/presentation/widgets/forum_attendee_form.dart';
 import 'package:racconnect/utility/forum_email_sender.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -36,7 +37,9 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   pw.Font? _font;
   pw.Font? _fontBold;
   bool _isLoading = true;
+  bool _isUpdating = false;
   bool _showCalibration = false;
+  late String _selectedName;
 
   // Calibration State
   double nameTop = 128.0;
@@ -67,6 +70,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   @override
   void initState() {
     super.initState();
+    _selectedName = widget.attendee.name;
     _loadAssets();
     if (widget.showSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -115,29 +119,9 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     }
   }
 
-  String _formatOrdinal(int day) {
-    if (day >= 11 && day <= 13) return '${day}th';
-    switch (day % 10) {
-      case 1:
-        return '${day}st';
-      case 2:
-        return '${day}nd';
-      case 3:
-        return '${day}rd';
-      default:
-        return '${day}th';
-    }
-  }
-
-  String _formatFullOrdinalDate(DateTime date) {
-    final dayOrdinal = _formatOrdinal(date.day);
-    final monthYear = DateFormat('MMMM yyyy').format(date);
-    return '$dayOrdinal of $monthYear';
-  }
-
   void _resetToDefault() {
     setState(() {
-      nameTop = 123.0;
+      nameTop = 128.0;
       nameLeft = 46.0;
       nameWidth = 150.0;
       nameFontSize = 24.0;
@@ -159,18 +143,37 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     });
   }
 
-  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
+  Future<Uint8List> _generatePdfWithAttendee(PdfPageFormat format, ForumAttendee attendee) async {
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(base: _font, bold: _fontBold),
     );
 
     final forumDateStr = DateFormat(
       'MMMM d, yyyy',
-    ).format(widget.attendee.forumDate ?? DateTime.now());
-    final certDateStr =
-        widget.attendee.emailSentDate != null
-            ? _formatFullOrdinalDate(widget.attendee.emailSentDate!)
-            : '(For sending)';
+    ).format(attendee.forumDate ?? DateTime.now());
+
+    final sentDate = attendee.emailSentDate ?? DateTime.now();
+    final day = sentDate.day;
+    final monthYear = DateFormat('MMMM yyyy').format(sentDate);
+
+    String suffix = 'th';
+    if (day >= 11 && day <= 13) {
+      suffix = 'th';
+    } else {
+      switch (day % 10) {
+        case 1:
+          suffix = 'st';
+          break;
+        case 2:
+          suffix = 'nd';
+          break;
+        case 3:
+          suffix = 'rd';
+          break;
+        default:
+          suffix = 'th';
+      }
+    }
 
     final pageFormat = PdfPageFormat.a4.landscape.copyWith(
       marginTop: 0,
@@ -209,7 +212,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
                           : null,
                   alignment: pw.Alignment.center,
                   child: pw.Text(
-                    widget.attendee.name.toUpperCase(),
+                    _selectedName.toUpperCase(),
                     textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(
                       font: _fontBold,
@@ -236,7 +239,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
                           : null,
                   alignment: pw.Alignment.center,
                   child: pw.Text(
-                    widget.attendee.address,
+                    attendee.address,
                     textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(
                       font: _fontBold,
@@ -328,14 +331,51 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
                     ),
                   ),
                   alignment: pw.Alignment.center,
-                  child: pw.Text(
-                    certDateStr,
-                    style: pw.TextStyle(
-                      font: _fontBold,
-                      fontSize: certDateFontSize,
-                      color: PdfColors.black,
-                    ),
-                  ),
+                  child: attendee.emailSentDate == null
+                      ? pw.Text(
+                          '(For sending)',
+                          style: pw.TextStyle(
+                            font: _fontBold,
+                            fontSize: certDateFontSize,
+                            color: PdfColors.black,
+                          ),
+                        )
+                      : pw.RichText(
+                          text: pw.TextSpan(
+                            children: [
+                              pw.TextSpan(
+                                text: '$day',
+                                style: pw.TextStyle(
+                                  font: _fontBold,
+                                  fontSize: certDateFontSize,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                              pw.WidgetSpan(
+                                baseline: 0.5,
+                                child: pw.Transform.translate(
+                                  offset: const PdfPoint(0, 4),
+                                  child: pw.Text(
+                                    suffix,
+                                    style: pw.TextStyle(
+                                      font: _fontBold,
+                                      fontSize: certDateFontSize * 0.6,
+                                      color: PdfColors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              pw.TextSpan(
+                                text: ' of $monthYear',
+                                style: pw.TextStyle(
+                                  font: _fontBold,
+                                  fontSize: certDateFontSize,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
               ),
 
@@ -355,7 +395,7 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
                           : null,
                   child: pw.BarcodeWidget(
                     barcode: pw.Barcode.qrCode(),
-                    data: widget.attendee.id,
+                    data: attendee.id,
                     width: x(qrSize),
                     height: x(qrSize),
                     drawText: false,
@@ -371,12 +411,74 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     return pdf.save();
   }
 
-  Future<void> _savePdf() async {
+  Future<void> _savePdfWithAttendee(ForumAttendee attendee) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final bytes = await _generatePdf(PdfPageFormat.a4.landscape);
+      final pdf = pw.Document(
+        theme: pw.ThemeData.withFont(base: _font, bold: _fontBold),
+      );
+
+      // Add main attendee page
+      ForumEmailSender.addCertificatePage(
+        pdf: pdf,
+        attendee: attendee,
+        svgBytes: _svgBytes!,
+        font: _font!,
+        fontBold: _fontBold!,
+        nameTop: nameTop,
+        nameLeft: nameLeft,
+        nameWidth: nameWidth,
+        nameFontSize: nameFontSize,
+        addrTop: addrTop,
+        addrLeft: addrLeft,
+        addrWidth: addrWidth,
+        addrFontSize: addrFontSize,
+        forumDateTop: forumDateTop,
+        forumDateLeft: forumDateLeft,
+        forumDateWidth: forumDateWidth,
+        forumDateFontSize: forumDateFontSize,
+        certDateTop: certDateTop,
+        certDateLeft: certDateLeft,
+        certDateWidth: certDateWidth,
+        certDateFontSize: certDateFontSize,
+        qrTop: qrTop,
+        qrLeft: qrLeft,
+        qrSize: qrSize,
+      );
+
+      // Add spouse page if exists
+      if (attendee.spouseName != null && attendee.spouseName!.isNotEmpty) {
+        ForumEmailSender.addCertificatePage(
+          pdf: pdf,
+          attendee: attendee.copyWith(name: attendee.spouseName!),
+          svgBytes: _svgBytes!,
+          font: _font!,
+          fontBold: _fontBold!,
+          nameTop: nameTop,
+          nameLeft: nameLeft,
+          nameWidth: nameWidth,
+          nameFontSize: nameFontSize,
+          addrTop: addrTop,
+          addrLeft: addrLeft,
+          addrWidth: addrWidth,
+          addrFontSize: addrFontSize,
+          forumDateTop: forumDateTop,
+          forumDateLeft: forumDateLeft,
+          forumDateWidth: forumDateWidth,
+          forumDateFontSize: forumDateFontSize,
+          certDateTop: certDateTop,
+          certDateLeft: certDateLeft,
+          certDateWidth: certDateWidth,
+          certDateFontSize: certDateFontSize,
+          qrTop: qrTop,
+          qrLeft: qrLeft,
+          qrSize: qrSize,
+        );
+      }
+
+      final bytes = await pdf.save();
       final fileName =
-          'Certificate_${widget.attendee.name.replaceAll(' ', '_')}.pdf';
+          'Certificate_${attendee.name.replaceAll(' ', '_')}.pdf';
 
       if (kIsWeb) {
         // Handle web if needed
@@ -423,8 +525,8 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     }
   }
 
-  Future<void> _sendEmail() async {
-    if (widget.attendee.email.isEmpty) {
+  Future<void> _sendEmailWithAttendee(ForumAttendee attendee) async {
+    if (attendee.email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No email address provided for this recipient.'),
@@ -435,13 +537,32 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
 
     final sender = ForumEmailSender(
       context: context,
-      attendees: [widget.attendee],
+      attendees: [attendee],
+      nameTop: nameTop,
+      nameLeft: nameLeft,
+      nameWidth: nameWidth,
+      nameFontSize: nameFontSize,
+      addrTop: addrTop,
+      addrLeft: addrLeft,
+      addrWidth: addrWidth,
+      addrFontSize: addrFontSize,
+      forumDateTop: forumDateTop,
+      forumDateLeft: forumDateLeft,
+      forumDateWidth: forumDateWidth,
+      forumDateFontSize: forumDateFontSize,
+      certDateTop: certDateTop,
+      certDateLeft: certDateLeft,
+      certDateWidth: certDateWidth,
+      certDateFontSize: certDateFontSize,
+      qrTop: qrTop,
+      qrLeft: qrLeft,
+      qrSize: qrSize,
     );
 
     await sender.sendEmails();
   }
 
-  Future<void> _markAsSent() async {
+  Future<void> _markAsSentWithAttendee(ForumAttendee attendee) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -463,24 +584,14 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
     );
 
     if (confirm == true && mounted) {
-      final updatedAttendee = ForumAttendee(
-        id: widget.attendee.id,
-        name: widget.attendee.name,
-        address: widget.attendee.address,
-        email: widget.attendee.email,
-        type: widget.attendee.type,
-        forumDate: widget.attendee.forumDate,
+      final updatedAttendee = attendee.copyWith(
         emailSentDate: DateTime.now(),
       );
 
       await context.read<ForumCubit>().updateAttendee(
-            widget.attendee.id,
+            attendee.id,
             updatedAttendee,
           );
-
-      if (mounted) {
-        Navigator.pop(context); // Close the preview sheet
-      }
     }
   }
 
@@ -673,125 +784,207 @@ class _CertificatePreviewSheetState extends State<CertificatePreviewSheet> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: SizedBox.shrink());
     }
 
     final width = MediaQuery.of(context).size.width;
     final bool isLargeScreen = width > 900;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
+    return BlocConsumer<ForumCubit, ForumState>(
+      listener: (context, state) {
+        if (state is ForumLoading) {
+          setState(() => _isUpdating = true);
+        } else if (state is ForumUpdateSuccess ||
+            state is ForumUpdateSilentSuccess ||
+            state is ForumLoaded ||
+            state is ForumError) {
+          setState(() => _isUpdating = false);
+        }
+      },
+      builder: (context, state) {
+        ForumAttendee attendee = widget.attendee;
+        if (state is ForumLoaded) {
+          try {
+            attendee = state.allAttendees
+                .firstWhere((a) => a.id == widget.attendee.id);
+          } catch (_) {}
+        }
+
+        return Stack(
           children: [
-            AppBar(
-              title: Text('Certificate: ${widget.attendee.name}'),
-              automaticallyImplyLeading: false,
-              actions: [
-                if (_showCalibration)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _resetToDefault,
-                    tooltip: 'Reset to Default Values',
-                  ),
-                if (widget.isAuthorized)
-                  IconButton(
-                    icon: Icon(
-                      _showCalibration ? Icons.visibility_off : Icons.tune,
-                    ),
-                    onPressed: () =>
-                        setState(() => _showCalibration = !_showCalibration),
-                    tooltip: 'Toggle Calibration',
-                  ),
-                if (!_showCalibration) ...[
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, authState) {
-                      String role = '';
-                      if (authState is AuthenticatedState) {
-                        role = authState.user.role ?? '';
-                      }
-                      if (role == 'Developer') {
-                        return IconButton(
-                          icon: const Icon(Icons.mark_email_read),
-                          onPressed: _markAsSent,
-                          tooltip: 'Mark as Sent',
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                  if (widget.isAuthorized)
-                    IconButton(
-                      icon: const Icon(Icons.forward_to_inbox),
-                      onPressed: _sendEmail,
-                      tooltip: 'Send to Email',
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.save_alt),
-                    onPressed: _savePdf,
-                    tooltip: 'Save as PDF',
-                  ),
-                ],
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-              ],
-            ),
-            Expanded(
-              child:
-                  isLargeScreen
-                      ? Row(
-                        children: [
-                          Expanded(
-                            flex: _showCalibration ? 80 : 100,
-                            child: PdfPreview(
-                              padding: EdgeInsets.zero,
-                              key: ValueKey(
-                                '$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize',
-                              ),
-                              build: _generatePdf,
-                              initialPageFormat: PdfPageFormat.a4.landscape,
-                              canChangePageFormat: false,
-                              canChangeOrientation: false,
-                              canDebug: false,
-                              allowPrinting: false,
-                              allowSharing: false,
-                              actions: [],
-                            ),
+                child: Column(
+                  children: [
+                    AppBar(
+                      title: Text('Certificate: $_selectedName'),
+                      automaticallyImplyLeading: false,
+                      actions: [
+                        if (attendee.spouseName != null &&
+                            attendee.spouseName!.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.swap_horiz),
+                            tooltip:
+                                'Switch to ${_selectedName == attendee.name ? 'Spouse' : 'Main'} Certificate',
+                            onPressed: () {
+                              setState(() {
+                                _selectedName = (_selectedName == attendee.name)
+                                    ? attendee.spouseName!
+                                    : attendee.name;
+                              });
+                            },
                           ),
-                          if (_showCalibration) _buildCalibrationPanel(true),
-                        ],
-                      )
-                      : Column(
-                        children: [
-                          Expanded(
-                            child: PdfPreview(
-                              padding: EdgeInsets.zero,
-                              key: ValueKey(
-                                '$_showCalibration-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize',
-                              ),
-                              build: _generatePdf,
-                              initialPageFormat: PdfPageFormat.a4.landscape,
-                              canChangePageFormat: false,
-                              canChangeOrientation: false,
-                              canDebug: false,
-                              allowPrinting: false,
-                              allowSharing: false,
-                              actions: [],
-                            ),
+                        if (_showCalibration)
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _resetToDefault,
+                            tooltip: 'Reset to Default Values',
                           ),
-                          if (_showCalibration) _buildCalibrationPanel(false),
+                        if (widget.isAuthorized) ...[
+                          if (!_showCalibration)
+                            IconButton(
+                              icon: const Icon(Icons.edit_note),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  scrollControlDisabledMaxHeightRatio: 0.75,
+                                  showDragHandle: true,
+                                  useSafeArea: true,
+                                  builder: (BuildContext builder) {
+                                    return ForumAttendeeForm(
+                                      forumAttendee: attendee,
+                                    );
+                                  },
+                                );
+                              },
+                              tooltip: 'Edit Attendee',
+                            ),
                         ],
-                      ),
+                        if (!_showCalibration) ...[
+                          BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, authState) {
+                              String role = '';
+                              if (authState is AuthenticatedState) {
+                                role = authState.user.role ?? '';
+                              }
+                              if (role == 'Developer') {
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.mark_email_read),
+                                      onPressed: () =>
+                                          _markAsSentWithAttendee(attendee),
+                                      tooltip: 'Mark as Sent',
+                                    ),
+                                  ],
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                          if (widget.isAuthorized)
+                            IconButton(
+                              icon: const Icon(Icons.forward_to_inbox),
+                              onPressed: () => _sendEmailWithAttendee(attendee),
+                              tooltip: 'Send to Email',
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.save_alt),
+                            onPressed: () => _savePdfWithAttendee(attendee),
+                            tooltip: 'Save as PDF',
+                          ),
+                        ],
+                        if (widget.isAuthorized)
+                          IconButton(
+                            icon: Icon(
+                              _showCalibration
+                                  ? Icons.playlist_remove
+                                  : Icons.tune,
+                            ),
+                            onPressed: () => setState(
+                                () => _showCalibration = !_showCalibration),
+                            tooltip: _showCalibration
+                                ? 'Finish Calibration'
+                                : 'Toggle Calibration',
+                          ),
+                        if (!_showCalibration)
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                      ],
+                    ),
+                    Expanded(
+                      child: isLargeScreen
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  flex: _showCalibration ? 80 : 100,
+                                  child: PdfPreview(
+                                    padding: EdgeInsets.zero,
+                                    key: ValueKey(
+                                      '$_showCalibration-$_selectedName-${attendee.emailSentDate}-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize',
+                                    ),
+                                    build: (format) => _generatePdfWithAttendee(
+                                        format, attendee),
+                                    initialPageFormat:
+                                        PdfPageFormat.a4.landscape,
+                                    canChangePageFormat: false,
+                                    canChangeOrientation: false,
+                                    canDebug: false,
+                                    allowPrinting: false,
+                                    allowSharing: false,
+                                    actions: [],
+                                  ),
+                                ),
+                                if (_showCalibration)
+                                  _buildCalibrationPanel(true),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                Expanded(
+                                  child: PdfPreview(
+                                    padding: EdgeInsets.zero,
+                                    key: ValueKey(
+                                      '$_showCalibration-$_selectedName-${attendee.emailSentDate}-$nameTop-$nameLeft-$nameWidth-$nameFontSize-$addrTop-$addrLeft-$addrWidth-$addrFontSize-$forumDateTop-$forumDateLeft-$forumDateWidth-$forumDateFontSize-$certDateTop-$certDateLeft-$certDateWidth-$certDateFontSize-$qrTop-$qrLeft-$qrSize',
+                                    ),
+                                    build: (format) => _generatePdfWithAttendee(
+                                        format, attendee),
+                                    initialPageFormat:
+                                        PdfPageFormat.a4.landscape,
+                                    canChangePageFormat: false,
+                                    canChangeOrientation: false,
+                                    canDebug: false,
+                                    allowPrinting: false,
+                                    allowSharing: false,
+                                    actions: [],
+                                  ),
+                                ),
+                                if (_showCalibration)
+                                  _buildCalibrationPanel(false),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+            if (_isUpdating)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withAlpha(50),
+                ),
+              ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
