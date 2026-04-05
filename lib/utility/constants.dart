@@ -54,8 +54,8 @@ const String employeeNameText = '{EMPLOYEE NAME}';
 const String employeePositionText = '{POSITION}';
 const String supervisorNameText = '{SUPERVISORY NAME}';
 const String supervisorDesignationText = '{DESIGNATION}';
-const String employeeText = 'Employee:';
-const String supervisorText = 'Immediate Supervisor:';
+const String employeeText = '';
+const String supervisorText = '';
 const String dividerText = ':';
 
 enum ConnectionType { wifi, ethernet, mobile }
