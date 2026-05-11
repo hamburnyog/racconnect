@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
-import 'package:racconnect/logic/cubit/time_check_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/internet_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/time_check_cubit.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
 
 class DisconnectedScreen extends StatefulWidget {

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:racconnect/data/models/signatory_model.dart';
-import 'package:racconnect/logic/cubit/section_cubit.dart';
-import 'package:racconnect/logic/cubit/signatory_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/section_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/signatory_cubit.dart';
 
 class SignatoryForm extends StatefulWidget {
   final SignatoryModel? signatoryModel;

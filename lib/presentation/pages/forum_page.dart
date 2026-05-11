@@ -7,14 +7,15 @@ import 'package:intl/intl.dart';
 
 import 'package:racconnect/data/models/forum_attendee.dart';
 import 'package:racconnect/data/repositories/forum_repository.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/forum_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/forum_cubit.dart';
 import 'package:racconnect/presentation/pages/certificate_preview_sheet.dart';
 import 'package:racconnect/presentation/pages/qr_scanner_page.dart';
 import 'package:racconnect/presentation/widgets/forum_attendee_form.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/forum_email_sender.dart';
 import 'package:racconnect/utility/forum_import.dart';
+import 'package:racconnect/utility/constants.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class ForumPage extends StatefulWidget {
@@ -857,26 +858,87 @@ class _ForumPageState extends State<ForumPage> {
                         onPressed: () {
                           showDialog(
                             context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: const Text('Send All Unsent?'),
-                                  content: const Text(
-                                    'This will generate and send certificates to all recipients who have an email address but haven\'t received theirs yet.',
+                            builder: (context) => AlertDialog(
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.forward_to_inbox, color: Colors.deepPurple),
+                                  SizedBox(width: 10),
+                                  Text('Send All Unsent?'),
+                                ],
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'This will generate and send certificates to all unsent recipients.',
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancel'),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey.shade300),
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _sendAllUnsent();
-                                      },
-                                      child: const Text('Send All'),
+                                    child: Text.rich(
+                                      TextSpan(
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade800,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'This system uses Google Workspace when sending emails, which has built-in limits and restrictions.\n\n',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: Colors.grey.shade900,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text: 'To comply, emails are sent in ',
+                                          ),
+                                          TextSpan(
+                                            text: 'batches of $smtpBatchSize at a time, followed by a $smtpBatchDelayMinutes-minute cooldown per batch',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text: '. This ensures reliable delivery and prevents the ',
+                                          ),
+                                          const TextSpan(
+                                            text: 'RACCO official email from being banned',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text: '.',
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ],
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton.icon(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.close),
+                                  label: const Text('Cancel'),
                                 ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _sendAllUnsent();
+                                  },
+                                  icon: const Icon(Icons.send_rounded),
+                                  label: const Text('Send All'),
+                                ),
+                              ],
+                            ),
                           );
                         },
                         backgroundColor: Colors.white,

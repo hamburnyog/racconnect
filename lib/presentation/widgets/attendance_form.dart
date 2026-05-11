@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
-import 'package:racconnect/logic/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 
 class AttendanceForm extends StatefulWidget {
   final AttendanceModel? attendanceModel;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 
 class UniformReminderCard extends StatefulWidget {
   const UniformReminderCard({super.key});

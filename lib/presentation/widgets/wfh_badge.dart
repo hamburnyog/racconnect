@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:racconnect/logic/cubit/wfh_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/wfh_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 
 class WfhBadge extends StatelessWidget {

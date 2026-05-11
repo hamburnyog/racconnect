@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
-import 'package:racconnect/logic/cubit/suspension_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/suspension_form.dart';
 import 'package:skeletonizer/skeletonizer.dart';

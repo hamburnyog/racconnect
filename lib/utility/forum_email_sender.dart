@@ -8,7 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:racconnect/data/models/forum_attendee.dart';
-import 'package:racconnect/logic/cubit/forum_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/forum_cubit.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -62,6 +62,7 @@ class ForumEmailSender {
   final ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
   final ValueNotifier<String> statusNotifier = ValueNotifier('Preparing...');
   late BuildContext dialogContext;
+  bool _isCancelled = false;
 
   static void addCertificatePage({
     required pw.Document pdf,
@@ -266,11 +267,23 @@ class ForumEmailSender {
     );
   }
 
-  Future<String> _getTemplate() async {
+  Future<String> _getTemplate({bool isFosterCare = false}) async {
+    final fileName = isFosterCare
+        ? 'foster_care_email_template.html'
+        : 'email_template.html';
     try {
-      return await rootBundle.loadString('assets/certificate/email_template.html');
+      return await rootBundle.loadString('assets/certificate/$fileName');
     } catch (e) {
-      debugPrint('Error loading email template from assets: $e');
+      debugPrint('Error loading email template $fileName from assets: $e');
+    }
+
+    if (isFosterCare) {
+      return '''<p>Dear Ma'am/Sir:</p>
+<p>Good day, attached is your certificate of attendance for completing the foster care forum last {{forum_date}}.</p>
+<p>If you have a correction in the issued certificate, kindly inform us</p>
+<p><b>Reminder:</b></p>
+<p>Please wait at least two (2) weeks after receiving this certificate to be contacted by your assigned social worker. During this time, the social worker will reach out to you to discuss the next steps and guide you through the succeeding process of your application.</p>
+<p>Thank you!</p>''';
     }
 
     // Default template fallback if asset fails to load
@@ -345,6 +358,7 @@ class ForumEmailSender {
       );
 
       final rawTemplate = await _getTemplate();
+      final fosterTemplate = await _getTemplate(isFosterCare: true);
 
       // Load used email images from assets
       final Map<String, Uint8List> emailImages = {};
@@ -370,6 +384,29 @@ class ForumEmailSender {
       }
 
       for (int i = 0; i < attendees.length; i++) {
+        if (_isCancelled) {
+          statusNotifier.value = 'Sending cancelled by user.';
+          break;
+        }
+
+        // --- SMTP Abuse Prevention (Batching & Delay) ---
+        if (i > 0 && i % smtpBatchSize == 0) {
+          final delay = smtpBatchDelayMinutes;
+          for (int second = delay * 60; second > 0; second--) {
+            if (_isCancelled) break;
+            final minutes = second ~/ 60;
+            final seconds = second % 60;
+            statusNotifier.value =
+                'Cooldown: Waiting $minutes:${seconds.toString().padLeft(2, '0')} to prevent SMTP abuse...';
+            await Future.delayed(const Duration(seconds: 1));
+          }
+          if (_isCancelled) {
+            statusNotifier.value = 'Sending cancelled by user.';
+            break;
+          }
+        }
+        // ------------------------------------------------
+
         final attendee = attendees[i];
         statusNotifier.value = 'Sending to ${attendee.name}...';
         progressNotifier.value = i / total;
@@ -397,25 +434,28 @@ class ForumEmailSender {
             'MMMM d, yyyy',
           ).format(attendee.forumDate ?? DateTime.now());
 
-          final htmlBody = _processTemplate(rawTemplate, attendee);
+          final htmlBody = _processTemplate(
+            isFosterCare ? fosterTemplate : rawTemplate,
+            attendee,
+          );
           
           final fromEmail = smtpFromEmail.isNotEmpty 
               ? smtpFromEmail 
               : (smtpUsername.contains('@') ? smtpUsername : '');
 
           if (fromEmail.isEmpty) {
-            failed++;
+            failed = total - success;
             statusNotifier.value = 'Invalid "From" email configuration';
             debugPrint('Error: smtpFromEmail and smtpUsername are not valid email addresses.');
-            continue;
+            break; // Stop on configuration error
           }
 
           final recipients = attendee.emails;
 
           if (recipients.isEmpty) {
-            failed++;
+            failed = total - success;
             statusNotifier.value = 'No valid email for ${attendee.name}';
-            continue;
+            break; 
           }
 
           final message =
@@ -540,11 +580,10 @@ class ForumEmailSender {
           }
           success++;
         } catch (e) {
-          failed++;
-          statusNotifier.value = 'Failed for ${attendee.name}: $e';
+          failed = total - success;
+          statusNotifier.value = 'Sending interrupted: $e';
           debugPrint('Error sending email to ${attendee.name}: $e');
-          // Wait a bit so user can see the error
-          await Future.delayed(const Duration(seconds: 3));
+          break; // Interrupt sending on first failure
         }
       }
     } catch (e) {
@@ -599,6 +638,15 @@ class ForumEmailSender {
               ],
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _isCancelled = true;
+                statusNotifier.value = 'Cancelling...';
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
         );
       },
     );

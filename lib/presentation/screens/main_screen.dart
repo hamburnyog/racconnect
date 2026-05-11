@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/data/models/user_model.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/attendance_page.dart';
 import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';

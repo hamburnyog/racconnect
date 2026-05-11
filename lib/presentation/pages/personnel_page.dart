@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/presentation/widgets/wfh_badge.dart';

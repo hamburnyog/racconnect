@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
-import 'package:racconnect/logic/cubit/time_check_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/internet_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/time_check_cubit.dart';
 import 'package:racconnect/presentation/screens/disconnected_screen.dart';
 import 'package:racconnect/presentation/screens/main_screen.dart';
 import 'package:racconnect/presentation/screens/password_reset_screen.dart';

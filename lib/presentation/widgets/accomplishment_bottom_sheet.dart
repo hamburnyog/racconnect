@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 
 class AccomplishmentBottomSheet extends StatefulWidget {
   final DateTime day;

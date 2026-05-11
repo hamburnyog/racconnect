@@ -12,12 +12,12 @@ import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:racconnect/logic/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
 import 'package:printing/printing.dart';
 import 'package:racconnect/data/models/signatory_model.dart';
-import 'package:racconnect/logic/cubit/signatory_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/signatory_cubit.dart';
 
 class ExportAccomplishmentsButton extends StatefulWidget {
   final int selectedYear;

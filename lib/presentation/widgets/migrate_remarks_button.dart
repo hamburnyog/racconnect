@@ -6,7 +6,7 @@ import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/data/repositories/auth_repository.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/internet_cubit.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

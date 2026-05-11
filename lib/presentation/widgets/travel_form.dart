@@ -6,7 +6,7 @@ import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/models/travel_model.dart';
 import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/auth_repository.dart';
-import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:table_calendar/table_calendar.dart';
 

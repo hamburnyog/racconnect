@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:racconnect/data/models/forum_attendee.dart';
-import 'package:racconnect/logic/cubit/forum_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/forum_cubit.dart';
 
 class ForumAttendeeForm extends StatefulWidget {
   final ForumAttendee? forumAttendee;
@@ -20,6 +20,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
   TextEditingController forumDateController = TextEditingController();
   TextEditingController emailSentDateController = TextEditingController();
   String selectedType = 'Pre-adoption';
+  bool _isPreviouslySent = false;
   final formKey = GlobalKey<FormState>();
 
   void addEmailField() {
@@ -108,6 +109,7 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
             widget.forumAttendee!.forumDate.toString().split(' ')[0];
       }
       if (widget.forumAttendee!.emailSentDate != null) {
+        _isPreviouslySent = true;
         emailSentDateController.text =
             widget.forumAttendee!.emailSentDate.toString().split(' ')[0];
       }
@@ -333,52 +335,72 @@ class _ForumAttendeeFormState extends State<ForumAttendeeForm> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                controller: emailSentDateController,
-                readOnly: true,
-                keyboardType: TextInputType.datetime,
-                onTap: () async {
-                  FocusScope.of(context).requestFocus(FocusNode());
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate:
-                        emailSentDateController.text.isNotEmpty
-                            ? DateTime.tryParse(emailSentDateController.text) ??
-                                DateTime.now()
-                            : DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    emailSentDateController.text =
-                        pickedDate.toIso8601String().split('T').first;
-                    setState(() {});
-                  }
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'Is this a previously sent certificate?',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                value: _isPreviouslySent,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _isPreviouslySent = value ?? false;
+                    if (!_isPreviouslySent) {
+                      emailSentDateController.clear();
+                    }
+                  });
                 },
-                decoration: InputDecoration(
-                  labelText: 'Email Sent Date (Issued Date)',
-                  hintText: 'Select a date if already sent',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (emailSentDateController.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
-                          onPressed: () {
-                            setState(() {
-                              emailSentDateController.clear();
-                            });
-                          },
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              if (_isPreviouslySent) ...[
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: emailSentDateController,
+                  readOnly: true,
+                  keyboardType: TextInputType.datetime,
+                  onTap: () async {
+                    FocusScope.of(context).requestFocus(FocusNode());
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate:
+                          emailSentDateController.text.isNotEmpty
+                              ? DateTime.tryParse(emailSentDateController.text) ??
+                                  DateTime.now()
+                              : DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      emailSentDateController.text =
+                          pickedDate.toIso8601String().split('T').first;
+                      setState(() {});
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Issuance Date',
+                    hintText: 'Select the date it was previously sent',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (emailSentDateController.text.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                emailSentDateController.clear();
+                              });
+                            },
+                          ),
+                        const Padding(
+                          padding: EdgeInsets.only(right: 26.0),
+                          child: Icon(Icons.calendar_today),
                         ),
-                      const Padding(
-                        padding: EdgeInsets.only(right: 26.0),
-                        child: Icon(Icons.calendar_today),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

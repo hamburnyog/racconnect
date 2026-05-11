@@ -36,6 +36,18 @@ String get smtpFromEmail => _getEnv(
 String get smtpFromName => _getEnv('SMTP_FROM_NAME',
     const String.fromEnvironment('SMTP_FROM_NAME'), 'RACCONNECT Forum');
 
+int get smtpBatchSize {
+  final batchStr = _getEnv(
+      'SMTP_BATCH_SIZE', const String.fromEnvironment('SMTP_BATCH_SIZE'), '10');
+  return int.tryParse(batchStr) ?? 10;
+}
+
+int get smtpBatchDelayMinutes {
+  final delayStr = _getEnv(
+      'SMTP_BATCH_DELAY', const String.fromEnvironment('SMTP_BATCH_DELAY'), '2');
+  return int.tryParse(delayStr) ?? 2;
+}
+
 const String totalText = 'TOTAL  ';
 const String arrivalText = 'Arrival';
 const String departureText = 'Departure';

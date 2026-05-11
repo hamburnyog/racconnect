@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:racconnect/logic/cubit/attendance_cubit.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/event_cubit.dart';
-import 'package:racconnect/logic/cubit/leave_cubit.dart';
-import 'package:racconnect/logic/cubit/suspension_cubit.dart';
-import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/event_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/leave_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 

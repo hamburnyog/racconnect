@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/internet_cubit.dart';
 
 class AttendanceImport {
   final AttendanceRepository attendanceRepo;

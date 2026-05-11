@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:racconnect/data/models/profile_model.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/profile_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/profile_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';

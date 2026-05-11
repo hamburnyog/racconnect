@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:racconnect/logic/cubit/attendance_cubit.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/internet_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/internet_cubit.dart';
 import 'package:racconnect/utility/import_attendance_button.dart';
 
 class ImportButton extends StatelessWidget {

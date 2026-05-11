@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
-import 'package:racconnect/logic/cubit/attendance_cubit.dart';
-import 'package:racconnect/logic/cubit/auth_cubit.dart';
-import 'package:racconnect/logic/cubit/holiday_cubit.dart';
-import 'package:racconnect/logic/cubit/leave_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/holiday_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/leave_cubit.dart';
 import 'package:racconnect/presentation/widgets/export_button.dart';
 import 'package:racconnect/presentation/widgets/import_button.dart';
 /* import 'package:racconnect/presentation/widgets/migrate_remarks_button.dart'; */
 import 'package:racconnect/presentation/widgets/export_accomplishments_button.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
-import 'package:racconnect/logic/cubit/suspension_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
 import 'package:racconnect/utility/group_attendance.dart';
 import 'package:racconnect/presentation/widgets/attendance_row.dart';
 import 'package:racconnect/data/repositories/accomplishment_repository.dart';
-import 'package:racconnect/logic/cubit/travel_cubit.dart';
+import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class AttendancePage extends StatefulWidget {
