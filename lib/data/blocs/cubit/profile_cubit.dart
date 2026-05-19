@@ -12,6 +12,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> saveProfile({
     String? id,
     required String employeeNumber,
+    String? bioId,
     required String firstName,
     String? middleName,
     required String lastName,
@@ -19,21 +20,26 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String gender,
     required String employmentStatus,
     required String position,
-    required String sectionId,
+    String? sectionId,
   }) async {
     try {
       emit(ProfileLoading());
-      final updatedProfile = await profileRepository.saveProfile(
+      final profile = ProfileModel(
         id: id,
         employeeNumber: employeeNumber,
+        bioId: bioId,
         firstName: firstName,
-        middleName: middleName ?? '',
+        middleName: middleName,
         lastName: lastName,
         birthdate: birthdate,
         gender: gender,
         employmentStatus: employmentStatus,
         position: position,
-        sectionId: sectionId,
+        section: sectionId,
+      );
+      final updatedProfile = await profileRepository.saveProfile(
+        id: id,
+        profile: profile,
       );
       emit(SaveProfileSuccess(updatedProfile));
     } catch (e) {

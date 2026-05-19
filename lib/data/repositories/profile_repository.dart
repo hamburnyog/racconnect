@@ -17,44 +17,33 @@ class ProfileRepository {
 
   Future<ProfileModel> saveProfile({
     String? id,
-    required String employeeNumber,
-    required String firstName,
-    required String middleName,
-    required String lastName,
-    required DateTime birthdate,
-    required String gender,
-    required String employmentStatus,
-    required String position,
-    String? sectionId,
+    required ProfileModel profile,
   }) async {
-    final data = {
-      'employeeNumber': employeeNumber,
-      'firstName': firstName,
-      'middleName': middleName,
-      'lastName': lastName,
-      'birthdate': birthdate.toIso8601String(),
-      'gender': gender,
-      'employmentStatus': employmentStatus,
-      'position': position,
-      if (sectionId != null) 'section': sectionId,
-    };
+    final data = profile.toMap();
+
+    // Remove fields that should not be updated or are expanded
+    data.remove('id');
+    data.remove('sectionName');
+    data.remove('sectionCode');
+    data.remove('role');
+    data.remove('sl');
+    data.remove('vl');
+    data.remove('spl');
+    data.remove('cto');
+
+    // Convert DateTime to ISO String for PocketBase
+    data['birthdate'] = profile.birthdate.toIso8601String();
 
     final record =
         id != null
             ? await pb.collection('profiles').update(id, body: data)
             : await pb.collection('profiles').create(body: data);
 
-    if (id == null) {
-      final profileId = record.id;
-      final userId = pb.authStore.record!.id;
-      await pb.collection('users').update(userId, body: {'profile': profileId});
-    }
-
     // Fetch the updated profile with expanded section data
     final updatedRecord = await pb
         .collection('profiles')
-        .getOne(record.id, expand: 'section');
+        .getOne(record.id, expand: 'section,user');
 
-    return ProfileModel.fromJson(updatedRecord.toString());
+    return ProfileModel.fromMap(updatedRecord.toJson());
   }
 }

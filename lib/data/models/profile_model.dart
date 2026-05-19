@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 class ProfileModel {
   final String? id;
   final String? employeeNumber;
+  final String? bioId; // New field
   final String firstName;
   final String? middleName;
   final String lastName;
@@ -23,6 +24,7 @@ class ProfileModel {
   ProfileModel({
     this.id,
     this.employeeNumber,
+    this.bioId, // Added to constructor
     required this.firstName,
     this.middleName,
     required this.lastName,
@@ -43,6 +45,7 @@ class ProfileModel {
   ProfileModel copyWith({
     ValueGetter<String?>? id,
     ValueGetter<String?>? employeeNumber,
+    ValueGetter<String?>? bioId, // Added to copyWith
     String? firstName,
     ValueGetter<String?>? middleName,
     String? lastName,
@@ -63,6 +66,7 @@ class ProfileModel {
       id: id != null ? id() : this.id,
       employeeNumber:
           employeeNumber != null ? employeeNumber() : this.employeeNumber,
+      bioId: bioId != null ? bioId() : this.bioId, // Added
       firstName: firstName ?? this.firstName,
       middleName: middleName != null ? middleName() : this.middleName,
       lastName: lastName ?? this.lastName,
@@ -86,6 +90,7 @@ class ProfileModel {
     return {
       'id': id,
       'employeeNumber': employeeNumber,
+      'bioId': bioId, // Added to toMap
       'firstName': firstName,
       'middleName': middleName,
       'lastName': lastName,
@@ -108,6 +113,7 @@ class ProfileModel {
     return ProfileModel(
       id: map['id'],
       employeeNumber: map['employeeNumber'],
+      bioId: map['bioId'], // Added to fromMap
       firstName: map['firstName'] ?? '',
       middleName: map['middleName'],
       lastName: map['lastName'] ?? '',
@@ -136,7 +142,7 @@ class ProfileModel {
 
   @override
   String toString() {
-    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sectionCode: $sectionCode, role: $role, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
+    return 'ProfileModel(id: $id, employeeNumber: $employeeNumber, bioId: $bioId, firstName: $firstName, middleName: $middleName, lastName: $lastName, birthdate: $birthdate, gender: $gender, position: $position, employmentStatus: $employmentStatus, section: $section, sectionName: $sectionName, sectionCode: $sectionCode, role: $role, sl: $sl, vl: $vl, spl: $spl, cto: $cto)';
   }
 
   @override
@@ -146,6 +152,7 @@ class ProfileModel {
     return other is ProfileModel &&
         other.id == id &&
         other.employeeNumber == employeeNumber &&
+        other.bioId == bioId && // Added
         other.firstName == firstName &&
         other.middleName == middleName &&
         other.lastName == lastName &&
@@ -167,6 +174,7 @@ class ProfileModel {
   int get hashCode {
     return id.hashCode ^
         employeeNumber.hashCode ^
+        bioId.hashCode ^ // Added
         firstName.hashCode ^
         middleName.hashCode ^
         lastName.hashCode ^

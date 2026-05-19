@@ -23,6 +23,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController employeeNumberController;
+  late TextEditingController bioIdController;
   late TextEditingController firstNameController;
   late TextEditingController middleNameController;
   late TextEditingController lastNameController;
@@ -60,6 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     employeeNumberController.dispose();
+    bioIdController.dispose();
     firstNameController.dispose();
     middleNameController.dispose();
     lastNameController.dispose();
@@ -192,6 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
         employeeNumberController = TextEditingController(
           text: p?.employeeNumber ?? '',
         );
+        bioIdController = TextEditingController(text: p?.bioId ?? '');
         firstNameController = TextEditingController(text: p?.firstName ?? '');
         middleNameController = TextEditingController(text: p?.middleName ?? '');
         lastNameController = TextEditingController(text: p?.lastName ?? '');
@@ -251,6 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   await profileCubit.saveProfile(
                     id: profile?.id,
                     employeeNumber: employeeNumberController.text.trim(),
+                    bioId: bioIdController.text.trim(),
                     firstName: firstNameController.text.trim(),
                     middleName: middleNameController.text.trim(),
                     lastName: lastNameController.text.trim(),
@@ -258,7 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     gender: genderController.text,
                     employmentStatus: employmentStatusController.text,
                     position: positionController.text.trim(),
-                    sectionId: sectionId ?? '',
+                    sectionId: sectionId,
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -579,6 +583,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                   },
                                 ),
                                 _formField(
+                                  'Bio ID',
+                                  bioIdController,
+                                  required: false,
+                                ),
+                                _formField(
                                   'First Name',
                                   firstNameController,
                                   validator: (value) {
@@ -648,7 +657,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                 if (sectionOptions.isNotEmpty)
                                   DropdownButtonFormField<String>(
                                     isExpanded: true,
-                                    initialValue: sectionId,
+                                    initialValue:
+                                        sectionOptions.any(
+                                              (opt) => opt['id'] == sectionId,
+                                            )
+                                            ? sectionId
+                                            : null,
                                     items:
                                         sectionOptions.map((option) {
                                           return DropdownMenuItem<String>(
@@ -676,7 +690,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const SizedBox(height: 10),
                                 DropdownButtonFormField<String>(
                                   initialValue:
-                                      genderController.text.isNotEmpty
+                                      ['Male', 'Female'].contains(
+                                            genderController.text,
+                                          )
                                           ? genderController.text
                                           : null,
                                   items:
@@ -715,12 +731,27 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const SizedBox(height: 10),
                                 DropdownButtonFormField<String>(
                                   initialValue:
-                                      employmentStatusController.text.isNotEmpty
+                                      [
+                                        'Permanent',
+                                        'Casual',
+                                        'Contractual',
+                                        'Job Order',
+                                        'COS',
+                                        'Detailed',
+                                        'Resigned',
+                                        'Retired',
+                                        'OJT',
+                                      ].contains(
+                                            employmentStatusController.text,
+                                          )
                                           ? employmentStatusController.text
                                           : null,
                                   items:
                                       [
                                         'Permanent',
+                                        'Casual',
+                                        'Contractual',
+                                        'Job Order',
                                         'COS',
                                         'Detailed',
                                         'Resigned',
