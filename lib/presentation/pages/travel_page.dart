@@ -1,12 +1,10 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/travel_model.dart';
 import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/travel_form.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -26,24 +24,11 @@ class _TravelPageState extends State<TravelPage> {
 
   List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
 
-  void _showTravelForm() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.9,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (BuildContext builder) {
-        return const TravelForm();
-      },
-    );
-  }
-
   void _showTravelFormWithEdit(TravelModel travelModel) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.9,
+      scrollControlDisabledMaxHeightRatio: 0.75,
       showDragHandle: true,
       useSafeArea: true,
       builder: (BuildContext builder) {
@@ -54,19 +39,6 @@ class _TravelPageState extends State<TravelPage> {
 
   void _deleteTravel(String id) {
     context.read<TravelCubit>().deleteTravel(id: id);
-  }
-
-  String _formatTravelDates(List<DateTime> dates) {
-    if (dates.isEmpty) return 'No dates';
-
-    // Sort dates
-    dates.sort((a, b) => a.compareTo(b));
-
-    if (dates.length == 1) {
-      return DateFormat('MMM d, yyyy').format(dates.first);
-    } else {
-      return '${DateFormat('MMM d, yyyy').format(dates.first)} - ${DateFormat('MMM d, yyyy').format(dates.last)}';
-    }
   }
 
   @override
@@ -110,9 +82,6 @@ class _TravelPageState extends State<TravelPage> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: _loadTravels,
@@ -130,39 +99,6 @@ class _TravelPageState extends State<TravelPage> {
             enabled: _isLoading,
             child: Column(
               children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: const Text(
-                      'Travel',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      !isSmallScreen
-                          ? 'Manage travel orders here. Pull down to refresh, or swipe left on a record to delete.'
-                          : 'Manage travel orders here',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                      ),
-                    ),
-                    leading: const Icon(
-                      Icons.directions_car,
-                      color: Colors.white,
-                    ),
-                    trailing: MobileButton(
-                      isSmallScreen: isSmallScreen,
-                      onPressed: _showTravelForm,
-                      icon: const Icon(Icons.add),
-                      label: 'Add',
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -175,7 +111,7 @@ class _TravelPageState extends State<TravelPage> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Search by SO number or travel date',
+                            hintText: 'Search',
                             prefixIcon: Icon(
                               Icons.search,
                               color: Theme.of(context).primaryColor,
@@ -188,11 +124,12 @@ class _TravelPageState extends State<TravelPage> {
                             ),
                             filled: true,
                             fillColor: Colors.grey[200],
-                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 10),
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           initialValue: selectedYear,
@@ -206,8 +143,10 @@ class _TravelPageState extends State<TravelPage> {
                             ),
                             filled: true,
                             fillColor: Colors.grey[200],
-                            contentPadding: EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 12,
+                            ),
                           ),
                           items: getYears().map((y) {
                             return DropdownMenuItem(
@@ -264,29 +203,20 @@ class _TravelPageState extends State<TravelPage> {
                       if (_searchQuery.isNotEmpty) {
                         travels.retainWhere((travel) {
                           final soNumber = travel.soNumber.toLowerCase();
-                          final employeeNumbers =
-                              travel.employeeNumbers.join(' ').toLowerCase();
-                          final travelDates = travel.specificDates
-                              .map(
-                                (date) =>
-                                    DateFormat(
-                                      'MMMM d, yyyy',
-                                    ).format(date).toLowerCase(),
-                              )
-                              .join(' ');
-                          final travelDatesShort = travel.specificDates
-                              .map(
-                                (date) =>
-                                    DateFormat(
-                                      'MM/dd/yyyy',
-                                    ).format(date).toLowerCase(),
-                              )
-                              .join(' ');
+                          bool dateMatch = false;
+                          for (var date in travel.specificDates) {
+                            final dateStr =
+                                DateFormat('MMMM d, yyyy').format(date).toLowerCase();
+                            final dateShort =
+                                DateFormat('MM/dd/yyyy').format(date).toLowerCase();
+                            if (dateStr.contains(_searchQuery) ||
+                                dateShort.contains(_searchQuery)) {
+                              dateMatch = true;
+                              break;
+                            }
+                          }
 
-                          return soNumber.contains(_searchQuery) ||
-                              employeeNumbers.contains(_searchQuery) ||
-                              travelDates.contains(_searchQuery) ||
-                              travelDatesShort.contains(_searchQuery);
+                          return soNumber.contains(_searchQuery) || dateMatch;
                         });
                       }
 
@@ -303,9 +233,9 @@ class _TravelPageState extends State<TravelPage> {
                               Center(
                                 child: Text(
                                   _searchQuery.isNotEmpty
-                                      ? 'No travel orders found matching "$_searchQuery"'
-                                      : 'Nothing is here yet. Add a travel order to get started.',
-                                  style: TextStyle(fontSize: 10),
+                                      ? 'No travels found matching "$_searchQuery"'
+                                      : 'Nothing is here yet. Add a record to get started.',
+                                  style: const TextStyle(fontSize: 10),
                                 ),
                               ),
                             ],
@@ -325,6 +255,11 @@ class _TravelPageState extends State<TravelPage> {
                             itemCount: travels.length,
                             itemBuilder: (context, index) {
                               final travelModel = travels[index];
+                              final displayDate = travelModel.specificDates.isNotEmpty
+                                  ? DateFormat('MMMM d, yyyy')
+                                      .format(travelModel.specificDates.first)
+                                  : 'No dates';
+
                               return ClipRect(
                                 child: Dismissible(
                                   key: ValueKey(travelModel.id),
@@ -339,7 +274,7 @@ class _TravelPageState extends State<TravelPage> {
                                         return AlertDialog(
                                           title: const Text("Confirm"),
                                           content: const Text(
-                                            "Are you sure you want to delete this travel order?",
+                                            "Are you sure you want to delete this record?",
                                           ),
                                           actions: <Widget>[
                                             TextButton(
@@ -351,7 +286,11 @@ class _TravelPageState extends State<TravelPage> {
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                _deleteTravel(travelModel.id!);
+                                                if (travelModel.id != null) {
+                                                  _deleteTravel(
+                                                    travelModel.id!,
+                                                  );
+                                                }
                                                 Navigator.of(context).pop(true);
                                               },
                                               child: const Text("Delete"),
@@ -378,65 +317,36 @@ class _TravelPageState extends State<TravelPage> {
                                       color: Colors.white,
                                     ),
                                   ),
-                                  child: Builder(
-                                    builder: (context) {
-                                      return Card(
-                                        elevation: 3,
-                                        child: ListTile(
-                                          onTap: () {
-                                            _showTravelFormWithEdit(
-                                              travelModel,
-                                            );
-                                          },
-                                          leading: CircleAvatar(
-                                            backgroundColor:
-                                                Theme.of(context).primaryColor,
-                                            child: const Icon(
-                                              Icons.directions_car,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          title: Text(
-                                            travelModel.soNumber,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color:
-                                                  Theme.of(
-                                                    context,
-                                                  ).primaryColor,
-                                            ),
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${travelModel.employeeNumbers.length} employee${travelModel.employeeNumbers.length != 1 ? 's' : ''}, ${travelModel.specificDates.length} date${travelModel.specificDates.length != 1 ? 's' : ''}',
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                ),
-                                              ),
-                                              if (travelModel
-                                                  .specificDates
-                                                  .isNotEmpty)
-                                                Text(
-                                                  _formatTravelDates(
-                                                    travelModel.specificDates,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          trailing: Icon(
-                                            Icons.edit_note,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
+                                  child: Card(
+                                    elevation: 3,
+                                    child: ListTile(
+                                      onTap: () {
+                                        _showTravelFormWithEdit(travelModel);
+                                      },
+                                      leading: CircleAvatar(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        child: const Icon(
+                                          Icons.directions_car,
+                                          color: Colors.white,
                                         ),
-                                      );
-                                    },
+                                      ),
+                                      title: Text(
+                                        travelModel.soNumber,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        displayDate,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                      trailing: Icon(
+                                        Icons.edit_note,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               );
@@ -456,14 +366,14 @@ class _TravelPageState extends State<TravelPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ListTile(
-                              leading: Bone.circle(size: 48),
+                              leading: const Bone.circle(size: 48),
                               title: Bone.text(
                                 words: 2,
-                                style: TextStyle(fontSize: 16),
+                                style: const TextStyle(fontSize: 16),
                               ),
                               subtitle: Bone.text(
                                 words: 4,
-                                style: TextStyle(fontSize: 10),
+                                style: const TextStyle(fontSize: 10),
                               ),
                             ),
                           );

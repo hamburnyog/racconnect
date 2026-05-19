@@ -80,34 +80,9 @@ const sideBarItemsDev = [
     label: 'Personnel',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.group_outlined),
-    activeIcon: Icon(Icons.group_rounded),
-    label: 'Sections',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.assignment_ind_outlined),
-    activeIcon: Icon(Icons.assignment_ind_rounded),
-    label: 'Signatories',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.calendar_month_outlined),
-    activeIcon: Icon(Icons.calendar_month),
-    label: 'Holidays',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.flood_outlined),
-    activeIcon: Icon(Icons.flood),
-    label: 'Suspensions',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.directions_car_filled_outlined),
-    activeIcon: Icon(Icons.directions_car),
-    label: 'Travels',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.sick_outlined),
-    activeIcon: Icon(Icons.sick_rounded),
-    label: 'Leaves',
+    icon: Icon(Icons.library_books_outlined),
+    activeIcon: Icon(Icons.library_books),
+    label: 'References',
   ),
 ];
 
@@ -132,9 +107,9 @@ const sideBarItemsUnitHead = [
     label: 'Personnel',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.assignment_ind_outlined),
-    activeIcon: Icon(Icons.assignment_ind_rounded),
-    label: 'Signatories',
+    icon: Icon(Icons.library_books_outlined),
+    activeIcon: Icon(Icons.library_books),
+    label: 'References',
   ),
 ];
 
@@ -146,33 +121,18 @@ const sideBarItemsHr = [
     label: 'Personnel',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.assignment_ind_outlined),
-    activeIcon: Icon(Icons.assignment_ind_rounded),
-    label: 'Signatories',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.calendar_month_outlined),
-    activeIcon: Icon(Icons.calendar_month),
-    label: 'Holidays',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.flood_outlined),
-    activeIcon: Icon(Icons.flood),
-    label: 'Suspensions',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.sick_outlined),
-    activeIcon: Icon(Icons.sick_rounded),
-    label: 'Leaves',
+    icon: Icon(Icons.library_books_outlined),
+    activeIcon: Icon(Icons.library_books),
+    label: 'References',
   ),
 ];
 
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
   BottomNavigationBarItem(
-    icon: Icon(Icons.directions_car_filled_outlined),
-    activeIcon: Icon(Icons.directions_car),
-    label: 'Travels',
+    icon: Icon(Icons.library_books_outlined),
+    activeIcon: Icon(Icons.library_books),
+    label: 'References',
   ),
 ];
 

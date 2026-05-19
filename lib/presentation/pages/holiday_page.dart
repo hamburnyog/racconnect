@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/holiday_model.dart';
 import 'package:racconnect/data/blocs/cubit/holiday_cubit.dart';
 import 'package:racconnect/presentation/widgets/holiday_form.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class HolidayPage extends StatefulWidget {
@@ -25,19 +24,6 @@ class _HolidayPageState extends State<HolidayPage> {
   int selectedYear = DateTime.now().year;
 
   List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
-
-  void _showHolidayForm() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (BuildContext builder) {
-        return HolidayForm();
-      },
-    );
-  }
 
   void _showHolidayFormWithEdit(HolidayModel holidayModel) {
     showModalBottomSheet(
@@ -96,9 +82,6 @@ class _HolidayPageState extends State<HolidayPage> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: _loadHolidays,
@@ -116,36 +99,6 @@ class _HolidayPageState extends State<HolidayPage> {
             enabled: _isLoading,
             child: Column(
               children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: Text(
-                      'Holidays',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      !isSmallScreen
-                          ? 'Manage your holidays here. Pull down to refresh, or swipe left on a record to delete.'
-                          : 'Manage your holidays here',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                    leading: Icon(
-                      Icons.calendar_month_outlined,
-                      color: Colors.white,
-                    ),
-                    trailing: MobileButton(
-                      isSmallScreen: isSmallScreen,
-                      onPressed: _showHolidayForm,
-                      icon: const Icon(Icons.add),
-                      label: 'Add',
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -158,7 +111,7 @@ class _HolidayPageState extends State<HolidayPage> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Search by holiday name or date',
+                            hintText: 'Search',
                             prefixIcon: Icon(
                               Icons.search,
                               color: Theme.of(context).primaryColor,

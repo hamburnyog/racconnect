@@ -6,7 +6,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/suspension_form.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -25,19 +24,6 @@ class _SuspensionPageState extends State<SuspensionPage> {
   int selectedYear = DateTime.now().year;
 
   List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
-
-  void _showSuspensionForm() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (BuildContext builder) {
-        return SuspensionForm();
-      },
-    );
-  }
 
   void _showSuspensionFormWithEdit(SuspensionModel suspensionModel) {
     showModalBottomSheet(
@@ -96,9 +82,6 @@ class _SuspensionPageState extends State<SuspensionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: _loadSuspensions,
@@ -116,33 +99,6 @@ class _SuspensionPageState extends State<SuspensionPage> {
             enabled: _isLoading,
             child: Column(
               children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: Text(
-                      'Suspensions',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      !isSmallScreen
-                          ? 'Manage your suspensions here. Pull down to refresh, or swipe left on a record to delete.'
-                          : 'Manage your suspensions here',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                    leading: Icon(Icons.flood_outlined, color: Colors.white),
-                    trailing: MobileButton(
-                      isSmallScreen: isSmallScreen,
-                      onPressed: _showSuspensionForm,
-                      icon: const Icon(Icons.add),
-                      label: 'Add',
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -155,7 +111,7 @@ class _SuspensionPageState extends State<SuspensionPage> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Search by suspension name or date',
+                            hintText: 'Search',
                             prefixIcon: Icon(
                               Icons.search,
                               color: Theme.of(context).primaryColor,

@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:racconnect/data/models/section_model.dart';
 import 'package:racconnect/data/blocs/cubit/section_cubit.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/section_form.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -21,19 +20,6 @@ class _SectionPageState extends State<SectionPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoading = true;
-
-  void _showSectionForm() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (BuildContext builder) {
-        return SectionForm();
-      },
-    );
-  }
 
   void _showSectionFormWithEdit(SectionModel sectionModel) {
     showModalBottomSheet(
@@ -83,9 +69,6 @@ class _SectionPageState extends State<SectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return RefreshIndicator(
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       onRefresh: _loadSections,
@@ -103,33 +86,6 @@ class _SectionPageState extends State<SectionPage> {
             enabled: _isLoading,
             child: Column(
               children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: Text(
-                      'Sections',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      !isSmallScreen
-                          ? 'Manage your sections here. Pull down to refresh, or swipe left on a record to delete.'
-                          : 'Manage your sections here',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                    leading: Icon(Icons.group_rounded, color: Colors.white),
-                    trailing: MobileButton(
-                      isSmallScreen: isSmallScreen,
-                      onPressed: _showSectionForm,
-                      icon: const Icon(Icons.add),
-                      label: 'Add',
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -138,7 +94,7 @@ class _SectionPageState extends State<SectionPage> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Search by section name or code',
+                      hintText: 'Search',
                       prefixIcon: Icon(
                         Icons.search,
                         color: Theme.of(context).primaryColor,

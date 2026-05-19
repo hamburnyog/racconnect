@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:racconnect/data/models/signatory_model.dart';
 import 'package:racconnect/data/blocs/cubit/signatory_cubit.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/presentation/widgets/signatory_form.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -71,9 +70,6 @@ class _SignatoryPageState extends State<SignatoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = width < 700;
-
     return RefreshIndicator(
       onRefresh: _loadSignatories,
       child: ScrollConfiguration(
@@ -90,33 +86,6 @@ class _SignatoryPageState extends State<SignatoryPage> {
             enabled: _isLoading,
             child: Column(
               children: [
-                Card(
-                  color: Theme.of(context).primaryColor,
-                  child: ListTile(
-                    minTileHeight: 70,
-                    title: const Text(
-                      'Signatories',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      !isSmallScreen
-                          ? 'Manage signatories for each section. Pull down to refresh, or swipe left on a record to delete.'
-                          : 'Manage signatories here',
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                    leading: const Icon(Icons.assignment_ind_rounded, color: Colors.white),
-                    trailing: MobileButton(
-                      isSmallScreen: isSmallScreen,
-                      onPressed: () => _showSignatoryForm(),
-                      icon: const Icon(Icons.add),
-                      label: 'Add',
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -125,7 +94,7 @@ class _SignatoryPageState extends State<SignatoryPage> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Search by name or designation',
+                      hintText: 'Search',
                       prefixIcon: Icon(
                         Icons.search,
                         color: Theme.of(context).primaryColor,

@@ -3,15 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/attendance_page.dart';
-import 'package:racconnect/presentation/pages/holiday_page.dart';
 import 'package:racconnect/presentation/pages/home_page.dart';
-import 'package:racconnect/presentation/pages/leave_page.dart';
 import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
-import 'package:racconnect/presentation/pages/section_page.dart';
-import 'package:racconnect/presentation/pages/signatory_page.dart';
-import 'package:racconnect/presentation/pages/suspension_page.dart';
-import 'package:racconnect/presentation/pages/travel_page.dart';
+import 'package:racconnect/presentation/pages/references_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
 import 'package:racconnect/presentation/pages/forum_page.dart';
 
@@ -210,8 +205,10 @@ class _MainScreenState extends State<MainScreen> {
       body: SafeArea(
         child: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
+            String userRole = '';
             if (state is AuthenticatedState) {
               final user = state.user;
+              userRole = user.role ?? '';
               sidebarItemMenu = sideBarItemsUser;
               if (user.role == 'Developer') {
                 sidebarItemMenu = sideBarItemsDev;
@@ -283,26 +280,11 @@ class _MainScreenState extends State<MainScreen> {
                             'Personnel') {
                           return PersonnelPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Sections') {
-                          return SectionPage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Signatories') {
-                          return SignatoryPage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Holidays') {
-                          return HolidayPage();
+                            'References') {
+                          return ReferencesPage(role: userRole);
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Attendance') {
                           return AttendancePage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Leaves') {
-                          return LeavePage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Suspensions') {
-                          return SuspensionPage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Travels') {
-                          return TravelPage();
                         } else if (sidebarItemMenu[_selectedIndex].label ==
                             'Certificates') {
                           return ForumPage();
