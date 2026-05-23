@@ -68,11 +68,12 @@ class _ForumPageState extends State<ForumPage> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       constraints: const BoxConstraints.expand(),
-      builder: (context) => CertificatePreviewSheet(
-        attendee: attendee,
-        showSuccess: showSuccess,
-        isAuthorized: isAuthorized,
-      ),
+      builder:
+          (context) => CertificatePreviewSheet(
+            attendee: attendee,
+            showSuccess: showSuccess,
+            isAuthorized: isAuthorized,
+          ),
     );
   }
 
@@ -134,9 +135,10 @@ class _ForumPageState extends State<ForumPage> {
   Future<void> _sendAllUnsent() async {
     final state = context.read<ForumCubit>().state;
     if (state is ForumLoaded) {
-      final unsent = state.allAttendees
-          .where((a) => a.emailSentDate == null && a.email.isNotEmpty)
-          .toList();
+      final unsent =
+          state.allAttendees
+              .where((a) => a.emailSentDate == null && a.email.isNotEmpty)
+              .toList();
 
       if (unsent.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,10 +150,7 @@ class _ForumPageState extends State<ForumPage> {
         return;
       }
 
-      final sender = ForumEmailSender(
-        context: context,
-        attendees: unsent,
-      );
+      final sender = ForumEmailSender(context: context, attendees: unsent);
       await sender.sendEmails();
     }
   }
@@ -282,8 +281,10 @@ class _ForumPageState extends State<ForumPage> {
                     },
                   ),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     child: Skeletonizer(
                       enabled: _isLoading,
                       child: Column(
@@ -307,16 +308,27 @@ class _ForumPageState extends State<ForumPage> {
                                     BlocBuilder<ForumCubit, ForumState>(
                                       builder: (context, state) {
                                         if (state is ForumLoaded) {
-                                          final unsentCount = state.allAttendees
-                                              .where((a) => a.emailSentDate == null)
-                                              .length;
+                                          final unsentCount =
+                                              state.allAttendees
+                                                  .where(
+                                                    (a) =>
+                                                        a.emailSentDate == null,
+                                                  )
+                                                  .length;
                                           if (unsentCount > 0) {
                                             return Container(
-                                              margin: const EdgeInsets.only(left: 8),
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 10, vertical: 4),
+                                              margin: const EdgeInsets.only(
+                                                left: 8,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.red.withAlpha(230),
+                                                color: Colors.red.withAlpha(
+                                                  230,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(20),
                                                 boxShadow: [
@@ -341,7 +353,8 @@ class _ForumPageState extends State<ForumPage> {
                                                     style: const TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ],
@@ -359,20 +372,23 @@ class _ForumPageState extends State<ForumPage> {
                                     ? 'Manage forum certificates here. Pull down to refresh, or swipe left on a record to delete.'
                                     : 'Manage certificates here',
                                 style: const TextStyle(
-                                    color: Colors.white70, fontSize: 10),
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                ),
                               ),
                               leading: const Icon(
                                 Icons.card_membership_rounded,
                                 color: Colors.white,
                               ),
-                              trailing: isAuthorized
-                                  ? MobileButton(
-                                      isSmallScreen: isSmallScreen,
-                                      onPressed: _showForumAttendeeForm,
-                                      icon: const Icon(Icons.add),
-                                      label: 'Add',
-                                    )
-                                  : null,
+                              trailing:
+                                  isAuthorized
+                                      ? MobileButton(
+                                        isSmallScreen: isSmallScreen,
+                                        onPressed: _showForumAttendeeForm,
+                                        icon: const Icon(Icons.add),
+                                        label: 'Add',
+                                      )
+                                      : null,
                             ),
                           ),
                           Padding(
@@ -387,7 +403,8 @@ class _ForumPageState extends State<ForumPage> {
                                   child: TextField(
                                     controller: _searchController,
                                     decoration: InputDecoration(
-                                      hintText: 'Search by name, address or date',
+                                      hintText:
+                                          'Search by name, address or date',
                                       prefixIcon: Icon(
                                         Icons.search,
                                         color: Theme.of(context).primaryColor,
@@ -400,8 +417,10 @@ class _ForumPageState extends State<ForumPage> {
                                       ),
                                       filled: true,
                                       fillColor: Colors.grey[200],
-                                      contentPadding: const EdgeInsets.symmetric(
-                                          vertical: 10),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -419,15 +438,19 @@ class _ForumPageState extends State<ForumPage> {
                                       ),
                                       filled: true,
                                       fillColor: Colors.grey[200],
-                                      contentPadding: const EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 12),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                            horizontal: 12,
+                                          ),
                                     ),
-                                    items: ['All', 'Sent', 'Unsent'].map((status) {
-                                      return DropdownMenuItem(
-                                        value: status,
-                                        child: Text(status),
-                                      );
-                                    }).toList(),
+                                    items:
+                                        ['All', 'Sent', 'Unsent'].map((status) {
+                                          return DropdownMenuItem(
+                                            value: status,
+                                            child: Text(status),
+                                          );
+                                        }).toList(),
                                     onChanged: (value) {
                                       if (value != null) {
                                         setState(() {
@@ -452,8 +475,9 @@ class _ForumPageState extends State<ForumPage> {
                               } else if (state is ForumAddSuccess) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content:
-                                        Text('Certificate added successfully!'),
+                                    content: Text(
+                                      'Certificate added successfully!',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -461,8 +485,9 @@ class _ForumPageState extends State<ForumPage> {
                               } else if (state is ForumUpdateSuccess) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content:
-                                        Text('Certificate updated successfully!'),
+                                    content: Text(
+                                      'Certificate updated successfully!',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -472,8 +497,9 @@ class _ForumPageState extends State<ForumPage> {
                               } else if (state is ForumDeleteSuccess) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content:
-                                        Text('Certificate deleted successfully!'),
+                                    content: Text(
+                                      'Certificate deleted successfully!',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -490,24 +516,29 @@ class _ForumPageState extends State<ForumPage> {
                                     final attendeeName =
                                         attendee.name.toLowerCase();
                                     final spouseName =
-                                        (attendee.spouseName ?? '').toLowerCase();
+                                        (attendee.spouseName ?? '')
+                                            .toLowerCase();
                                     final attendeeAddress =
                                         attendee.address.toLowerCase();
-                                    final forumDateStr = attendee.forumDate !=
-                                            null
-                                        ? DateFormat('MMMM d, yyyy')
-                                            .format(attendee.forumDate!)
-                                            .toLowerCase()
-                                        : '';
-                                    final emailSentDateStr = attendee.emailSentDate !=
-                                            null
-                                        ? DateFormat('MMMM d, yyyy')
-                                            .format(attendee.emailSentDate!)
-                                            .toLowerCase()
-                                        : '';
-                                    return attendeeName.contains(_searchQuery) ||
+                                    final forumDateStr =
+                                        attendee.forumDate != null
+                                            ? DateFormat('MMMM d, yyyy')
+                                                .format(attendee.forumDate!)
+                                                .toLowerCase()
+                                            : '';
+                                    final emailSentDateStr =
+                                        attendee.emailSentDate != null
+                                            ? DateFormat('MMMM d, yyyy')
+                                                .format(attendee.emailSentDate!)
+                                                .toLowerCase()
+                                            : '';
+                                    return attendeeName.contains(
+                                          _searchQuery,
+                                        ) ||
                                         spouseName.contains(_searchQuery) ||
-                                        attendeeAddress.contains(_searchQuery) ||
+                                        attendeeAddress.contains(
+                                          _searchQuery,
+                                        ) ||
                                         forumDateStr.contains(_searchQuery) ||
                                         emailSentDateStr.contains(_searchQuery);
                                   });
@@ -515,11 +546,15 @@ class _ForumPageState extends State<ForumPage> {
 
                                 // Apply status filter
                                 if (_statusFilter == 'Sent') {
-                                  attendees.retainWhere((attendee) =>
-                                      attendee.emailSentDate != null);
+                                  attendees.retainWhere(
+                                    (attendee) =>
+                                        attendee.emailSentDate != null,
+                                  );
                                 } else if (_statusFilter == 'Unsent') {
-                                  attendees.retainWhere((attendee) =>
-                                      attendee.emailSentDate == null);
+                                  attendees.retainWhere(
+                                    (attendee) =>
+                                        attendee.emailSentDate == null,
+                                  );
                                 }
 
                                 // Apply sorting: Unsent first, then by latest forum date
@@ -543,7 +578,9 @@ class _ForumPageState extends State<ForumPage> {
                                   }
 
                                   // 3. If both sent, latest emailSentDate first
-                                  return b.emailSentDate!.compareTo(a.emailSentDate!);
+                                  return b.emailSentDate!.compareTo(
+                                    a.emailSentDate!,
+                                  );
                                 });
 
                                 if (attendees.isEmpty) {
@@ -562,7 +599,9 @@ class _ForumPageState extends State<ForumPage> {
                                             _searchQuery.isNotEmpty
                                                 ? 'No certificates found matching "$_searchQuery"'
                                                 : 'Nothing is here yet. Add a record to get started.',
-                                            style: const TextStyle(fontSize: 10),
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -577,203 +616,248 @@ class _ForumPageState extends State<ForumPage> {
                                       thumbVisibility: true,
                                       interactive: true,
                                       child: ListView.builder(
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(),
-                                      controller: _scrollController,
-                                      itemCount: attendees.length,
-                                      itemBuilder: (context, index) {
-                                        final attendee = attendees[index];
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 5,
-                                            horizontal: 3,
-                                          ),
-                                          child: Dismissible(
-                                            key: Key(attendee.id),
-                                            direction: isAuthorized
-                                                ? DismissDirection.endToStart
-                                                : DismissDirection.none,
-                                            confirmDismiss: (direction) async {
-                                              return await showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                  title: const Text(
-                                                      'Confirm Delete'),
-                                                  content: Text(
-                                                      'Are you sure you want to delete the certificate for ${attendee.name}?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context, false),
-                                                      child: const Text(
-                                                          'Cancel'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context, true),
-                                                      child: const Text(
-                                                        'Delete',
-                                                        style: TextStyle(
-                                                            color: Colors.red),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                            onDismissed: (direction) {
-                                              _deleteAttendee(attendee.id);
-                                            },
-                                            background: Container(
-                                              alignment: Alignment.centerRight,
-                                              decoration: BoxDecoration(
-                                                color: Colors.red,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              margin: const EdgeInsets.symmetric(
-                                                horizontal: 5,
-                                              ),
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 20,
-                                              ),
-                                              child: const Icon(
-                                                Icons.delete,
-                                                color: Colors.white,
-                                              ),
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(),
+                                        controller: _scrollController,
+                                        itemCount: attendees.length,
+                                        itemBuilder: (context, index) {
+                                          final attendee = attendees[index];
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 5,
+                                              horizontal: 3,
                                             ),
-                                                                                    child: Card(
-                                                                                      elevation: 3,
-                                                                                      child: ListTile(
-                                                                                        onTap: () {
-                                                                                          _showCertificatePreview(
-                                                                                            attendee,
-                                                                                            isAuthorized: isAuthorized,
-                                                                                          );
-                                                                                        },
-                                                                                        leading: Tooltip(                                                  message:
-                                                      attendee.emailSentDate !=
-                                                              null
-                                                          ? 'Sent on ${DateFormat('MMM dd, yyyy').format(attendee.emailSentDate!)}'
-                                                          : 'Not sent yet',
-                                                  child: CircleAvatar(
-                                                    backgroundColor: attendee
-                                                                .emailSentDate !=
-                                                            null
-                                                        ? Colors.green
-                                                        : Colors.grey.shade300,
-                                                    child: attendee.emailSentDate !=
-                                                            null
-                                                        ? const Icon(
-                                                            Icons
-                                                                .mark_email_read,
-                                                            color: Colors.white,
-                                                            size: 20,
-                                                          )
-                                                        : const Icon(
-                                                            Icons.mail_outline,
-                                                            color: Colors.grey,
-                                                            size: 20,
-                                                          ),
-                                                  ),
-                                                ),
-                                                                                                                                                title: Text(
-                                                                                                                                                  attendee.spouseName != null && attendee.spouseName!.isNotEmpty
-                                                                                                                                                      ? '${attendee.name} & ${attendee.spouseName}'
-                                                                                                                                                      : attendee.name,
-                                                                                                                                                  style: TextStyle(
-                                                                                                                                                    fontSize: 16,
-                                                                                                                                                    fontWeight: FontWeight.bold,
-                                                                                                                                                    color: Theme.of(context)
-                                                                                                                                                        .primaryColor,
-                                                                                                                                                  ),
-                                                                                                                                                  overflow:
-                                                                                                                                                      TextOverflow.ellipsis,
-                                                                                                                                                ),
-                                                                                                                                                subtitle: Column(
-                                                                                                                                                  crossAxisAlignment:
-                                                                                                                                                      CrossAxisAlignment.start,
-                                                                                                                                                  children: [
-                                                                                                                                                    Text(
-                                                                                                                                                      attendee.address,
-                                                                                                                                                      style: const TextStyle(
-                                                                                                                                                          fontSize: 10),
-                                                                                                                                                    ),
-                                                                                                                                                    if (attendee
-                                                                                                                                                        .email.isNotEmpty)
-                                                                                                                                                      Text(
-                                                                                                                                                        attendee.email,
-                                                                                                                                                        style: TextStyle(
-                                                                                                                                                          fontSize: 10,
-                                                                                                                                                          color:
-                                                                                                                                                              Theme.of(context)
-                                                                                                                                                                  .primaryColor,
-                                                                                                                                                          fontWeight:
-                                                                                                                                                              FontWeight.w500,
-                                                                                                                                                        ),
-                                                                                                                                                      ),
-                                                                                                                                                                                                                                                            Row(
-                                                                                                                                                                                                                                                              children: [
-                                                                                                                                                                                                                                                                if (attendee.forumDate !=
-                                                                                                                                                                                                                                                                    null)
-                                                                                                                                                                                                                                                                  Text(
-                                                                                                                                                                                                                                                                    '${attendee.type} Forum: ${DateFormat('MMM dd, yyyy').format(attendee.forumDate!)}',
-                                                                                                                                                                                                                                                                    style: TextStyle(
-                                                                                                                                                                                                                                                                      fontSize: 9,
-                                                                                                                                                                                                                                                                      color: Colors
-                                                                                                                                                                                                                                                                          .grey[600],
-                                                                                                                                                                                                                                                                      fontWeight:
-                                                                                                                                                                                                                                                                          FontWeight
-                                                                                                                                                                                                                                                                              .bold,
-                                                                                                                                                                                                                                                                    ),
-                                                                                                                                                                                                                                                                  ),
-                                                                                                                                                                                                                                                                if (attendee.emailSentDate !=
-                                                                                                                                                                                                                                                                    null) ...[                                                                                                                                                                                                              const SizedBox(
-                                                                                                                                                                                                                  width: 8),
-                                                                                                                                                                                                              Text(
-                                                                                                                                                                                                                '• Sent: ${DateFormat('MMM dd, yyyy').format(attendee.emailSentDate!)}',
-                                                                                                                                                                                                                style:
-                                                                                                                                                                                                                    const TextStyle(
-                                                                                                                                                                                                                  fontSize: 9,
-                                                                                                                                                                                                                  color:
-                                                                                                                                                                                                                      Colors.green,
-                                                                                                                                                                                                                  fontWeight:
-                                                                                                                                                                                                                      FontWeight
-                                                                                                                                                                                                                          .bold,
-                                                                                                                                                                                                                ),
-                                                                                                                                                                                                              ),
-                                                                                                                                                                                                            ],
-                                                                                                                                                                                                          ],
-                                                                                                                                                                                                        ),                                                                                                                                                  ],
-                                                                                                                                                ),                                                trailing: isAuthorized
-                                                    ? IconButton(
-                                                        icon: Icon(
-                                                          Icons.edit_note,
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .primaryColor,
+                                            child: Dismissible(
+                                              key: Key(attendee.id),
+                                              direction:
+                                                  isAuthorized
+                                                      ? DismissDirection
+                                                          .endToStart
+                                                      : DismissDirection.none,
+                                              confirmDismiss: (
+                                                direction,
+                                              ) async {
+                                                return await showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (context) => AlertDialog(
+                                                        title: const Text(
+                                                          'Confirm Delete',
                                                         ),
-                                                        onPressed: () {
-                                                          _showForumAttendeeFormWithEdit(
-                                                              attendee);
-                                                        },
-                                                        tooltip: 'Edit',
-                                                      )
-                                                    : null,
+                                                        content: Text(
+                                                          'Are you sure you want to delete the certificate for ${attendee.name}?',
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      false,
+                                                                    ),
+                                                            child: const Text(
+                                                              'Cancel',
+                                                            ),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed:
+                                                                () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      true,
+                                                                    ),
+                                                            child: const Text(
+                                                              'Delete',
+                                                              style: TextStyle(
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                );
+                                              },
+                                              onDismissed: (direction) {
+                                                _deleteAttendee(attendee.id);
+                                              },
+                                              background: Container(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 5,
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                    ),
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              child: Card(
+                                                elevation: 3,
+                                                child: ListTile(
+                                                  onTap: () {
+                                                    _showCertificatePreview(
+                                                      attendee,
+                                                      isAuthorized:
+                                                          isAuthorized,
+                                                    );
+                                                  },
+                                                  leading: Tooltip(
+                                                    message:
+                                                        attendee.emailSentDate !=
+                                                                null
+                                                            ? 'Sent on ${DateFormat('MMM dd, yyyy').format(attendee.emailSentDate!)}'
+                                                            : 'Not sent yet',
+                                                    child: CircleAvatar(
+                                                      backgroundColor:
+                                                          attendee.emailSentDate !=
+                                                                  null
+                                                              ? Colors.green
+                                                              : Colors
+                                                                  .grey
+                                                                  .shade300,
+                                                      child:
+                                                          attendee.emailSentDate !=
+                                                                  null
+                                                              ? const Icon(
+                                                                Icons
+                                                                    .mark_email_read,
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                                size: 20,
+                                                              )
+                                                              : const Icon(
+                                                                Icons
+                                                                    .mail_outline,
+                                                                color:
+                                                                    Colors.grey,
+                                                                size: 20,
+                                                              ),
+                                                    ),
+                                                  ),
+                                                  title: Text(
+                                                    attendee.spouseName !=
+                                                                null &&
+                                                            attendee
+                                                                .spouseName!
+                                                                .isNotEmpty
+                                                        ? '${attendee.name} & ${attendee.spouseName}'
+                                                        : attendee.name,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Theme.of(
+                                                            context,
+                                                          ).primaryColor,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        attendee.address,
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                      if (attendee
+                                                          .email
+                                                          .isNotEmpty)
+                                                        Text(
+                                                          attendee.email,
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            color:
+                                                                Theme.of(
+                                                                  context,
+                                                                ).primaryColor,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      Wrap(
+                                                        spacing: 8,
+                                                        children: [
+                                                          if (attendee
+                                                                  .forumDate !=
+                                                              null)
+                                                            Text(
+                                                              '${attendee.type} Forum: ${DateFormat('MMM dd, yyyy').format(attendee.forumDate!)}',
+                                                              style: TextStyle(
+                                                                fontSize: 9,
+                                                                color:
+                                                                    Colors
+                                                                        .grey[600],
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                          if (attendee
+                                                                  .emailSentDate !=
+                                                              null)
+                                                            Text(
+                                                              '• Sent: ${DateFormat('MMM dd, yyyy').format(attendee.emailSentDate!)}',
+                                                              style: const TextStyle(
+                                                                fontSize: 9,
+                                                                color:
+                                                                    Colors
+                                                                        .green,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  trailing:
+                                                      isAuthorized
+                                                          ? IconButton(
+                                                            icon: Icon(
+                                                              Icons.edit_note,
+                                                              color:
+                                                                  Theme.of(
+                                                                    context,
+                                                                  ).primaryColor,
+                                                            ),
+                                                            onPressed: () {
+                                                              _showForumAttendeeFormWithEdit(
+                                                                attendee,
+                                                              );
+                                                            },
+                                                            tooltip: 'Edit',
+                                                          )
+                                                          : null,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        );
-                                      },
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }
-                            return Expanded(
+                                );
+                              }
+                              return Expanded(
                                 child: ListView.builder(
                                   itemCount: 10,
                                   itemBuilder: (context, index) {
@@ -858,87 +942,99 @@ class _ForumPageState extends State<ForumPage> {
                         onPressed: () {
                           showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Row(
-                                children: [
-                                  Icon(Icons.forward_to_inbox, color: Colors.deepPurple),
-                                  SizedBox(width: 10),
-                                  Text('Send All Unsent?'),
-                                ],
-                              ),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'This will generate and send certificates to all unsent recipients.',
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.grey.shade300),
-                                    ),
-                                    child: Text.rich(
-                                      TextSpan(
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade800,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: 'This system uses Google Workspace when sending emails, which has built-in limits and restrictions.\n\n',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                              color: Colors.grey.shade900,
-                                            ),
-                                          ),
-                                          const TextSpan(
-                                            text: 'To comply, emails are sent in ',
-                                          ),
-                                          TextSpan(
-                                            text: 'batches of $smtpBatchSize at a time, followed by a $smtpBatchDelayMinutes-minute cooldown per batch',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const TextSpan(
-                                            text: '. This ensures reliable delivery and prevents the ',
-                                          ),
-                                          const TextSpan(
-                                            text: 'RACCO official email from being banned',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const TextSpan(
-                                            text: '.',
-                                          ),
-                                        ],
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.forward_to_inbox,
+                                        color: Colors.deepPurple,
                                       ),
-                                    ),
+                                      SizedBox(width: 10),
+                                      Text('Send All Unsent?'),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton.icon(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(Icons.close),
-                                  label: const Text('Cancel'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'This will generate and send certificates to all unsent recipients.',
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Text.rich(
+                                          TextSpan(
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade800,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                text:
+                                                    'This system uses Google Workspace when sending emails, which has built-in limits and restrictions.\n\n',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: Colors.grey.shade900,
+                                                ),
+                                              ),
+                                              const TextSpan(
+                                                text:
+                                                    'To comply, emails are sent in ',
+                                              ),
+                                              TextSpan(
+                                                text:
+                                                    'batches of $smtpBatchSize at a time, followed by a $smtpBatchDelayMinutes-minute cooldown per batch',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const TextSpan(
+                                                text:
+                                                    '. This ensures reliable delivery and prevents the ',
+                                              ),
+                                              const TextSpan(
+                                                text:
+                                                    'RACCO official email from being banned',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const TextSpan(text: '.'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton.icon(
+                                      onPressed: () => Navigator.pop(context),
+                                      icon: const Icon(Icons.close),
+                                      label: const Text('Cancel'),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _sendAllUnsent();
+                                      },
+                                      icon: const Icon(Icons.send_rounded),
+                                      label: const Text('Send All'),
+                                    ),
+                                  ],
                                 ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _sendAllUnsent();
-                                  },
-                                  icon: const Icon(Icons.send_rounded),
-                                  label: const Text('Send All'),
-                                ),
-                              ],
-                            ),
                           );
                         },
                         backgroundColor: Colors.white,

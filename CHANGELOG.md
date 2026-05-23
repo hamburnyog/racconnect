@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-05-23
+
+### Changed
+- **Version Bump**: Updated version to 1.2.5 across all platforms.
+- **UI Improvements**: Fixed UI overflow in Forum Page by replacing Row with Wrap widget.
+
 ## [1.2.1] - 2026-03-01
 
 ### Changed
