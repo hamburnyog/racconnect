@@ -2,7 +2,14 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart' hide Border, BorderStyle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const String serverUrl = 'https://racconnect.codecarpentry.com';
+String get serverUrl => _getEnv(
+    'SERVER_URL', const String.fromEnvironment('SERVER_URL'), '');
+
+String get privacyPolicyUrl => _getEnv('PRIVACY_POLICY_URL',
+    const String.fromEnvironment('PRIVACY_POLICY_URL'), '');
+
+String get canvaDesignUrl => _getEnv('CANVA_DESIGN_URL',
+    const String.fromEnvironment('CANVA_DESIGN_URL'), '');
 
 String _getEnv(String key, String fromEnv, String fallback) {
   if (fromEnv.isNotEmpty) {

@@ -9,6 +9,7 @@ import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
 import 'package:racconnect/presentation/widgets/attendance_form.dart';
 import 'package:racconnect/presentation/widgets/clock_in_button.dart';
+import 'package:racconnect/utility/constants.dart';
 
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -549,7 +550,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       launchUrl(
                         Uri.parse(
-                          'https://www.canva.com/design/DAGv8fq8d3Y/256t5FyYa77CQs3cmNpFTw/view?utm_content=DAGv8fq8d3Y&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hd98961ff75',
+                          canvaDesignUrl,
                         ),
                       );
                     },

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
+import 'package:racconnect/utility/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -172,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 onTap: () {
                                   launchUrl(
                                     Uri.parse(
-                                      'https://privacy.codecarpentry.com/',
+                                      privacyPolicyUrl,
                                     ),
                                   );
                                 },
