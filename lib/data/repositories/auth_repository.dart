@@ -50,6 +50,27 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> signInWithApple() async {
+    try {
+      final response = await pb.collection('users').authWithOAuth2('apple', (
+        url,
+      ) async {
+        await launchUrl(url);
+      }, expand: 'profile,profile.section');
+
+      if (response.record.data.isNotEmpty) {
+        final isVerified = response.record.getBoolValue('verified');
+
+        if (!isVerified) {
+          throw 'Your account is inactive. Kindly check your email for the verification link or contact your administrator.';
+        }
+      }
+      return UserModel.fromMap(response.record.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> requestPasswordReset({required String email}) async {
     try {
       await pb.collection('users').requestPasswordReset(email);

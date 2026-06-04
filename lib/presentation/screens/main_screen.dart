@@ -7,6 +7,7 @@ import 'package:racconnect/presentation/pages/home_page.dart';
 import 'package:racconnect/presentation/pages/personnel_page.dart';
 import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/references_page.dart';
+import 'package:racconnect/presentation/pages/office_logs_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
 import 'package:racconnect/presentation/pages/forum_page.dart';
 
@@ -25,6 +26,11 @@ class _MainScreenState extends State<MainScreen> {
   bool _isProfilePageSelected = false;
   List<BottomNavigationBarItem> sidebarItemMenu = [];
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   String? getPocketBaseFileUrl(String? filename, String? recordId) {
     if (filename == null ||
@@ -101,7 +107,7 @@ class _MainScreenState extends State<MainScreen> {
               child: const Text('Sign out'),
               onPressed: () {
                 context.read<AuthCubit>().signOut();
-                Navigator.pushReplacementNamed(context, '/');
+                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
               },
             ),
           ],
@@ -274,24 +280,33 @@ class _MainScreenState extends State<MainScreen> {
                         if (_isProfilePageSelected) {
                           return ProfilePage();
                         }
-                        if (sidebarItemMenu[_selectedIndex].label == 'Home') {
-                          return HomePage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Personnel') {
+                        final label = sidebarItemMenu[_selectedIndex].label;
+                        if (label == 'Home') {
+                          return HomePage(
+                            onNavigate: (index) {
+                              setState(() {
+                                _selectedIndex = index;
+                              });
+                            },
+                          );
+                        } else if (label == 'Personnel') {
                           return PersonnelPage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'References') {
+                        } else if (label == 'References') {
                           return ReferencesPage(role: userRole);
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Attendance') {
-                          return AttendancePage();
-                        } else if (sidebarItemMenu[_selectedIndex].label ==
-                            'Certificates') {
+                        } else if (label == 'Attendance') {
+                          return AttendancePage(
+                            onNavigateToProfile: () {
+                              setState(() {
+                                _isProfilePageSelected = true;
+                              });
+                            },
+                          );
+                        } else if (label == 'Office Logs') {
+                          return OfficeLogsPage();
+                        } else if (label == 'Certificates') {
                           return ForumPage();
                         } else {
-                          return Text(
-                            sidebarItemMenu[_selectedIndex].label.toString(),
-                          );
+                          return Text(label.toString());
                         }
                       },
                     ),

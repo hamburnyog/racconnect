@@ -2,7 +2,7 @@ name: racconnect
 description: "RACCONNECT App"
 
 publish_to: 'none'
-version: 1.2.5+11
+version: 1.2.6+12
 
 environment:
   sdk: ^3.7.2
@@ -40,6 +40,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   mailer: ^6.6.0
   csv: ^7.1.0
+  flutter_staggered_grid_view: ^0.7.0
 
 dev_dependencies:
   flutter_test:

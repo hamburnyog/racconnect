@@ -35,6 +35,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan QR codes for certificate verification and to take profile pictures.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app does not actively use your location. However, some libraries used for photo and scanning features may reference location APIs for metadata processing.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to your microphone if you choose to record a video for your profile (optional feature of image picker).</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -66,6 +68,8 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

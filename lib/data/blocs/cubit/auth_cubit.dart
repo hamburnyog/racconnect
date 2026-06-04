@@ -61,6 +61,15 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  void signInWithApple() async {
+    try {
+      final userModel = await authRepository.signInWithApple();
+      emit(AuthSignedIn(userModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
   void requestPasswordReset(String email) async {
     try {
       emit(AuthLoading());
@@ -87,12 +96,15 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   void errorMessage(dynamic e) {
-    if (e.runtimeType == ClientException) {
-      if (e.response['data'].isNotEmpty &&
-          e.response['data']['email']['code'] == 'validation_not_unique') {
+    if (e is ClientException) {
+      final data = e.response['data'];
+      if (data is Map &&
+          data.isNotEmpty &&
+          data['email'] != null &&
+          data['email']['code'] == 'validation_not_unique') {
         emit(AuthError('The email address is already taken.'));
       } else {
-        emit(AuthError(e.response['message'].toString()));
+        emit(AuthError(e.response['message']?.toString() ?? 'An error occurred'));
       }
     } else {
       emit(AuthError(e.toString()));

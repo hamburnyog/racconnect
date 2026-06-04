@@ -2,14 +2,17 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart' hide Border, BorderStyle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-String get serverUrl => _getEnv(
+final String serverUrl = _getEnv(
     'SERVER_URL', const String.fromEnvironment('SERVER_URL'), '');
 
-String get privacyPolicyUrl => _getEnv('PRIVACY_POLICY_URL',
+final String privacyPolicyUrl = _getEnv('PRIVACY_POLICY_URL',
     const String.fromEnvironment('PRIVACY_POLICY_URL'), '');
 
-String get canvaDesignUrl => _getEnv('CANVA_DESIGN_URL',
+final String canvaDesignUrl = _getEnv('CANVA_DESIGN_URL',
     const String.fromEnvironment('CANVA_DESIGN_URL'), '');
+
+final String ipApiUrl = _getEnv('IP_API_URL',
+    const String.fromEnvironment('IP_API_URL'), 'https://api.ipify.org');
 
 String _getEnv(String key, String fromEnv, String fallback) {
   if (fromEnv.isNotEmpty) {
@@ -79,12 +82,24 @@ const String dividerText = ':';
 
 enum ConnectionType { wifi, ethernet, mobile }
 
+const _certificateItem = BottomNavigationBarItem(
+  icon: Icon(Icons.card_membership_outlined),
+  activeIcon: Icon(Icons.card_membership_rounded),
+  label: 'Certificates',
+);
+
 const sideBarItemsDev = [
   ...sideBarItemsUser,
+  _certificateItem,
   BottomNavigationBarItem(
     icon: Icon(Icons.person_outline_rounded),
     activeIcon: Icon(Icons.person_rounded),
     label: 'Personnel',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.fingerprint_rounded),
+    activeIcon: Icon(Icons.fingerprint),
+    label: 'Office Logs',
   ),
   BottomNavigationBarItem(
     icon: Icon(Icons.library_books_outlined),
@@ -95,10 +110,12 @@ const sideBarItemsDev = [
 
 const sideBarItemsIO = [
   ...sideBarItemsUser,
+  _certificateItem,
 ];
 
 const sideBarItemsOic = [
   ...sideBarItemsUser,
+  _certificateItem,
   BottomNavigationBarItem(
     icon: Icon(Icons.person_outline_rounded),
     activeIcon: Icon(Icons.person_rounded),
@@ -108,6 +125,7 @@ const sideBarItemsOic = [
 
 const sideBarItemsUnitHead = [
   ...sideBarItemsUser,
+  _certificateItem,
   BottomNavigationBarItem(
     icon: Icon(Icons.person_outline_rounded),
     activeIcon: Icon(Icons.person_rounded),
@@ -122,6 +140,7 @@ const sideBarItemsUnitHead = [
 
 const sideBarItemsHr = [
   ...sideBarItemsUser,
+  _certificateItem,
   BottomNavigationBarItem(
     icon: Icon(Icons.person_outline_rounded),
     activeIcon: Icon(Icons.person_rounded),
@@ -136,6 +155,7 @@ const sideBarItemsHr = [
 
 const sideBarItemsRecords = [
   ...sideBarItemsUser,
+  _certificateItem,
   BottomNavigationBarItem(
     icon: Icon(Icons.library_books_outlined),
     activeIcon: Icon(Icons.library_books),
@@ -153,11 +173,6 @@ const sideBarItemsUser = [
     icon: Icon(Icons.access_time),
     activeIcon: Icon(Icons.access_time_filled),
     label: 'Attendance',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.card_membership_outlined),
-    activeIcon: Icon(Icons.card_membership_rounded),
-    label: 'Certificates',
   ),
 ];
 

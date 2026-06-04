@@ -12,7 +12,17 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   Future<void> getAllAttendances() async {
     try {
       emit(AttendanceLoading());
-      final attendanceModels = await attendanceRepository.getAllAttendances();
+      final attendanceModels = await attendanceRepository.getAllAttendanceForMonth(DateTime.now());
+      emit(GetAllAttendanceSuccess(attendanceModels));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> getAllAttendanceForMonth(DateTime monthDate) async {
+    try {
+      emit(AttendanceLoading());
+      final attendanceModels = await attendanceRepository.getAllAttendanceForMonth(monthDate);
       emit(GetAllAttendanceSuccess(attendanceModels));
     } catch (e) {
       errorMessage(e);
@@ -86,6 +96,34 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         timestamp: timestamp,
       );
       emit(AttendanceAddSuccess(attendance));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> updateAttendance({
+    required String id,
+    required DateTime timestamp,
+    String? remarks,
+  }) async {
+    try {
+      emit(AttendanceLoading());
+      final attendance = await attendanceRepository.updateAttendance(
+        id: id,
+        timestamp: timestamp,
+        remarks: remarks,
+      );
+      emit(AttendanceAddSuccess(attendance));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  Future<void> deleteAttendance(String id) async {
+    try {
+      emit(AttendanceLoading());
+      await attendanceRepository.deleteAttendance(id);
+      emit(AttendanceInitial()); // Or a success state if needed
     } catch (e) {
       errorMessage(e);
     }

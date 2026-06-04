@@ -50,3 +50,14 @@ app.*.map.json
 dtr-transpose/
 android/gradle.properties
 android/key.properties
+GEMINI.md
+
+# Sensitive files and API keys
+*.env.*
+*.key
+*.pem
+*.cer
+*.p12
+*.p8
+google-services.json
+GoogleService-Info.plist

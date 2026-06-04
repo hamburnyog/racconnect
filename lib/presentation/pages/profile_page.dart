@@ -253,6 +253,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   await profileCubit.saveProfile(
                     id: profile?.id,
+                    userId: context.read<AuthCubit>().state is AuthenticatedState ? (context.read<AuthCubit>().state as AuthenticatedState).user.id : null,
                     employeeNumber: employeeNumberController.text.trim(),
                     bioId: bioIdController.text.trim(),
                     firstName: firstNameController.text.trim(),

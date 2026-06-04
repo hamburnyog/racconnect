@@ -8,7 +8,6 @@ import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/signatory_cubit.dart';
-import 'package:racconnect/presentation/widgets/mobile_button.dart';
 import 'package:racconnect/utility/generate_excel.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart'; // For error logging
@@ -40,21 +39,14 @@ class _ExportButtonState extends State<ExportButton> {
 
   @override
   Widget build(BuildContext context) {
-    final isSmallScreen = MediaQuery.of(context).size.width < 700;
-
     final authState = context.read<AuthCubit>().state;
     final user = authState is AuthenticatedState ? authState.user : null;
     final profile = user?.profile;
     final userRole = user?.role ?? '';
     final employeeNumber = profile?.employeeNumber ?? '';
-    final employmentStatus = profile?.employmentStatus ?? '';
     final isProfileComplete = employeeNumber.isNotEmpty;
+    final employmentStatus = profile?.employmentStatus ?? '';
     final isCOS = employmentStatus == 'COS';
-
-    final tooltipMessage =
-        isProfileComplete
-            ? "Export this month's DTR as Excel"
-            : 'Complete your profile to export.';
 
     Future<void> handleExport() async {
       if (!isProfileComplete) return;
@@ -76,14 +68,18 @@ class _ExportButtonState extends State<ExportButton> {
       }
     }
 
-    return Tooltip(
-      message: tooltipMessage,
-      child: MobileButton(
-        isSmallScreen: isSmallScreen,
-        onPressed: isProfileComplete && !_isExporting ? handleExport : null,
-        icon: Icon(_isExporting ? Icons.hourglass_bottom : Icons.download),
-        label: _isExporting ? 'Exporting' : 'Export',
-      ),
+    return FloatingActionButton(
+      mini: true,
+      heroTag: 'exportLogsFab',
+      backgroundColor: Theme.of(context).primaryColor,
+      onPressed: isProfileComplete && !_isExporting ? handleExport : null,
+      child:
+          _isExporting
+              ? const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              )
+              : const Icon(Icons.file_download, color: Colors.white),
     );
   }
 

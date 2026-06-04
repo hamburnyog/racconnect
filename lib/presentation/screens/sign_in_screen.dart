@@ -220,6 +220,21 @@ class _SignInScreenState extends State<SignInScreen> {
                                 context.read<AuthCubit>().signInWithGoogle();
                               },
                             ),
+                            if (Platform.isIOS || Platform.isMacOS) ...[
+                              SizedBox(height: 15),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.black),
+                                ),
+                                icon: const Icon(Icons.apple, color: Colors.white, size: 28),
+                                label: const Text('SIGN IN WITH APPLE'),
+                                onPressed: () {
+                                  context.read<AuthCubit>().signInWithApple();
+                                },
+                              ),
+                            ],
                             SizedBox(height: 15),
                             GestureDetector(
                               onTap: () {
