@@ -109,14 +109,14 @@ class _ExportRawLogsButtonState extends State<ExportRawLogsButton> {
       DateTime endDate;
 
       if (period == 'first') {
-        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
-        endDate = DateTime(widget.selectedYear, widget.selectedMonth, 15, 23, 59, 59);
+        startDate = DateTime.utc(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime.utc(widget.selectedYear, widget.selectedMonth, 15, 23, 59, 59);
       } else if (period == 'second') {
-        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 16);
-        endDate = DateTime(widget.selectedYear, widget.selectedMonth + 1, 1).subtract(const Duration(seconds: 1));
+        startDate = DateTime.utc(widget.selectedYear, widget.selectedMonth, 16);
+        endDate = DateTime.utc(widget.selectedYear, widget.selectedMonth + 1, 1).subtract(const Duration(seconds: 1));
       } else {
-        startDate = DateTime(widget.selectedYear, widget.selectedMonth, 1);
-        endDate = DateTime(widget.selectedYear, widget.selectedMonth + 1, 1).subtract(const Duration(seconds: 1));
+        startDate = DateTime.utc(widget.selectedYear, widget.selectedMonth, 1);
+        endDate = DateTime.utc(widget.selectedYear, widget.selectedMonth + 1, 1).subtract(const Duration(seconds: 1));
       }
 
       final filteredLogs = widget.logs.where((log) {

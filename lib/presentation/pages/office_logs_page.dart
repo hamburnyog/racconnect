@@ -16,6 +16,62 @@ import 'package:racconnect/presentation/widgets/time_log_bottom_sheet.dart';
 import 'package:racconnect/utility/attendance_rules.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+class TabIndexListener extends StatefulWidget {
+  final List<ProfileModel> profiles;
+  final Function(ProfileModel) onProfileChanged;
+  final Widget child;
+
+  const TabIndexListener({
+    super.key,
+    required this.profiles,
+    required this.onProfileChanged,
+    required this.child,
+  });
+
+  @override
+  State<TabIndexListener> createState() => _TabIndexListenerState();
+}
+
+class _TabIndexListenerState extends State<TabIndexListener> {
+  TabController? _controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newController = DefaultTabController.of(context);
+    if (newController != _controller) {
+      _controller?.removeListener(_handleTabChange);
+      _controller = newController;
+      _controller?.addListener(_handleTabChange);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_controller != null && _controller!.index < widget.profiles.length) {
+          widget.onProfileChanged(widget.profiles[_controller!.index]);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_handleTabChange);
+    super.dispose();
+  }
+
+  void _handleTabChange() {
+    if (_controller != null) {
+      final index = _controller!.index;
+      if (index >= 0 && index < widget.profiles.length) {
+        widget.onProfileChanged(widget.profiles[index]);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
 class OfficeLogsPage extends StatefulWidget {
   const OfficeLogsPage({super.key});
 
@@ -28,6 +84,9 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   int selectedMonth = DateTime.now().month;
   List<ProfileModel> _profiles = [];
   ProfileModel? _selectedProfile;
+  ProfileModel? _activeTabProfile;
+  String? _selectedEmploymentStatus = 'All';
+  String _selectedPeriod = 'Whole Month';
   List<AttendanceModel> _employeeLogs = [];
   List<AttendanceModel> _filteredLogs = [];
   Map<DateTime, String> holidayMap = {};
@@ -39,6 +98,31 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   final TextEditingController _searchController = TextEditingController();
 
   List<int> getYears() => List.generate(2, (i) => DateTime.now().year - i);
+
+  ProfileModel? get _effectiveProfile {
+    if (_selectedProfile != null) return _selectedProfile;
+    final filtered = _getFilteredAndSortedProfiles();
+    if (filtered.isEmpty) return null;
+    if (_activeTabProfile != null && filtered.contains(_activeTabProfile)) {
+      return _activeTabProfile;
+    }
+    return filtered.first;
+  }
+
+  List<ProfileModel> _getFilteredAndSortedProfiles() {
+    final list = _profiles.where((p) {
+      if (_selectedEmploymentStatus != null && _selectedEmploymentStatus != 'All') {
+        return p.employmentStatus == _selectedEmploymentStatus;
+      }
+      return true;
+    }).toList();
+    list.sort((a, b) {
+      final aNum = a.employeeNumber ?? '';
+      final bNum = b.employeeNumber ?? '';
+      return aNum.compareTo(bNum);
+    });
+    return list;
+  }
 
   @override
   void initState() {
@@ -64,7 +148,12 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       final profiles = await ProfileRepository().getAllProfiles();
       setState(() {
         _profiles = profiles;
+        final filtered = _getFilteredAndSortedProfiles();
+        if (filtered.isNotEmpty) {
+          _activeTabProfile = filtered.first;
+        }
       });
+      _loadEmployeeLogs();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,11 +164,21 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   }
 
   Future<void> _loadEmployeeLogs() async {
-    if (_selectedProfile == null) return;
+    final profile = _effectiveProfile;
+    if (profile == null) {
+      setState(() {
+        _employeeLogs = [];
+        _filteredLogs = [];
+      });
+      return;
+    }
     setState(() => _isLoadingLogs = true);
 
-    final employeeNumber = _selectedProfile!.employeeNumber;
-    if (employeeNumber == null) return;
+    final employeeNumber = profile.employeeNumber;
+    if (employeeNumber == null) {
+      setState(() => _isLoadingLogs = false);
+      return;
+    }
 
     final cubit = context.read<AttendanceCubit>();
     await cubit.getEmployeeAttendanceForMonth(
@@ -109,10 +208,18 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
 
         if (!_includeWFH) {
           final isWFH = log.type.toLowerCase().contains('wfh');
-          return matchesQuery && !isWFH;
+          if (isWFH) return false;
         }
 
-        return matchesQuery;
+        if (!matchesQuery) return false;
+
+        if (_selectedPeriod == 'First Half') {
+          return log.timestamp.day <= 15;
+        } else if (_selectedPeriod == 'Second Half') {
+          return log.timestamp.day >= 16;
+        }
+
+        return true;
       }).toList();
     });
   }
@@ -128,13 +235,48 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       _loadGlobalData();
     }
 
-    if (_selectedProfile != null) {
+    if (_effectiveProfile != null) {
       _loadEmployeeLogs();
     }
   }
 
+  void _onEmploymentStatusChanged(String? val) {
+    setState(() {
+      _selectedEmploymentStatus = val;
+      if (_selectedProfile != null && val != 'All' && val != null) {
+        if (_selectedProfile!.employmentStatus != val) {
+          _selectedProfile = null;
+          _employeeLogs = [];
+          _filteredLogs = [];
+        }
+      }
+      if (_selectedProfile == null) {
+        _activeTabProfile = null;
+      }
+    });
+    _loadEmployeeLogs();
+  }
+
+  void _onPeriodChanged(String? val) {
+    if (val != null) {
+      setState(() {
+        _selectedPeriod = val;
+        _applyFilter();
+      });
+    }
+  }
+
+  void _onTabProfileChanged(ProfileModel profile) {
+    if (_activeTabProfile == profile) return;
+    setState(() {
+      _activeTabProfile = profile;
+    });
+    _loadEmployeeLogs();
+  }
+
   void _showLogEditor({DateTime? date, AttendanceModel? log}) {
-    if (_selectedProfile == null) return;
+    final profile = _effectiveProfile;
+    if (profile == null) return;
 
     showModalBottomSheet(
       context: context,
@@ -144,7 +286,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       builder: (context) => TimeLogBottomSheet(
         log: log,
         initialDate: date,
-        employeeNumber: _selectedProfile!.employeeNumber!,
+        employeeNumber: profile.employeeNumber!,
       ),
     ).then((result) {
       if (result == true) {
@@ -156,6 +298,9 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 1000;
+    final filteredProfiles = _getFilteredAndSortedProfiles();
+    final bool showTabs = _selectedProfile == null && filteredProfiles.isNotEmpty;
+    final String profilesKey = filteredProfiles.map((p) => p.employeeNumber ?? '').join(',');
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -181,7 +326,8 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                       DateTime(s.datetime.year, s.datetime.month, s.datetime.day): s,
                   };
                 }
-                return Scaffold(
+
+                Widget mainContent = Scaffold(
                   backgroundColor: Colors.transparent,
                   body: Stack(
                     children: [
@@ -189,8 +335,35 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                         children: [
                           _buildHeader(),
                           _buildFilters(),
+                          if (showTabs) ...[
+                            TabBar(
+                              isScrollable: true,
+                              tabAlignment: TabAlignment.start,
+                              padding: EdgeInsets.zero,
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 6.0),
+                              labelColor: Colors.deepPurple,
+                              unselectedLabelColor: Colors.grey,
+                              indicatorColor: Colors.deepPurple,
+                              tabs: filteredProfiles.map((p) {
+                                final String firstInitial = p.firstName.isNotEmpty ? '${p.firstName[0]}.' : '';
+                                return Tab(
+                                  child: Text(
+                                    '${p.lastName}, $firstInitial (${p.employeeNumber ?? 'N/A'})',
+                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                           Expanded(
-                            child: isSmallScreen ? _buildStackedView() : _buildTwoColumnView(),
+                            child: showTabs
+                                ? TabIndexListener(
+                                    profiles: filteredProfiles,
+                                    onProfileChanged: _onTabProfileChanged,
+                                    child: isSmallScreen ? _buildStackedView() : _buildTwoColumnView(),
+                                  )
+                                : (isSmallScreen ? _buildStackedView() : _buildTwoColumnView()),
                           ),
                         ],
                       ),
@@ -201,12 +374,25 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (_selectedProfile == null)
+                            if (_selectedProfile == null) ...[
                               ExportAllEmployeesLogsButton(
+                                key: ValueKey(profilesKey),
                                 selectedYear: selectedYear,
                                 selectedMonth: selectedMonth,
-                                profiles: _profiles,
+                                profiles: filteredProfiles,
                               ),
+                              if (showTabs && _effectiveProfile != null) ...[
+                                const SizedBox(height: 8),
+                                ExportRawLogsButton(
+                                  key: ValueKey(_effectiveProfile),
+                                  selectedYear: selectedYear,
+                                  selectedMonth: selectedMonth,
+                                  logs: _filteredLogs,
+                                  isAllEmployees: true,
+                                  bioId: _effectiveProfile?.bioId ?? _effectiveProfile?.employeeNumber,
+                                ),
+                              ],
+                            ],
                             if (_selectedProfile != null)
                               ExportRawLogsButton(
                                 selectedYear: selectedYear,
@@ -221,6 +407,15 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                     ],
                   ),
                 );
+
+                if (showTabs) {
+                  return DefaultTabController(
+                    key: ValueKey(profilesKey),
+                    length: filteredProfiles.length,
+                    child: mainContent,
+                  );
+                }
+                return mainContent;
               },
             );
           },
@@ -257,6 +452,13 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
     );
 
+    final filteredProfilesForDropdown = _profiles.where((p) {
+      if (_selectedEmploymentStatus != null && _selectedEmploymentStatus != 'All') {
+        return p.employmentStatus == _selectedEmploymentStatus;
+      }
+      return true;
+    }).toList();
+
     if (isSmallScreen) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -281,7 +483,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                       ),
-                      dropdownMenuEntries: _profiles.map((p) {
+                      dropdownMenuEntries: filteredProfilesForDropdown.map((p) {
                         return DropdownMenuEntry(value: p, label: '${p.lastName}, ${p.firstName} (${p.employeeNumber})');
                       }).toList(),
                       onSelected: (val) {
@@ -300,12 +502,37 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                         _employeeLogs = [];
                         _filteredLogs = [];
                       });
+                      _loadEmployeeLogs();
                     },
                     icon: const Icon(Icons.close, color: Colors.red),
                     tooltip: 'Clear Selection',
                   ),
                 ],
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: h,
+              child: DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: _selectedEmploymentStatus,
+                decoration: decoration.copyWith(labelText: 'Status', labelStyle: const TextStyle(fontSize: 12)),
+                items: [
+                  const DropdownMenuItem(value: 'All', child: Text('All Statuses', style: TextStyle(fontSize: 13))),
+                  ...[
+                    'Permanent',
+                    'Casual',
+                    'Contractual',
+                    'Job Order',
+                    'COS',
+                    'Detailed',
+                    'Resigned',
+                    'Retired',
+                    'OJT',
+                  ].map((status) => DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontSize: 13)))),
+                ],
+                onChanged: _onEmploymentStatusChanged,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -335,6 +562,20 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: h,
+              child: DropdownButtonFormField<String>(
+                initialValue: _selectedPeriod,
+                decoration: decoration.copyWith(labelText: 'Period', labelStyle: const TextStyle(fontSize: 12)),
+                items: [
+                  'Whole Month',
+                  'First Half',
+                  'Second Half',
+                ].map((period) => DropdownMenuItem(value: period, child: Text(period, style: const TextStyle(fontSize: 13)))).toList(),
+                onChanged: _onPeriodChanged,
+              ),
             ),
             const SizedBox(height: 8),
             _buildAlignedSwitch(
@@ -382,7 +623,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                     ),
-                    dropdownMenuEntries: _profiles.map((p) {
+                    dropdownMenuEntries: filteredProfilesForDropdown.map((p) {
                       return DropdownMenuEntry(value: p, label: '${p.lastName}, ${p.firstName} (${p.employeeNumber})');
                     }).toList(),
                     onSelected: (val) {
@@ -401,12 +642,44 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                       _employeeLogs = [];
                       _filteredLogs = [];
                     });
+                    _loadEmployeeLogs();
                   },
                   icon: const Icon(Icons.close, color: Colors.red),
                   tooltip: 'Clear Selection',
                 ),
               ],
               const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: SizedBox(
+                  height: h,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedEmploymentStatus,
+                    decoration: decoration.copyWith(labelText: 'Status', labelStyle: const TextStyle(fontSize: 12)),
+                    items: [
+                      const DropdownMenuItem(value: 'All', child: Text('All Statuses', style: TextStyle(fontSize: 13))),
+                      ...[
+                        'Permanent',
+                        'Casual',
+                        'Contractual',
+                        'Job Order',
+                        'COS',
+                        'Detailed',
+                        'Resigned',
+                        'Retired',
+                        'OJT',
+                      ].map((status) => DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontSize: 13)))),
+                    ],
+                    onChanged: _onEmploymentStatusChanged,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 flex: 1,
                 child: SizedBox(
@@ -430,6 +703,23 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                     decoration: decoration.copyWith(labelText: 'Year', labelStyle: const TextStyle(fontSize: 12)),
                     items: getYears().map((y) => DropdownMenuItem(value: y, child: Text('$y', style: const TextStyle(fontSize: 13)))).toList(),
                     onChanged: (val) => _onDateFilterChanged(year: val),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: SizedBox(
+                  height: h,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedPeriod,
+                    decoration: decoration.copyWith(labelText: 'Period', labelStyle: const TextStyle(fontSize: 12)),
+                    items: [
+                      'Whole Month',
+                      'First Half',
+                      'Second Half',
+                    ].map((period) => DropdownMenuItem(value: period, child: Text(period, style: const TextStyle(fontSize: 13)))).toList(),
+                    onChanged: _onPeriodChanged,
                   ),
                 ),
               ),
@@ -528,7 +818,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   Widget _buildDtrCard({required bool isSmallScreen}) {
     Widget content = Skeletonizer(
       enabled: _isLoadingLogs,
-      child: _selectedProfile == null
+      child: _effectiveProfile == null
           ? _buildEmptyState('Select an employee to view DTR', 'assets/images/dog.png')
           : _buildDtrTable(),
     );
@@ -552,7 +842,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   Widget _buildRawLogsCard({required bool isSmallScreen}) {
     Widget content = Skeletonizer(
       enabled: _isLoadingLogs,
-      child: _selectedProfile == null
+      child: _effectiveProfile == null
           ? _buildEmptyState('No employee selected', 'assets/images/cat.png')
           : RawLogsView(
               logs: _filteredLogs,
@@ -605,7 +895,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   }
 
   Widget _buildDtrTable() {
-    final days = _getDaysInMonth(selectedYear, selectedMonth);
+    final days = _getDaysForPeriod(selectedYear, selectedMonth);
 
     // Group all filtered logs by date for efficient access
     final Map<String, List<AttendanceModel>> logsByDate = {};
@@ -755,20 +1045,16 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   }
 
   bool _isWorkday(DateTime day) {
-    // 1. Check if weekend
     if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
       return false;
     }
 
-    // 2. Check if holiday
     final dateKey = DateTime(day.year, day.month, day.day);
     if (holidayMap.containsKey(dateKey)) {
       return false;
     }
 
-    // 3. Check if suspension
     if (suspensionMap.containsKey(dateKey)) {
-      // You might want to check the suspension time, but for now we assume whole day
       return false;
     }
 
@@ -778,5 +1064,15 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
   List<DateTime> _getDaysInMonth(int year, int month) {
     final lastDay = DateTime(year, month + 1, 0);
     return List.generate(lastDay.day, (i) => DateTime(year, month, i + 1));
+  }
+
+  List<DateTime> _getDaysForPeriod(int year, int month) {
+    final allDays = _getDaysInMonth(year, month);
+    if (_selectedPeriod == 'First Half') {
+      return allDays.where((d) => d.day <= 15).toList();
+    } else if (_selectedPeriod == 'Second Half') {
+      return allDays.where((d) => d.day >= 16).toList();
+    }
+    return allDays;
   }
 }
