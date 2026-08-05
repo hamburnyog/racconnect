@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/data/models/accomplishment_model.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
@@ -43,6 +45,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
   bool _isEditing = false;
   final _formKey = GlobalKey<FormState>();
+  ProfileModel? _profile;
 
   late TextEditingController _firstNameController;
   late TextEditingController _middleNameController;
@@ -61,6 +64,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
   @override
   void initState() {
+    _profile = widget.user.profile;
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _dataFuture = _fetchData();
@@ -69,7 +73,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
   }
 
   void _initializeControllers() {
-    final profile = widget.user.profile;
+    final profile = _profile;
     _firstNameController = TextEditingController(text: profile?.firstName);
     _middleNameController = TextEditingController(text: profile?.middleName);
     _lastNameController = TextEditingController(text: profile?.lastName);
@@ -98,7 +102,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
   }
 
   Future<Map<String, dynamic>> _fetchData() async {
-    final employeeNumber = widget.user.profile?.employeeNumber;
+    final employeeNumber = _profile?.employeeNumber;
     if (employeeNumber == null) {
       return {'attendance': [], 'accomplishment': null};
     }
@@ -139,7 +143,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
     try {
       final updatedProfile = ProfileModel(
-        id: widget.user.profile?.id,
+        id: _profile?.id,
         firstName: _firstNameController.text.trim(),
         middleName: _middleNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -152,12 +156,14 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
         section: _selectedSectionId,
       );
 
-      await _profileRepository.saveProfile(
-        id: widget.user.profile?.id,
+      final savedProfile = await _profileRepository.saveProfile(
+        id: _profile?.id,
         profile: updatedProfile,
       );
 
       if (mounted) {
+        context.read<AuthCubit>().getUsers();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully'),
@@ -165,10 +171,9 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
           ),
         );
         setState(() {
+          _profile = savedProfile;
           _isEditing = false;
         });
-        // We might want to refresh the parent page or update the local user object
-        // For now, just close the edit mode.
       }
     } catch (e) {
       if (mounted) {
@@ -190,7 +195,7 @@ class _EmployeeViewPageState extends State<EmployeeViewPage>
 
   @override
   Widget build(BuildContext context) {
-    final profile = widget.user.profile;
+    final profile = _profile;
 
     if (profile == null) {
       return const Center(child: Text('This user does not have a profile.'));

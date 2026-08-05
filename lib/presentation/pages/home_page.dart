@@ -195,6 +195,8 @@ class _HomePageState extends State<HomePage> {
                       child: ListView(
                         shrinkWrap: true,
                         children: [
+                          _buildQuickAccessGrid(context, role),
+                          const SizedBox(height: 16),
                           Card(
                             color: Theme.of(context).primaryColor,
                             child: ListTile(
@@ -436,8 +438,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          _buildQuickAccessGrid(context, role),
                           const SizedBox(height: 80),
                         ],
                       ),

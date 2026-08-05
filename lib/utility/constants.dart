@@ -106,6 +106,11 @@ const sideBarItemsDev = [
     activeIcon: Icon(Icons.library_books),
     label: 'References',
   ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.mark_email_unread_outlined),
+    activeIcon: Icon(Icons.mark_email_read_rounded),
+    label: 'Email Settings',
+  ),
 ];
 
 const sideBarItemsIO = [

@@ -185,7 +185,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         state.users
                             .where(
                               (user) =>
-                                  user.role != null && user.role!.isNotEmpty,
+                                  user.role != null && user.role!.isNotEmpty &&
+                                  user.profile?.employmentStatus != 'Resigned',
                             )
                             .toList();
 
@@ -353,7 +354,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                         builder: (BuildContext builder) {
                                           return EmployeeViewPage(user: user);
                                         },
-                                      );
+                                      ).then((_) => _loadData());
                                     },
                                     trailing:
                                         hasAttendance

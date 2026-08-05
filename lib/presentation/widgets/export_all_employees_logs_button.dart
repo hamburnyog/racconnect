@@ -13,12 +13,18 @@ class ExportAllEmployeesLogsButton extends StatefulWidget {
   final int selectedYear;
   final int selectedMonth;
   final List<ProfileModel> profiles;
+  final ProfileModel? selectedProfile;
+  final String selectedPeriod;
+  final bool includeWFH;
 
   const ExportAllEmployeesLogsButton({
     super.key,
     required this.selectedYear,
     required this.selectedMonth,
     required this.profiles,
+    this.selectedProfile,
+    required this.selectedPeriod,
+    required this.includeWFH,
   });
 
   @override
@@ -34,13 +40,40 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
   @override
   void initState() {
     super.initState();
-    _selectedEmployeeNumbers = widget.profiles
-        .where((p) => p.employeeNumber != null)
-        .map((p) => p.employeeNumber!)
-        .toList();
+    _includeWFH = widget.includeWFH;
   }
 
-  Future<void> _showSelectionDialog() async {
+  void _onPressed() {
+    if (_isExporting) return;
+
+    // Convert period display text to pocketbase/export key format
+    String periodKey = 'whole';
+    if (widget.selectedPeriod == 'First Half') {
+      periodKey = 'first';
+    } else if (widget.selectedPeriod == 'Second Half') {
+      periodKey = 'second';
+    }
+
+    if (widget.selectedProfile != null) {
+      final empNo = widget.selectedProfile!.employeeNumber;
+      if (empNo != null) {
+        setState(() {
+          _selectedEmployeeNumbers = [empNo];
+        });
+        _performExport(periodKey);
+      }
+    } else {
+      setState(() {
+        _selectedEmployeeNumbers = widget.profiles
+            .where((p) => p.employeeNumber != null)
+            .map((p) => p.employeeNumber!)
+            .toList();
+      });
+      _showSelectionDialog(periodKey);
+    }
+  }
+
+  Future<void> _showSelectionDialog(String periodKey) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -53,7 +86,7 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
             }).toList();
 
             return AlertDialog(
-              title: const Text('Export All Logs'),
+              title: const Text('Export Logs'),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -144,48 +177,13 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
                 TextButton(
                   onPressed: _selectedEmployeeNumbers.isEmpty ? null : () {
                     Navigator.of(context).pop();
-                    _showPeriodSelectionDialog();
+                    _performExport(periodKey);
                   },
-                  child: const Text('Next'),
+                  child: const Text('Export'),
                 ),
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  Future<void> _showPeriodSelectionDialog() async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Period'),
-          content: const Text('Choose the period for export:'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('First Half (1-15)'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performExport('first');
-              },
-            ),
-            TextButton(
-              child: const Text('Second Half (16-end)'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performExport('second');
-              },
-            ),
-            TextButton(
-              child: const Text('Whole Month'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performExport('whole');
-              },
-            ),
-          ],
         );
       },
     );
@@ -254,7 +252,15 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
       }
 
       final csvContent = buffer.toString();
-      final fileName = 'all_employees_logs_${widget.selectedYear}_${widget.selectedMonth}_$period.csv';
+      
+      final String fileName;
+      if (widget.selectedProfile != null) {
+        final lastName = widget.selectedProfile!.lastName.toLowerCase().replaceAll(' ', '_');
+        final firstName = widget.selectedProfile!.firstName.toLowerCase().replaceAll(' ', '_');
+        fileName = '${lastName}_${firstName}_logs_${widget.selectedYear}_${widget.selectedMonth}_$period.csv';
+      } else {
+        fileName = 'all_employees_logs_${widget.selectedYear}_${widget.selectedMonth}_$period.csv';
+      }
 
       final directory = await getApplicationDocumentsDirectory();
       final filePath = p.join(directory.path, fileName);
@@ -269,7 +275,9 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
         
         await SharePlus.instance.share(
           ShareParams(
-            subject: 'All Employees Logs Export - ${DateFormat('MMMM yyyy').format(selectedDate)}',
+            subject: widget.selectedProfile != null
+                ? '${widget.selectedProfile!.lastName} Logs Export - ${DateFormat('MMMM yyyy').format(selectedDate)}'
+                : 'All Employees Logs Export - ${DateFormat('MMMM yyyy').format(selectedDate)}',
             files: [xFile],
             sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
           ),
@@ -293,7 +301,7 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error exporting all logs: $e');
+        print('Error exporting logs: $e');
       }
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -316,7 +324,7 @@ class _ExportAllEmployeesLogsButtonState extends State<ExportAllEmployeesLogsBut
       mini: true,
       heroTag: 'exportAllEmployeesLogsFab',
       backgroundColor: Colors.white,
-      onPressed: _isExporting ? null : _showSelectionDialog,
+      onPressed: _isExporting ? null : _onPressed,
       child: _isExporting
           ? CircularProgressIndicator(
               strokeWidth: 2,

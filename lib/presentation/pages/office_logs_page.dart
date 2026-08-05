@@ -10,7 +10,6 @@ import 'package:racconnect/data/models/suspension_model.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/repositories/profile_repository.dart';
 import 'package:racconnect/presentation/widgets/raw_logs_view.dart';
-import 'package:racconnect/presentation/widgets/export_raw_logs_button.dart';
 import 'package:racconnect/presentation/widgets/export_all_employees_logs_button.dart';
 import 'package:racconnect/presentation/widgets/time_log_bottom_sheet.dart';
 import 'package:racconnect/utility/attendance_rules.dart';
@@ -147,7 +146,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     try {
       final profiles = await ProfileRepository().getAllProfiles();
       setState(() {
-        _profiles = profiles;
+        _profiles = profiles.where((p) => p.employmentStatus != 'Resigned').toList();
         final filtered = _getFilteredAndSortedProfiles();
         if (filtered.isNotEmpty) {
           _activeTabProfile = filtered.first;
@@ -367,41 +366,17 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                           ),
                         ],
                       ),
-                      Positioned(
+                       Positioned(
                         right: 16,
                         bottom: 16,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            if (_selectedProfile == null) ...[
-                              ExportAllEmployeesLogsButton(
-                                key: ValueKey(profilesKey),
-                                selectedYear: selectedYear,
-                                selectedMonth: selectedMonth,
-                                profiles: filteredProfiles,
-                              ),
-                              if (showTabs && _effectiveProfile != null) ...[
-                                const SizedBox(height: 8),
-                                ExportRawLogsButton(
-                                  key: ValueKey(_effectiveProfile),
-                                  selectedYear: selectedYear,
-                                  selectedMonth: selectedMonth,
-                                  logs: _filteredLogs,
-                                  isAllEmployees: true,
-                                  bioId: _effectiveProfile?.bioId ?? _effectiveProfile?.employeeNumber,
-                                ),
-                              ],
-                            ],
-                            if (_selectedProfile != null)
-                              ExportRawLogsButton(
-                                selectedYear: selectedYear,
-                                selectedMonth: selectedMonth,
-                                logs: _filteredLogs,
-                                isAllEmployees: true,
-                                bioId: _selectedProfile?.bioId ?? _selectedProfile?.employeeNumber,
-                              ),
-                          ],
+                        child: ExportAllEmployeesLogsButton(
+                          key: ValueKey('${profilesKey}_${_selectedProfile?.id}_${_selectedPeriod}_$_includeWFH'),
+                          selectedYear: selectedYear,
+                          selectedMonth: selectedMonth,
+                          profiles: filteredProfiles,
+                          selectedProfile: _selectedProfile,
+                          selectedPeriod: _selectedPeriod,
+                          includeWFH: _includeWFH,
                         ),
                       ),
                     ],
@@ -526,7 +501,6 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                     'Job Order',
                     'COS',
                     'Detailed',
-                    'Resigned',
                     'Retired',
                     'OJT',
                   ].map((status) => DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontSize: 13)))),
@@ -666,7 +640,6 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                         'Job Order',
                         'COS',
                         'Detailed',
-                        'Resigned',
                         'Retired',
                         'OJT',
                       ].map((status) => DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontSize: 13)))),
@@ -828,9 +801,15 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       child: Column(
         mainAxisSize: isSmallScreen ? MainAxisSize.min : MainAxisSize.max,
         children: [
-          const ListTile(
-            leading: Icon(Icons.calendar_view_month),
-            title: Text('DTR View', style: TextStyle(fontWeight: FontWeight.bold)),
+          ListTile(
+            leading: const Icon(Icons.calendar_view_month),
+            title: const Text('DTR View', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: _effectiveProfile != null
+                ? Text(
+                    '${_effectiveProfile!.lastName}, ${_effectiveProfile!.firstName} (${_effectiveProfile!.employeeNumber ?? 'N/A'})',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  )
+                : null,
           ),
           const Divider(height: 1),
           if (isSmallScreen) content else Expanded(child: content),
@@ -859,9 +838,15 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
       child: Column(
         mainAxisSize: isSmallScreen ? MainAxisSize.min : MainAxisSize.max,
         children: [
-          const ListTile(
-            leading: Icon(Icons.list_alt),
-            title: Text('Raw Logs', style: TextStyle(fontWeight: FontWeight.bold)),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text('Raw Logs', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: _effectiveProfile != null
+                ? Text(
+                    '${_effectiveProfile!.lastName}, ${_effectiveProfile!.firstName} (${_effectiveProfile!.employeeNumber ?? 'N/A'})',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  )
+                : null,
           ),
           const Divider(height: 1),
           if (isSmallScreen) content else Expanded(child: content),

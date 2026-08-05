@@ -9,6 +9,7 @@ import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/references_page.dart';
 import 'package:racconnect/presentation/pages/office_logs_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
+import 'package:racconnect/presentation/pages/email_settings_page.dart';
 import 'package:racconnect/presentation/pages/forum_page.dart';
 
 import 'package:racconnect/utility/constants.dart';
@@ -305,6 +306,8 @@ class _MainScreenState extends State<MainScreen> {
                           return OfficeLogsPage();
                         } else if (label == 'Certificates') {
                           return ForumPage();
+                        } else if (label == 'Email Settings') {
+                          return EmailSettingsPage();
                         } else {
                           return Text(label.toString());
                         }

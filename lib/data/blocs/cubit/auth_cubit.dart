@@ -46,6 +46,11 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         password: password,
       );
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);
@@ -55,6 +60,11 @@ class AuthCubit extends Cubit<AuthState> {
   void signInWithGoogle() async {
     try {
       final userModel = await authRepository.signInWithGoogle();
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);
@@ -64,6 +74,11 @@ class AuthCubit extends Cubit<AuthState> {
   void signInWithApple() async {
     try {
       final userModel = await authRepository.signInWithApple();
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);
@@ -89,6 +104,11 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> refreshCurrentUser() async {
     try {
       final updatedUser = await authRepository.refreshCurrentUser();
+      if (updatedUser.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(updatedUser));
     } catch (e) {
       errorMessage(e);
