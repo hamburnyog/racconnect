@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
-import 'package:racconnect/presentation/widgets/version_check_wrapper.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -86,8 +86,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return VersionCheckWrapper(
-      child: Scaffold(
+    return Scaffold(
         body: SafeArea(
           child: BlocBuilder<AuthCubit, AuthState>(
             builder: (context, state) {
@@ -317,7 +316,6 @@ class _SignInScreenState extends State<SignInScreen> {
             },
           ),
         ),
-      ),
     );
   }
 }

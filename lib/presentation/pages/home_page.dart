@@ -669,6 +669,15 @@ class _HomePageState extends State<HomePage> {
           color: Colors.blueAccent,
           onTap: () => widget.onNavigate(4),
         ),
+      if (role == 'Developer')
+        _buildMenuCard(
+          context,
+          title: 'Email Settings',
+          subtitle: isSmallScreen ? null : 'Configure SMTP credentials',
+          icon: Icons.mark_email_unread_outlined,
+          color: Colors.redAccent,
+          onTap: () => widget.onNavigate(6),
+        ),
     ];
 
     return LayoutBuilder(
