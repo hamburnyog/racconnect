@@ -10,6 +10,7 @@ class RawLogsView extends StatelessWidget {
   final bool showAccomplishment;
   final bool isSmallScreen;
   final Function(AttendanceModel)? onLogTap;
+  final Function(AttendanceModel)? onDeleteTap;
 
   const RawLogsView({
     super.key,
@@ -19,6 +20,7 @@ class RawLogsView extends StatelessWidget {
     this.showAccomplishment = true,
     this.isSmallScreen = false,
     this.onLogTap,
+    this.onDeleteTap,
   });
 
   @override
@@ -53,6 +55,10 @@ class RawLogsView extends StatelessWidget {
         final accomplishment = log.remarks.isNotEmpty ? log.remarks : 'No accomplishment';
         final isBio = log.type.toLowerCase().contains('biometrics');
 
+        final VoidCallback? tapAction = onDeleteTap != null
+            ? () => onDeleteTap!(log)
+            : (onLogTap != null ? () => onLogTap!(log) : null);
+
         return Card(
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
@@ -61,7 +67,7 @@ class RawLogsView extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: InkWell(
-            onTap: onLogTap != null ? () => onLogTap!(log) : null,
+            onTap: tapAction,
             borderRadius: BorderRadius.circular(4),
             child: ListTile(
               dense: true,
@@ -77,9 +83,22 @@ class RawLogsView extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
-              trailing: SizedBox(
-                width: 60,
-                child: buildBadge(log.type, smallScreen: true),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  buildBadge(log.type, smallScreen: true),
+                  if (onDeleteTap != null) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                      tooltip: 'Delete log',
+                      splashRadius: 18,
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(4),
+                      onPressed: () => onDeleteTap!(log),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),

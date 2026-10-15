@@ -7,7 +7,7 @@ import 'package:racconnect/data/models/travel_model.dart';
 import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/auth_repository.dart';
 import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
-import 'package:racconnect/utility/constants.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
@@ -17,7 +17,7 @@ String? getPocketBaseFileUrl(String? filename, String? recordId) {
       recordId.isEmpty) {
     return null;
   }
-  return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
+  return '${PocketBaseClient.instance.baseURL}/api/files/_pb_users_auth_/$recordId/$filename';
 }
 
 class TravelForm extends StatefulWidget {

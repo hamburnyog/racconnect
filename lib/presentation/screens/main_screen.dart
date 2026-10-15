@@ -9,8 +9,9 @@ import 'package:racconnect/presentation/pages/profile_page.dart';
 import 'package:racconnect/presentation/pages/references_page.dart';
 import 'package:racconnect/presentation/pages/office_logs_page.dart';
 import 'package:racconnect/presentation/widgets/logo_widget.dart';
-import 'package:racconnect/presentation/pages/email_settings_page.dart';
+import 'package:racconnect/presentation/pages/settings_page.dart';
 import 'package:racconnect/presentation/pages/forum_page.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
 
 import 'package:racconnect/utility/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,7 +41,7 @@ class _MainScreenState extends State<MainScreen> {
         recordId.isEmpty) {
       return null;
     }
-    return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
+    return '${PocketBaseClient.instance.baseURL}/api/files/_pb_users_auth_/$recordId/$filename';
   }
 
   String getUserInitial(AuthState state) {
@@ -306,8 +307,8 @@ class _MainScreenState extends State<MainScreen> {
                           return OfficeLogsPage();
                         } else if (label == 'Certificates') {
                           return ForumPage();
-                        } else if (label == 'Email Settings') {
-                          return EmailSettingsPage();
+                        } else if (label == 'Settings' || label == 'Email Settings') {
+                          return const SettingsPage();
                         } else {
                           return Text(label.toString());
                         }

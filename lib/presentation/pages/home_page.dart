@@ -672,9 +672,9 @@ class _HomePageState extends State<HomePage> {
       if (role == 'Developer')
         _buildMenuCard(
           context,
-          title: 'Email Settings',
-          subtitle: isSmallScreen ? null : 'Configure SMTP credentials',
-          icon: Icons.mark_email_unread_outlined,
+          title: 'Settings',
+          subtitle: isSmallScreen ? null : 'Server URL & Email Configuration',
+          icon: Icons.settings_outlined,
           color: Colors.redAccent,
           onTap: () => widget.onNavigate(6),
         ),

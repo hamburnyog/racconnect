@@ -11,7 +11,6 @@ import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/repositories/profile_repository.dart';
 import 'package:racconnect/presentation/widgets/raw_logs_view.dart';
 import 'package:racconnect/presentation/widgets/export_all_employees_logs_button.dart';
-import 'package:racconnect/presentation/widgets/time_log_bottom_sheet.dart';
 import 'package:racconnect/utility/attendance_rules.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -273,25 +272,69 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     _loadEmployeeLogs();
   }
 
-  void _showLogEditor({DateTime? date, AttendanceModel? log}) {
-    final profile = _effectiveProfile;
-    if (profile == null) return;
+  Future<void> _confirmDeleteLog(AttendanceModel log) async {
+    final authState = context.read<AuthCubit>().state;
+    final isDeveloper = authState is AuthenticatedState && authState.user.role == 'Developer';
+    if (!isDeveloper || log.id == null) return;
 
-    showModalBottomSheet(
+    final formattedDate = DateFormat('MMMM dd, yyyy').format(log.timestamp);
+    final formattedTime = DateFormat('hh:mm a').format(log.timestamp);
+
+    final bool? confirm = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (context) => TimeLogBottomSheet(
-        log: log,
-        initialDate: date,
-        employeeNumber: profile.employeeNumber!,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: Text(
+          'Are you sure you want to delete this attendance record?\n\n'
+          'Date: $formattedDate\n'
+          'Time: $formattedTime${log.type.isNotEmpty ? ' (${log.type.toUpperCase()})' : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(100, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
-    ).then((result) {
-      if (result == true) {
-        _loadEmployeeLogs();
+    );
+
+    if (confirm == true && mounted) {
+      final cubit = context.read<AttendanceCubit>();
+      try {
+        await cubit.deleteAttendance(log.id!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Attendance record deleted successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _loadEmployeeLogs();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting log: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-    });
+    }
   }
 
   @override
@@ -308,6 +351,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
             child: Text('Restricted Access: Developer Only', style: TextStyle(color: Colors.red)),
           );
         }
+        final bool isDeveloper = authState is AuthenticatedState && authState.user.role == 'Developer';
 
         return BlocBuilder<HolidayCubit, HolidayState>(
           builder: (context, holidayState) {
@@ -360,9 +404,13 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                                 ? TabIndexListener(
                                     profiles: filteredProfiles,
                                     onProfileChanged: _onTabProfileChanged,
-                                    child: isSmallScreen ? _buildStackedView() : _buildTwoColumnView(),
+                                    child: isSmallScreen
+                                        ? _buildStackedView(isDeveloper: isDeveloper)
+                                        : _buildTwoColumnView(isDeveloper: isDeveloper),
                                   )
-                                : (isSmallScreen ? _buildStackedView() : _buildTwoColumnView()),
+                                : (isSmallScreen
+                                    ? _buildStackedView(isDeveloper: isDeveloper)
+                                    : _buildTwoColumnView(isDeveloper: isDeveloper)),
                           ),
                         ],
                       ),
@@ -765,35 +813,35 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     );
   }
 
-  Widget _buildStackedView() {
+  Widget _buildStackedView({required bool isDeveloper}) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildDtrCard(isSmallScreen: true),
+          _buildDtrCard(isSmallScreen: true, isDeveloper: isDeveloper),
           const SizedBox(height: 8),
-          _buildRawLogsCard(isSmallScreen: true),
+          _buildRawLogsCard(isSmallScreen: true, isDeveloper: isDeveloper),
         ],
       ),
     );
   }
 
-  Widget _buildTwoColumnView() {
+  Widget _buildTwoColumnView({required bool isDeveloper}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 3, child: _buildDtrCard(isSmallScreen: false)),
+        Expanded(flex: 3, child: _buildDtrCard(isSmallScreen: false, isDeveloper: isDeveloper)),
         const SizedBox(width: 8),
-        Expanded(flex: 2, child: _buildRawLogsCard(isSmallScreen: false)),
+        Expanded(flex: 2, child: _buildRawLogsCard(isSmallScreen: false, isDeveloper: isDeveloper)),
       ],
     );
   }
 
-  Widget _buildDtrCard({required bool isSmallScreen}) {
+  Widget _buildDtrCard({required bool isSmallScreen, required bool isDeveloper}) {
     Widget content = Skeletonizer(
       enabled: _isLoadingLogs,
       child: _effectiveProfile == null
           ? _buildEmptyState('Select an employee to view DTR', 'assets/images/dog.png')
-          : _buildDtrTable(),
+          : _buildDtrTable(isDeveloper: isDeveloper),
     );
 
     return Card(
@@ -818,7 +866,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     );
   }
 
-  Widget _buildRawLogsCard({required bool isSmallScreen}) {
+  Widget _buildRawLogsCard({required bool isSmallScreen, required bool isDeveloper}) {
     Widget content = Skeletonizer(
       enabled: _isLoadingLogs,
       child: _effectiveProfile == null
@@ -829,7 +877,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
               showEmployeeNumber: false,
               showAccomplishment: _includeAccomplishment,
               isSmallScreen: isSmallScreen,
-              onLogTap: (log) => _showLogEditor(log: log),
+              onDeleteTap: isDeveloper ? (log) => _confirmDeleteLog(log) : null,
             ),
     );
 
@@ -879,7 +927,7 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     );
   }
 
-  Widget _buildDtrTable() {
+  Widget _buildDtrTable({required bool isDeveloper}) {
     final days = _getDaysForPeriod(selectedYear, selectedMonth);
 
     // Group all filtered logs by date for efficient access
@@ -934,10 +982,10 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  _buildTableTimeCell(day, grouped['amIn'], 'amIn'),
-                  _buildTableTimeCell(day, grouped['amOut'], 'amOut'),
-                  _buildTableTimeCell(day, grouped['pmIn'], 'pmIn'),
-                  _buildTableTimeCell(day, grouped['pmOut'], 'pmOut'),
+                  _buildTableTimeCell(day, grouped['amIn'], 'amIn', isDeveloper: isDeveloper),
+                  _buildTableTimeCell(day, grouped['amOut'], 'amOut', isDeveloper: isDeveloper),
+                  _buildTableTimeCell(day, grouped['pmIn'], 'pmIn', isDeveloper: isDeveloper),
+                  _buildTableTimeCell(day, grouped['pmOut'], 'pmOut', isDeveloper: isDeveloper),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 2.0),
                     child: remarksData != null
@@ -1003,30 +1051,40 @@ class _OfficeLogsPageState extends State<OfficeLogsPage> {
     );
   }
 
-  Widget _buildTableTimeCell(DateTime day, AttendanceModel? log, String type) {
+  Widget _buildTableTimeCell(DateTime day, AttendanceModel? log, String type, {required bool isDeveloper}) {
     final bool isMissing = log == null;
     final bool isWorkday = _isWorkday(day);
     final bool shouldHighlight = isMissing && isWorkday;
+    final bool canDelete = log != null && isDeveloper;
 
-    return InkWell(
-      onTap: () => _showLogEditor(date: day, log: log),
-      child: Container(
-        height: 40,
-        alignment: Alignment.center,
-        color: shouldHighlight ? Colors.red.withValues(alpha: 0.1) : null,
-        child: Text(
-          AttendanceRules.formatTime(log),
-          style: TextStyle(
-            color: log != null
-                ? Colors.black
-                : (shouldHighlight ? Colors.red[700] : Colors.grey[400]),
-            fontSize: 11,
-            fontWeight: shouldHighlight ? FontWeight.bold : FontWeight.normal,
-          ),
-          textAlign: TextAlign.center,
+    Widget cellContent = Container(
+      height: 40,
+      alignment: Alignment.center,
+      color: shouldHighlight ? Colors.red.withValues(alpha: 0.1) : null,
+      child: Text(
+        AttendanceRules.formatTime(log),
+        style: TextStyle(
+          color: log != null
+              ? Colors.black
+              : (shouldHighlight ? Colors.red[700] : Colors.grey[400]),
+          fontSize: 11,
+          fontWeight: shouldHighlight ? FontWeight.bold : FontWeight.normal,
         ),
+        textAlign: TextAlign.center,
       ),
     );
+
+    if (canDelete) {
+      return Tooltip(
+        message: 'Tap to delete log',
+        child: InkWell(
+          onTap: () => _confirmDeleteLog(log),
+          child: cellContent,
+        ),
+      );
+    }
+
+    return cellContent;
   }
 
   bool _isWorkday(DateTime day) {

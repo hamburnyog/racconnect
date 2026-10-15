@@ -107,9 +107,9 @@ const sideBarItemsDev = [
     label: 'References',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.mark_email_unread_outlined),
-    activeIcon: Icon(Icons.mark_email_read_rounded),
-    label: 'Email Settings',
+    icon: Icon(Icons.settings_outlined),
+    activeIcon: Icon(Icons.settings),
+    label: 'Settings',
   ),
 ];
 
