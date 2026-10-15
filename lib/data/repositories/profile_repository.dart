@@ -1,3 +1,4 @@
+import 'package:pocketbase/pocketbase.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
 
@@ -34,10 +35,21 @@ class ProfileRepository {
     // Convert DateTime to ISO String for PocketBase
     data['birthdate'] = profile.birthdate.toIso8601String();
 
-    final record =
-        id != null
-            ? await pb.collection('profiles').update(id, body: data)
-            : await pb.collection('profiles').create(body: data);
+    late RecordModel record;
+
+    if (id != null) {
+      record = await pb.collection('profiles').update(id, body: data);
+    } else {
+      record = await pb.collection('profiles').create(body: data);
+      
+      // If we just created a new profile, we must link its ID back to the user record
+      final userId = profile.user;
+      if (userId != null) {
+        await pb.collection('users').update(userId, body: {
+          'profile': record.id,
+        });
+      }
+    }
 
     // Fetch the updated profile with expanded section data
     final updatedRecord = await pb

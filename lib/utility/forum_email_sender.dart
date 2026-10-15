@@ -8,6 +8,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:racconnect/data/models/forum_attendee.dart';
+import 'package:racconnect/data/models/email_settings_model.dart';
+import 'package:racconnect/data/repositories/email_settings_repository.dart';
 import 'package:racconnect/data/blocs/cubit/forum_cubit.dart';
 import 'package:racconnect/utility/constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -267,7 +269,11 @@ class ForumEmailSender {
     );
   }
 
-  Future<String> _getTemplate({bool isFosterCare = false}) async {
+  Future<String> _getTemplate({
+    bool isFosterCare = false,
+    EmailSettingsModel? settings,
+  }) async {
+
     final fileName = isFosterCare
         ? 'foster_care_email_template.html'
         : 'email_template.html';
@@ -332,9 +338,30 @@ class ForumEmailSender {
   Future<void> sendEmails() async {
     if (attendees.isEmpty) return;
 
-    if (smtpUsername.isEmpty || smtpPassword.isEmpty) {
+    final dbSettings = await EmailSettingsRepository().getSettings();
+
+    final activeUsername = dbSettings?.smtpUsername.isNotEmpty == true
+        ? dbSettings!.smtpUsername
+        : smtpUsername;
+    final activePassword = dbSettings?.smtpPassword.isNotEmpty == true
+        ? dbSettings!.smtpPassword
+        : smtpPassword;
+    final activeServer = dbSettings?.smtpServer.isNotEmpty == true
+        ? dbSettings!.smtpServer
+        : smtpServer;
+    final activePort = (dbSettings?.smtpPort ?? 0) > 0
+        ? dbSettings!.smtpPort
+        : smtpPort;
+    final activeFromEmail = dbSettings?.smtpFromEmail.isNotEmpty == true
+        ? dbSettings!.smtpFromEmail
+        : smtpFromEmail;
+    final activeFromName = dbSettings?.smtpFromName.isNotEmpty == true
+        ? dbSettings!.smtpFromName
+        : smtpFromName;
+
+    if (activeUsername.isEmpty || activePassword.isEmpty) {
       _showSnackBar(
-        'SMTP Error: Username or Password not configured. Please check your environment settings.',
+        'SMTP Error: Username or Password not configured. Please set it in Developer Email Settings.',
         false,
       );
       return;
@@ -351,27 +378,30 @@ class ForumEmailSender {
       final fontBold = await PdfGoogleFonts.libreBaskervilleBold();
 
       final smtpServerInstance = SmtpServer(
-        smtpServer,
-        port: smtpPort,
-        username: smtpUsername,
-        password: smtpPassword,
+        activeServer,
+        port: activePort,
+        username: activeUsername,
+        password: activePassword,
       );
 
-      final rawTemplate = await _getTemplate();
-      final fosterTemplate = await _getTemplate(isFosterCare: true);
+      final rawTemplate = await _getTemplate(settings: dbSettings);
+      final fosterTemplate = await _getTemplate(
+        isFosterCare: true,
+        settings: dbSettings,
+      );
 
       // Load used email images from assets
       final Map<String, Uint8List> emailImages = {};
       final List<String> imageNames = [
-        'image1.png', 
-        'image2.png', 
-        'image3.png', 
-        'image4.jpg', 
-        'image5.png', 
-        'image6.png', 
-        'image7.png', 
-        'image8.png', 
+        'image1.png',
+        'image2.png',
+        'image3.png',
+        'image4.jpg',
+        'image5.png',
+        'image6.png',
+        'image8.png',
         'image9.png',
+        'image10.png',
       ];
 
       for (final name in imageNames) {
@@ -439,14 +469,14 @@ class ForumEmailSender {
             attendee,
           );
           
-          final fromEmail = smtpFromEmail.isNotEmpty 
-              ? smtpFromEmail 
-              : (smtpUsername.contains('@') ? smtpUsername : '');
+          final fromEmail = activeFromEmail.isNotEmpty 
+              ? activeFromEmail 
+              : (activeUsername.contains('@') ? activeUsername : '');
 
           if (fromEmail.isEmpty) {
             failed = total - success;
             statusNotifier.value = 'Invalid "From" email configuration';
-            debugPrint('Error: smtpFromEmail and smtpUsername are not valid email addresses.');
+            debugPrint('Error: activeFromEmail and activeUsername are not valid email addresses.');
             break; // Stop on configuration error
           }
 
@@ -460,7 +490,7 @@ class ForumEmailSender {
 
           final message =
               Message()
-                ..from = Address(fromEmail, smtpFromName)
+                ..from = Address(fromEmail, activeFromName)
                 ..recipients.addAll(recipients)
                 ..subject =
                     'Forum Certificate ($forumDateStr): ${attendee.name}'

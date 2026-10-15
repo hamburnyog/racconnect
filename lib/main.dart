@@ -20,9 +20,8 @@ import 'package:racconnect/data/blocs/cubit/signatory_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/time_check_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
-import 'package:racconnect/data/blocs/cubit/version_check_cubit.dart';
 import 'package:racconnect/presentation/router/app_router.dart';
-import 'package:racconnect/services/version_check_service.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
 // import 'package:racconnect/utility/app_bloc_observer.dart';
 
 Future<void> main() async {
@@ -41,6 +40,9 @@ Future<void> main() async {
   } catch (_) {
     // .env not found, likely a release build using --dart-define-from-file
   }
+
+  // Load custom PocketBase URL if configured in settings
+  await PocketBaseClient.init();
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: HydratedStorageDirectory(
       (await getApplicationDocumentsDirectory()).path,
@@ -86,12 +88,6 @@ class _MyAppState extends State<MyApp> {
           create: (context) => SignatoryCubit(SignatoryRepository()),
         ),
         BlocProvider<TimeCheckCubit>(create: (_) => TimeCheckCubit()),
-        BlocProvider<VersionCheckCubit>(
-          create:
-              (context) =>
-                  VersionCheckCubit(versionCheckService: VersionCheckService())
-                    ..checkVersion(), // Run version check on app boot
-        ),
       ],
       child: MaterialApp(
         title: 'Racconnect Client',

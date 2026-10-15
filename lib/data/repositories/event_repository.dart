@@ -24,7 +24,8 @@ class EventRepository {
       final birthdayResponse = await pb
           .collection('profiles')
           .getFullList(
-            fields: 'lastName,firstName,middleName,birthdate',
+            fields: 'lastName,firstName,middleName,birthdate,employmentStatus',
+            filter: 'employmentStatus != "Resigned"',
             sort: '+birthdate',
           );
 

@@ -1,16 +1,32 @@
 import 'package:pocketbase/pocketbase.dart';
 import 'package:racconnect/data/models/attendance_model.dart';
+import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
 import 'package:http/http.dart' as http;
 
 class AttendanceRepository {
   final pb = PocketBaseClient.instance;
 
-  Future<List<AttendanceModel>> getAllAttendances() async {
+  Future<List<AttendanceModel>> getAllAttendanceForMonth(
+    DateTime selectedDate,
+  ) async {
     try {
-      final response = await pb
-          .collection('attendance')
-          .getFullList(sort: '+date');
+      // Get start and end of the month
+      final startOfMonth = DateTime(selectedDate.year, selectedDate.month, 1);
+      final endOfMonth = DateTime(
+        selectedDate.year,
+        selectedDate.month + 1,
+        1,
+      ).subtract(const Duration(milliseconds: 1));
+
+      final isoStart = startOfMonth.toUtc().toIso8601String().split('.').first;
+      final isoEnd = endOfMonth.toUtc().toIso8601String().split('.').first;
+
+      final response = await pb.collection('attendance').getFullList(
+            filter: 'timestamp >= "$isoStart" && timestamp <= "$isoEnd"',
+            sort: '+timestamp',
+          );
+
       return response
           .map((e) => AttendanceModel.fromJson(e.toString()))
           .toList();
@@ -173,9 +189,36 @@ class AttendanceRepository {
     }
   }
 
+  Future<AttendanceModel> updateAttendance({
+    required String id,
+    required DateTime timestamp,
+    String? remarks,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        "timestamp": timestamp.toIso8601String(),
+        if (remarks != null) "remarks": remarks,
+      };
+
+      final response = await pb.collection('attendance').update(id, body: body);
+
+      return AttendanceModel.fromJson(response.toString());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAttendance(String id) async {
+    try {
+      await pb.collection('attendance').delete(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Future<String?> getIpAddress() async {
     try {
-      final url = Uri.parse('https://api.ipify.org');
+      final url = Uri.parse(ipApiUrl);
       final response = await http.get(url);
 
       return response.statusCode == 200 ? response.body : null;

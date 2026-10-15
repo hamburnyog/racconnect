@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/models/user_model.dart';
 import 'package:racconnect/data/repositories/auth_repository.dart';
-import 'package:racconnect/utility/constants.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
 
 String? getPocketBaseFileUrl(String? filename, String? recordId) {
   if (filename == null ||
@@ -11,7 +11,7 @@ String? getPocketBaseFileUrl(String? filename, String? recordId) {
       recordId.isEmpty) {
     return null;
   }
-  return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
+  return '${PocketBaseClient.instance.baseURL}/api/files/_pb_users_auth_/$recordId/$filename';
 }
 
 class UserMultiSelect extends StatefulWidget {

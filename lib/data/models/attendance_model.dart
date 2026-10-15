@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 
 class AttendanceModel {
+  final String? id;
   final String employeeNumber;
   final DateTime timestamp;
   final String type;
@@ -10,6 +11,7 @@ class AttendanceModel {
   final String? ipAddress;
   final String? accomplishmentId;
   AttendanceModel({
+    this.id,
     required this.employeeNumber,
     required this.timestamp,
     required this.type,
@@ -19,6 +21,7 @@ class AttendanceModel {
   });
 
   AttendanceModel copyWith({
+    String? id,
     String? employeeNumber,
     DateTime? timestamp,
     String? type,
@@ -27,6 +30,7 @@ class AttendanceModel {
     ValueGetter<String?>? accomplishmentId,
   }) {
     return AttendanceModel(
+      id: id ?? this.id,
       employeeNumber: employeeNumber ?? this.employeeNumber,
       timestamp: timestamp ?? this.timestamp,
       type: type ?? this.type,
@@ -39,6 +43,7 @@ class AttendanceModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'employeeNumber': employeeNumber,
       'timestamp': timestamp.millisecondsSinceEpoch,
       'type': type,
@@ -50,6 +55,7 @@ class AttendanceModel {
 
   factory AttendanceModel.fromMap(Map<String, dynamic> map) {
     return AttendanceModel(
+      id: map['id'],
       employeeNumber: map['employeeNumber'] ?? '',
       timestamp:
           (map['timestamp'] is int
@@ -69,7 +75,7 @@ class AttendanceModel {
 
   @override
   String toString() {
-    return 'AttendanceModel(employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks, ipAddress: $ipAddress, accomplishmentId: $accomplishmentId)';
+    return 'AttendanceModel(id: $id, employeeNumber: $employeeNumber, timestamp: $timestamp, type: $type, remarks: $remarks, ipAddress: $ipAddress, accomplishmentId: $accomplishmentId)';
   }
 
   @override
@@ -77,6 +83,7 @@ class AttendanceModel {
     if (identical(this, other)) return true;
 
     return other is AttendanceModel &&
+        other.id == id &&
         other.employeeNumber == employeeNumber &&
         other.timestamp == timestamp &&
         other.type == type &&
@@ -87,7 +94,8 @@ class AttendanceModel {
 
   @override
   int get hashCode {
-    return employeeNumber.hashCode ^
+    return id.hashCode ^
+        employeeNumber.hashCode ^
         timestamp.hashCode ^
         type.hashCode ^
         remarks.hashCode ^

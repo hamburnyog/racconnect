@@ -46,6 +46,11 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         password: password,
       );
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);
@@ -55,6 +60,25 @@ class AuthCubit extends Cubit<AuthState> {
   void signInWithGoogle() async {
     try {
       final userModel = await authRepository.signInWithGoogle();
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
+      emit(AuthSignedIn(userModel));
+    } catch (e) {
+      errorMessage(e);
+    }
+  }
+
+  void signInWithApple() async {
+    try {
+      final userModel = await authRepository.signInWithApple();
+      if (userModel.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(userModel));
     } catch (e) {
       errorMessage(e);
@@ -80,6 +104,11 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> refreshCurrentUser() async {
     try {
       final updatedUser = await authRepository.refreshCurrentUser();
+      if (updatedUser.profile?.employmentStatus == 'Resigned') {
+        await authRepository.signOut();
+        emit(AuthError('Your account has been deactivated (Resigned). Please contact the administrator.'));
+        return;
+      }
       emit(AuthSignedIn(updatedUser));
     } catch (e) {
       errorMessage(e);
@@ -87,12 +116,15 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   void errorMessage(dynamic e) {
-    if (e.runtimeType == ClientException) {
-      if (e.response['data'].isNotEmpty &&
-          e.response['data']['email']['code'] == 'validation_not_unique') {
+    if (e is ClientException) {
+      final data = e.response['data'];
+      if (data is Map &&
+          data.isNotEmpty &&
+          data['email'] != null &&
+          data['email']['code'] == 'validation_not_unique') {
         emit(AuthError('The email address is already taken.'));
       } else {
-        emit(AuthError(e.response['message'].toString()));
+        emit(AuthError(e.response['message']?.toString() ?? 'An error occurred'));
       }
     } else {
       emit(AuthError(e.toString()));

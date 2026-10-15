@@ -31,34 +31,30 @@ class ImportButton extends StatelessWidget {
 
     if (!_isDesktop || !isDeveloper) return const SizedBox.shrink();
 
-    return Positioned(
-      bottom: 50, // Positioned above the mini export button (0 + 40 + 10)
-      right: 0,
-      child: Builder(
-        builder: (localContext) {
-          return FloatingActionButton(
-            mini: true,
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              final attendanceRepo =
-                  localContext.read<AttendanceCubit>().attendanceRepository;
-              final internetCubit = localContext.read<InternetCubit>();
+    return Builder(
+      builder: (localContext) {
+        return FloatingActionButton(
+          mini: true,
+          backgroundColor: Colors.white,
+          onPressed: () async {
+            final attendanceRepo =
+                localContext.read<AttendanceCubit>().attendanceRepository;
+            final internetCubit = localContext.read<InternetCubit>();
 
-              await AttendanceImport(
-                context: localContext,
-                attendanceRepo: attendanceRepo,
-                selectedYear: selectedYear,
-                selectedMonth: selectedMonth,
-                internetCubit: internetCubit,
-                onImportSuccess: () async {
-                  await onRefresh();
-                },
-              ).pickAndImportFile();
-            },
-            child: const Icon(Icons.upload_file_sharp),
-          );
-        },
-      ),
+            await AttendanceImport(
+              context: localContext,
+              attendanceRepo: attendanceRepo,
+              selectedYear: selectedYear,
+              selectedMonth: selectedMonth,
+              internetCubit: internetCubit,
+              onImportSuccess: () async {
+                await onRefresh();
+              },
+            ).pickAndImportFile();
+          },
+          child: const Icon(Icons.upload_file_sharp),
+        );
+      },
     );
   }
 }

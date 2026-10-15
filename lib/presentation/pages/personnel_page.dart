@@ -8,7 +8,7 @@ import 'package:racconnect/data/models/attendance_model.dart';
 import 'package:racconnect/data/repositories/attendance_repository.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/presentation/pages/employee_view_page.dart';
-import 'package:racconnect/utility/constants.dart';
+import 'package:racconnect/utility/pocketbase_client.dart';
 import 'package:racconnect/presentation/widgets/wfh_badge.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -19,7 +19,7 @@ String? getPocketBaseFileUrl(String? filename, String? recordId) {
       recordId.isEmpty) {
     return null;
   }
-  return '$serverUrl/api/files/_pb_users_auth_/$recordId/$filename';
+  return '${PocketBaseClient.instance.baseURL}/api/files/_pb_users_auth_/$recordId/$filename';
 }
 
 class PersonnelPage extends StatefulWidget {
@@ -185,7 +185,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         state.users
                             .where(
                               (user) =>
-                                  user.role != null && user.role!.isNotEmpty,
+                                  user.role != null && user.role!.isNotEmpty &&
+                                  user.profile?.employmentStatus != 'Resigned',
                             )
                             .toList();
 
@@ -353,7 +354,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                         builder: (BuildContext builder) {
                                           return EmployeeViewPage(user: user);
                                         },
-                                      );
+                                      ).then((_) => _loadData());
                                     },
                                     trailing:
                                         hasAttendance

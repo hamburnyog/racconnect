@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:racconnect/data/blocs/cubit/attendance_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/event_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/leave_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/suspension_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/travel_cubit.dart';
-import 'package:racconnect/presentation/widgets/attendance_form.dart';
-import 'package:racconnect/presentation/widgets/clock_in_button.dart';
 import 'package:racconnect/utility/constants.dart';
-
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Function(int) onNavigate;
+  const HomePage({super.key, required this.onNavigate});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -26,8 +23,6 @@ class _HomePageState extends State<HomePage> {
   final DateTime now = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  bool _lockClockIn = true;
-  int _timeLogsToday = 0;
   bool _isLoading = true;
 
   Map<String, List> mySelectedEvents = {};
@@ -35,10 +30,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    checkProfile();
     _selectedDay = _focusedDay;
     _loadAllData();
-    _loadAttendanceData();
   }
 
   Future<void> _loadAllData() async {
@@ -50,48 +43,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _loadAttendanceData() async {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthenticatedState) {
-      final employeeNumber = authState.user.profile?.employeeNumber ?? '';
-      if (employeeNumber.isNotEmpty) {
-        final cubit = context.read<AttendanceCubit>();
-        await cubit.getEmployeeAttendance(employeeNumber: employeeNumber);
-        final state = cubit.state;
-        if (state is GetEmployeeAttendanceSuccess) {
-          final today = DateTime.now();
-          final todaysLogs =
-              state.attendanceModels
-                  .where(
-                    (log) =>
-                        log.timestamp.year == today.year &&
-                        log.timestamp.month == today.month &&
-                        log.timestamp.day == today.day,
-                  )
-                  .toList();
-          if (mounted) {
-            setState(() {
-              _timeLogsToday = todaysLogs.length;
-            });
-          }
-        }
-      }
-    }
-  }
-
-  void _showAttendanceForm() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (BuildContext builder) {
-        return AttendanceForm();
-      },
-    ).then((_) => _loadAttendanceData());
-  }
-
   @override
   void dispose() {
     _focusedDay = DateTime.now();
@@ -100,35 +51,12 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> checkProfile() async {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthenticatedState) {
-      var profile = authState.user.profile;
-      var employeeNumber = profile?.employeeNumber ?? '';
-
-      if (employeeNumber.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _lockClockIn = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _lockClockIn = true;
-          });
-        }
-      }
-    }
-  }
-
   Future<void> loadEvents() async {
     final eventCubit = context.read<EventCubit>();
     final suspensionCubit = context.read<SuspensionCubit>();
     final leaveCubit = context.read<LeaveCubit>();
     final travelCubit = context.read<TravelCubit>();
 
-    // Get employee number for loading leaves
     final authState = context.read<AuthCubit>().state;
     String employeeNumber = '';
     if (authState is AuthenticatedState) {
@@ -141,13 +69,11 @@ class _HomePageState extends State<HomePage> {
     await suspensionCubit.getAllSuspensions();
     final suspensionState = suspensionCubit.state;
 
-    // Load leaves if employee number is available
     if (employeeNumber.isNotEmpty) {
       await leaveCubit.getAllLeaves();
     }
     final leaveState = leaveCubit.state;
 
-    // Load travel orders if employee number is available
     if (employeeNumber.isNotEmpty) {
       await travelCubit.getAllTravels();
     }
@@ -187,12 +113,10 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // Add leaves to the calendar events
     if (leaveState is GetAllLeaveSuccess && employeeNumber.isNotEmpty) {
       if (mounted) {
         setState(() {
           for (var leave in leaveState.leaveModels) {
-            // Only show leaves for the current employee
             if (leave.employeeNumbers.contains(employeeNumber)) {
               for (var date in leave.specificDates) {
                 final dateKey = DateFormat('yyyy-MM-dd').format(date);
@@ -210,14 +134,11 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // Add travel orders to the calendar events
     if (travelState is GetAllTravelSuccess && employeeNumber.isNotEmpty) {
       if (mounted) {
         setState(() {
           for (var travel in travelState.travelModels) {
-            // Only show travel orders for the current employee
             if (travel.employeeNumbers.contains(employeeNumber)) {
-              // Add each date in the travel order
               for (var date in travel.specificDates) {
                 final dateKey = DateFormat('yyyy-MM-dd').format(date);
                 final eventString = '${travel.soNumber},T=Travel';
@@ -253,140 +174,250 @@ class _HomePageState extends State<HomePage> {
     final width = MediaQuery.of(context).size.width;
     final bool isSmallScreen = width < 700;
 
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Skeletonizer(
-            enabled: _isLoading,
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      Card(
-                        color: Theme.of(context).primaryColor,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedDay = now;
-                              _focusedDay = now;
-                            });
-                          },
-                          child: ListTile(
-                            leading: const Icon(
-                              Icons.home,
-                              color: Colors.white,
-                            ),
-                            minTileHeight: 70,
-                            title: Text(
-                              (isSmallScreen)
-                                  ? DateFormat.yMMMMd().format(now)
-                                  : 'Today is ${DateFormat.yMMMMd().format(now)}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        if (state is! AuthenticatedState) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final user = state.user;
+        final role = user.role ?? '';
+
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Skeletonizer(
+                enabled: _isLoading,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          _buildQuickAccessGrid(context, role),
+                          const SizedBox(height: 16),
+                          Card(
+                            color: Theme.of(context).primaryColor,
+                            child: ListTile(
+                              leading: const Icon(
+                                Icons.calendar_month,
                                 color: Colors.white,
                               ),
-                            ),
-                            subtitle: Text(
-                              listOfDayEvents(_selectedDay!).isNotEmpty
-                                  ? '${listOfDayEvents(_selectedDay!).length} event${listOfDayEvents(_selectedDay!).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay!)}'
-                                  : (_selectedDay == null ||
-                                      (_selectedDay!.year == now.year &&
-                                          _selectedDay!.month == now.month &&
-                                          _selectedDay!.day == now.day))
-                                  ? 'No event for today'
-                                  : 'No event for the selected day',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
+                              minTileHeight: 70,
+                              title: Text(
+                                DateFormat.yMMMMd().format(_selectedDay ?? now),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            trailing: ClockInButton(
-                              lockClockIn: _lockClockIn,
-                              onPressed: _showAttendanceForm,
-                              timeLogsToday: _timeLogsToday,
+                              subtitle: Text(
+                                listOfDayEvents(_selectedDay ?? now).isNotEmpty
+                                    ? '${listOfDayEvents(_selectedDay ?? now).length} event${listOfDayEvents(_selectedDay ?? now).length > 1 ? 's' : ''} for ${DateFormat.yMMMMd().format(_selectedDay ?? now)}'
+                                    : 'No event for the selected day',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: BlocBuilder<EventCubit, EventState>(
-                          builder: (context, state) {
-                            if (state is EventLoading) {
-                              return const Column(
-                                children: [
-                                  SizedBox(height: 30),
-                                  CircularProgressIndicator(),
-                                ],
-                              );
-                            }
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: BlocBuilder<EventCubit, EventState>(
+                              builder: (context, eventState) {
+                                if (eventState is EventLoading) {
+                                  return const Column(
+                                    children: [
+                                      SizedBox(height: 30),
+                                      CircularProgressIndicator(),
+                                    ],
+                                  );
+                                }
 
-                            if (state is EventError) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(state.error),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              });
-                            }
+                                if (eventState is EventError) {
+                                  return Center(
+                                    child: Text(
+                                      eventState.error,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  );
+                                }
 
-                            if (state is GetAllEventSuccess &&
-                                listOfDayEvents(_selectedDay!).isNotEmpty) {
-                              return Column(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Wrap(
-                                      alignment: WrapAlignment.start,
-                                      spacing: 8.0,
-                                      runSpacing: 8.0,
-                                      children:
-                                          listOfDayEvents(
-                                            _selectedDay!,
-                                          ).map<Widget>((myEvent) {
-                                            final parts = myEvent
-                                                .toString()
-                                                .split(',T=');
-                                            final title = parts[0];
-                                            final type =
-                                                parts.length > 1
-                                                    ? parts[1]
-                                                    : 'Unknown';
+                                if (listOfDayEvents(_selectedDay ?? now)
+                                    .isNotEmpty) {
+                                  return Column(
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Wrap(
+                                          alignment: WrapAlignment.start,
+                                          spacing: 8.0,
+                                          runSpacing: 8.0,
+                                          children:
+                                              listOfDayEvents(
+                                                _selectedDay ?? now,
+                                              ).map<Widget>((myEvent) {
+                                                final parts = myEvent
+                                                    .toString()
+                                                    .split(',T=');
+                                                final title = parts[0];
+                                                final type =
+                                                    parts.length > 1
+                                                        ? parts[1]
+                                                        : 'Unknown';
 
-                                            return Chip(
-                                              avatar: CircleAvatar(
-                                                backgroundColor:
-                                                    Colors.grey.shade200,
-                                                child: Icon(
-                                                  () {
-                                                    switch (type) {
-                                                      case 'Holiday':
-                                                        return Icons.event;
-                                                      case 'Birthday':
-                                                        return Icons.cake;
-                                                      case 'Suspension':
-                                                        return Icons.flood;
-                                                      case 'Leave':
-                                                        return Icons.sick;
-                                                      case 'Travel':
-                                                        return Icons
-                                                            .directions_car;
-                                                      default:
-                                                        return Icons.event;
-                                                    }
-                                                  }(),
+                                                return Chip(
+                                                  avatar: CircleAvatar(
+                                                    backgroundColor:
+                                                        Colors.grey.shade200,
+                                                    child: Icon(
+                                                      () {
+                                                        switch (type) {
+                                                          case 'Holiday':
+                                                            return Icons.event;
+                                                          case 'Birthday':
+                                                            return Icons.cake;
+                                                          case 'Suspension':
+                                                            return Icons.flood;
+                                                          case 'Leave':
+                                                            return Icons.sick;
+                                                          case 'Travel':
+                                                            return Icons
+                                                                .directions_car;
+                                                          default:
+                                                            return Icons.event;
+                                                        }
+                                                      }(),
+                                                      color: () {
+                                                        switch (type) {
+                                                          case 'Holiday':
+                                                            return Colors.green;
+                                                          case 'Birthday':
+                                                            return Colors.red;
+                                                          case 'Suspension':
+                                                            return Colors
+                                                                .orange;
+                                                          case 'Leave':
+                                                            return Colors
+                                                                .purple;
+                                                          case 'Travel':
+                                                            return Colors.teal;
+                                                          default:
+                                                            return Colors.grey;
+                                                        }
+                                                      }(),
+                                                      size: 18,
+                                                    ),
+                                                  ),
+                                                  label: Text(
+                                                    title,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: TableCalendar(
+                                headerStyle: const HeaderStyle(
+                                  formatButtonVisible: false,
+                                  titleCentered: true,
+                                ),
+                                rowHeight: isSmallScreen ? 40 : 60,
+                                startingDayOfWeek: StartingDayOfWeek.sunday,
+                                availableGestures: AvailableGestures.none,
+                                firstDay: now.subtract(
+                                  const Duration(days: 365),
+                                ),
+                                lastDay: now.add(const Duration(days: 365)),
+                                focusedDay: _focusedDay,
+                                selectedDayPredicate: (day) {
+                                  return isSameDay(_selectedDay, day);
+                                },
+                                onDaySelected: (selectedDay, focusedDay) {
+                                  if (!isSameDay(_selectedDay, selectedDay)) {
+                                    setState(() {
+                                      _selectedDay = selectedDay;
+                                      _focusedDay = focusedDay;
+                                    });
+                                  }
+                                },
+                                onPageChanged: (focusedDay) {
+                                  _focusedDay = focusedDay;
+                                },
+                                eventLoader: listOfDayEvents,
+                                calendarBuilders: CalendarBuilders(
+                                  dowBuilder: (context, day) {
+                                    final text = DateFormat.E().format(day);
+                                    if (day.weekday == DateTime.sunday ||
+                                        day.weekday == DateTime.saturday) {
+                                      return Center(
+                                        child: Text(
+                                          text.toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return Center(
+                                      child: Text(
+                                        text.toUpperCase(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  markerBuilder: (context, date, events) {
+                                    if (events.isEmpty) return null;
+                                    return Positioned(
+                                      bottom: isSmallScreen ? 2 : 5,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children:
+                                            events.map((event) {
+                                              final parts = event
+                                                  .toString()
+                                                  .split(',T=');
+                                              final type =
+                                                  parts.length > 1
+                                                      ? parts[1]
+                                                      : 'Unknown';
+                                              return Container(
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 1.5,
+                                                    ),
+                                                width: isSmallScreen ? 6 : 8,
+                                                height: isSmallScreen ? 6 : 8,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
                                                   color: () {
                                                     switch (type) {
-                                                      case 'Holiday':
-                                                        return Colors.green;
                                                       case 'Birthday':
                                                         return Colors.red;
+                                                      case 'Holiday':
+                                                        return Colors.green;
                                                       case 'Suspension':
                                                         return Colors.orange;
                                                       case 'Leave':
@@ -397,177 +428,50 @@ class _HomePageState extends State<HomePage> {
                                                         return Colors.grey;
                                                     }
                                                   }(),
-                                                  size: 18,
                                                 ),
-                                              ),
-                                              label: Text(
-                                                title,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      ),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TableCalendar(
-                            headerStyle: const HeaderStyle(
-                              formatButtonVisible: false,
-                              titleCentered: true,
-                            ),
-                            rowHeight: isSmallScreen ? 40 : 60,
-                            startingDayOfWeek: StartingDayOfWeek.sunday,
-                            availableGestures: AvailableGestures.none,
-                            firstDay: now.subtract(const Duration(days: 365)),
-                            lastDay: now.add(const Duration(days: 365)),
-                            focusedDay: _focusedDay,
-                            selectedDayPredicate: (day) {
-                              return isSameDay(_selectedDay, day);
-                            },
-                            onDaySelected: (selectedDay, focusedDay) {
-                              if (!isSameDay(_selectedDay, selectedDay)) {
-                                setState(() {
-                                  _selectedDay = selectedDay;
-                                  _focusedDay = focusedDay;
-                                });
-                              }
-                            },
-                            onPageChanged: (focusedDay) {
-                              _focusedDay = focusedDay;
-                            },
-                            eventLoader: listOfDayEvents,
-                            calendarBuilders: CalendarBuilders(
-                              dowBuilder: (context, day) {
-                                final text = DateFormat.E().format(day);
-                                if (day.weekday == DateTime.sunday ||
-                                    day.weekday == DateTime.saturday) {
-                                  return Center(
-                                    child: Text(
-                                      text.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
+                                              );
+                                            }).toList(),
                                       ),
-                                    ),
-                                  );
-                                }
-                                return Center(
-                                  child: Text(
-                                    text.toUpperCase(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                );
-                              },
-                              markerBuilder: (context, date, events) {
-                                if (events.isEmpty) return null;
-                                return Positioned(
-                                  bottom: isSmallScreen ? 2 : 5,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children:
-                                        events.map((event) {
-                                          final parts = event.toString().split(
-                                            ',T=',
-                                          );
-                                          final type =
-                                              parts.length > 1
-                                                  ? parts[1]
-                                                  : 'Unknown';
-                                          return Container(
-                                            margin: const EdgeInsets.symmetric(
-                                              horizontal: 1.5,
-                                            ),
-                                            width: isSmallScreen ? 6 : 8,
-                                            height: isSmallScreen ? 6 : 8,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: () {
-                                                switch (type) {
-                                                  case 'Birthday':
-                                                    return Colors.red;
-                                                  case 'Holiday':
-                                                    return Colors.green;
-                                                  case 'Suspension':
-                                                    return Colors.orange;
-                                                  case 'Leave':
-                                                    return Colors.purple;
-                                                  case 'Travel':
-                                                    return Colors.teal;
-                                                  default:
-                                                    return Colors.grey;
-                                                }
-                                              }(),
-                                            ),
-                                          );
-                                        }).toList(),
-                                  ),
-                                );
-                              },
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 80),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Positioned FAB button - only show for users with a role
-        BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, authState) {
-            // Hide FAB if user has no role or is not authenticated
-            if (authState is! AuthenticatedState ||
-                authState.user.role == null ||
-                authState.user.role!.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            return Positioned(
-              right: 0,
-              bottom: 0,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FloatingActionButton(
-                    mini: true,
-                    heroTag: 'orgChartFab',
-                    backgroundColor: Colors.white,
-                    onPressed: () {
-                      launchUrl(
-                        Uri.parse(
-                          canvaDesignUrl,
-                        ),
-                      );
-                    },
-                    child: Icon(
-                      Icons.account_tree,
-                      color: Theme.of(context).primaryColor,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  FloatingActionButton(
-                    mini: true,
-                    heroTag: 'uniformFab',
-                    backgroundColor: Colors.white,
-                    onPressed: () {
-                      final authState = context.read<AuthCubit>().state;
-                      if (authState is AuthenticatedState) {
-                        final gender = authState.user.profile?.gender ?? '';
+                  ],
+                ),
+              ),
+            ),
+            if (role.isNotEmpty)
+              Positioned(
+                right: 10,
+                bottom: 10,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FloatingActionButton(
+                      mini: true,
+                      heroTag: 'orgChartFab',
+                      backgroundColor: Colors.white,
+                      onPressed: () {
+                        launchUrl(Uri.parse(canvaDesignUrl));
+                      },
+                      child: Icon(
+                        Icons.account_tree,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    FloatingActionButton(
+                      mini: true,
+                      heroTag: 'uniformFab',
+                      backgroundColor: Colors.white,
+                      onPressed: () {
+                        final gender = user.profile?.gender ?? '';
                         showDialog(
                           context: context,
                           builder:
@@ -585,7 +489,8 @@ class _HomePageState extends State<HomePage> {
                                             vertical: 6.0,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Theme.of(context).primaryColor,
+                                            color:
+                                                Theme.of(context).primaryColor,
                                             borderRadius: BorderRadius.circular(
                                               20.0,
                                             ),
@@ -593,9 +498,8 @@ class _HomePageState extends State<HomePage> {
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(
-                                                Icons
-                                                    .checkroom, // Using the same icon as the FAB
+                                              const Icon(
+                                                Icons.checkroom,
                                                 color: Colors.white,
                                                 size: 18,
                                               ),
@@ -621,13 +525,15 @@ class _HomePageState extends State<HomePage> {
                                             'assets/images/girls-uniform-nobg.png',
                                           ),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                          child: Column(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0,
+                                          ),
+                                          child: const Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
                                                 'First Working Day of Month:',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold,
@@ -636,7 +542,7 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               Text(
                                                 'ASEAN-Inspired',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold,
@@ -645,7 +551,7 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               Text(
                                                 'Monday: Barong/Filipiniana',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black,
                                                 ),
@@ -653,7 +559,7 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               Text(
                                                 'Other Weekdays: At Least Smart Casual',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black,
                                                 ),
@@ -661,7 +567,7 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               Text(
                                                 '(Tue: White, Wed: Black, Thu: Gray, Friday: Any Color)',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black,
                                                 ),
@@ -676,19 +582,218 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                         );
-                      }
-                    },
-                    child: Icon(
-                      Icons.checkroom,
-                      color: Theme.of(context).primaryColor,
+                      },
+                      child: Icon(
+                        Icons.checkroom,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            );
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickAccessGrid(BuildContext context, String role) {
+    final bool canSeePersonnel = [
+      'Developer',
+      'OIC',
+      'HR',
+      'Unit Head',
+    ].contains(role);
+    final bool canSeeReferences = [
+      'Developer',
+      'HR',
+      'Records',
+      'Record',
+      'Unit Head',
+    ].contains(role);
+
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 700;
+
+    final List<Widget> cards = [
+      _buildMenuCard(
+        context,
+        title: 'Attendance',
+        subtitle: isSmallScreen ? null : 'WFH, DTR, Accomplishment Reports',
+        icon: Icons.access_time_filled,
+        color: Colors.orangeAccent,
+        onTap: () => widget.onNavigate(1),
+      ),
+      if (role.isNotEmpty)
+        _buildMenuCard(
+          context,
+          title: 'Certificates',
+          subtitle: isSmallScreen ? null : 'Manage Forum Certificates',
+          icon: Icons.card_membership_rounded,
+          color: Colors.purpleAccent,
+          onTap: () => widget.onNavigate(2),
+        ),
+      if (canSeePersonnel)
+        _buildMenuCard(
+          context,
+          title: 'Personnel',
+          subtitle: isSmallScreen ? null : 'View of your Staff Details',
+          icon: Icons.badge,
+          color: Colors.greenAccent[700]!,
+          onTap: () {
+            widget.onNavigate(3);
           },
         ),
-      ],
+      if (canSeeReferences)
+        _buildMenuCard(
+          context,
+          title: 'References',
+          subtitle: isSmallScreen ? null : 'Manage system references',
+          icon: Icons.library_books,
+          color: Colors.tealAccent[700]!,
+          onTap: () {
+            if (role == 'Developer') {
+              widget.onNavigate(5);
+            } else if (role == 'HR' || role == 'Unit Head') {
+              widget.onNavigate(4);
+            } else if (role == 'Records' || role == 'Record') {
+              widget.onNavigate(3);
+            }
+          },
+        ),
+      if (role == 'Developer')
+        _buildMenuCard(
+          context,
+          title: 'Office Logs',
+          subtitle: isSmallScreen ? null : 'Prepare Biometric Records for HRMIS',
+          icon: Icons.fingerprint,
+          color: Colors.blueAccent,
+          onTap: () => widget.onNavigate(4),
+        ),
+      if (role == 'Developer')
+        _buildMenuCard(
+          context,
+          title: 'Settings',
+          subtitle: isSmallScreen ? null : 'Server URL & Email Configuration',
+          icon: Icons.settings_outlined,
+          color: Colors.redAccent,
+          onTap: () => widget.onNavigate(6),
+        ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        int crossAxisCount = 2;
+        double childAspectRatio = isSmallScreen ? 2.5 : 3.5;
+
+        if (width > 1200) {
+          crossAxisCount = 4;
+          childAspectRatio = 4.0;
+        } else if (width > 800) {
+          crossAxisCount = 3;
+          childAspectRatio = 3.8;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: childAspectRatio,
+            ),
+            itemCount: cards.length,
+            itemBuilder: (context, index) => cards[index],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMenuCard(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: color.withValues(alpha: 0.1),
+          highlightColor: color.withValues(alpha: 0.05),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey[400],
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

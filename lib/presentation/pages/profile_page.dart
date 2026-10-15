@@ -11,7 +11,6 @@ import 'package:racconnect/data/models/profile_model.dart';
 import 'package:racconnect/data/blocs/cubit/auth_cubit.dart';
 import 'package:racconnect/data/blocs/cubit/profile_cubit.dart';
 import 'package:racconnect/presentation/widgets/mobile_button.dart';
-import 'package:racconnect/utility/constants.dart';
 import 'package:racconnect/utility/pocketbase_client.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -253,6 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   await profileCubit.saveProfile(
                     id: profile?.id,
+                    userId: context.read<AuthCubit>().state is AuthenticatedState ? (context.read<AuthCubit>().state as AuthenticatedState).user.id : null,
                     employeeNumber: employeeNumberController.text.trim(),
                     bioId: bioIdController.text.trim(),
                     firstName: firstNameController.text.trim(),
@@ -804,7 +804,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                             if (user.avatar != null &&
                                                 user.avatar!.isNotEmpty) {
                                               avatarUrl =
-                                                  '$serverUrl/api/files/_pb_users_auth_/${user.id}/${user.avatar}';
+                                                  '${PocketBaseClient.instance.baseURL}/api/files/_pb_users_auth_/${user.id}/${user.avatar}';
                                             }
                                           }
                                           return Container(

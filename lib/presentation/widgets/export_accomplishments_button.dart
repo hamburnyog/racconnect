@@ -1235,20 +1235,16 @@ class _ExportAccomplishmentsButtonState
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 0,
-      right: 0,
-      child: FloatingActionButton(
-        mini: true,
-        backgroundColor: Colors.white,
-        onPressed: _exportToPDF,
-        child:
-            _isExporting
-                ? const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
-                )
-                : const Icon(Icons.picture_as_pdf, color: Colors.deepPurple),
-      ),
+    return FloatingActionButton(
+      mini: true,
+      backgroundColor: Colors.white,
+      onPressed: _exportToPDF,
+      child:
+          _isExporting
+              ? const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+              )
+              : const Icon(Icons.picture_as_pdf, color: Colors.deepPurple),
     );
   }
 }

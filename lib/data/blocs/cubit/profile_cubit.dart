@@ -11,6 +11,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> saveProfile({
     String? id,
+    String? userId,
     required String employeeNumber,
     String? bioId,
     required String firstName,
@@ -26,6 +27,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileLoading());
       final profile = ProfileModel(
         id: id,
+        user: userId,
         employeeNumber: employeeNumber,
         bioId: bioId,
         firstName: firstName,
